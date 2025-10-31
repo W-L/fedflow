@@ -1,19 +1,19 @@
 import os
-from dotenv import load_dotenv
 from pathlib import Path
 import argparse
 
-from FedSim.utils import read_toml_config
+from dotenv import load_dotenv
+from fabric import Connection
+
+from FedSim.utils import transfer_with_packing, write_to_file_remote, test_fabric_connection, read_toml_config
 
 
 """
 a simple script to prepare the environment for computing across VMs
-this is executed once and distributes data and credentials for each client
-this would not be part of a real analysis, just to prep simulations
+transfers data and FC credentials to each client VM
 
 Usage:
-    python prep_environment.py -c resources/config_svd.toml -e resources/.env
-
+    python FedSim/prep_environment.py -c resources/config_svd.toml -e resources/.env
 """
 
 
@@ -25,30 +25,26 @@ def get_args() -> argparse.Namespace:
     return args
 
 
+
 class Client: 
 
-    def __init__(self, name: str, target_dir: str):
+    def __init__(self, name: str, info: dict, target_dir: str):
         self.name = name
-        self.target_dir = target_dir
-        self.client_path = Path(target_dir) / name
-        self.client_path.mkdir(parents=True, exist_ok=True) 
+        self.info = info
+        self.target_dir = Path(target_dir)
+        self.conn = Connection(f"{info['username']}@{info['hostname']}:{info['port']}")
+        # verify that connection works and that we get expected returns
+        test_fabric_connection(conn=self.conn, hostname=info['hostname'], username=info['username'])
 
+    
 
-    def write_credentials(self):
-        cred_file = self.client_path / ".env"
-        with open(cred_file, "w") as f:
-            f.write(f"{self.name}={os.getenv(self.name)}\n")
-            f.write(f"{self.name}_P={os.getenv(f'{self.name}_P')}\n")
-
-
-    def link_data(self, source_path: str):
-        data_src = Path(source_path) 
-        data_dst = self.client_path / f"{self.name}_data"
-        if data_dst.exists():
-            return
-        else:
-            os.symlink(data_src, data_dst)
-
+    def get_credentials(self):
+        self.fc_user = os.getenv(self.name)
+        self.fc_pass = os.getenv(f"{self.name}_P")
+        write_to_file_remote(conn=self.conn,
+                                          remote_path=str(self.target_dir / ".env"),
+                                          content=f"FC_USER={self.fc_user}\nFC_PASS={self.fc_pass}\n")
+        
 
 
 
@@ -58,22 +54,26 @@ def main(config_path: str, credentials_path: str):
     load_dotenv(dotenv_path=credentials_path, override=True)
 
     # grab some directories
-    target_dir = conf['vms']['target_dir']
-    participants = conf['clients']['participants']
+    target_dir = conf['vm']['target_dir']
+    participants = conf['clients']
 
-    for p in participants:
+    for pname, pinfo in participants.items():
         # create clients
-        client = Client(name=p, target_dir=target_dir)
-        # distribute credentials into VM-specific .env files
-        client.write_credentials()
-        # link data into each client directory
-        client.link_data(source_path=conf['data'][client.name])
+        client = Client(name=pname, info=pinfo, target_dir=target_dir)
+        # write credentials to .env file in remote
+        client.get_credentials()
+        # transfer data to remote
+        transfer_with_packing(conn=client.conn, paths=pinfo['data'], remote_dir=target_dir)
+        
 
   
-
 if __name__ == "__main__":
     args = get_args()
-    main(config_path=args.config, credentials_path=args.creds)
+    main(config_path=args.conf, credentials_path=args.creds)
+    # debug
+    # config_path = "resources/config_svd.toml"
+    # credentials_path = "resources/.env"
+
 
 
 
