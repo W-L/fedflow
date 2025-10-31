@@ -1,0 +1,30 @@
+[clients]
+
+
+[clients.client0]
+data = ["data/client0.txt", "data/shared_config.yaml"]
+hostname = 'localhost'
+username = 'user'
+port = '2222'
+coordinator = true
+
+[clients.client1]
+data = ["data/client1.txt", "data/shared_config.yaml"]
+hostname = 'localhost'
+username = 'user'
+port = '2223'
+
+[clients.client2]
+data = ["data/client2.txt", "data/shared_config.yaml"]
+hostname = 'localhost'
+username = 'user'
+port = '2224'
+
+
+[project]
+pid = 17264
+
+
+[vm]
+target_dir = '/home/user/fed'
+
