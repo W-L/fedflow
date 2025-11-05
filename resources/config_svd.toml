@@ -26,5 +26,5 @@ pid = 17264
 
 
 [vm]
-target_dir = '/home/user/fed'
+target_dir = '/home/user/data'
 
