@@ -2,6 +2,8 @@ dump/
 .vagrant/
 *Zone.Identifier*
 apps/
+biosphere/
+.vscode/
 
 
 # Byte-compiled / optimized / DLL files
