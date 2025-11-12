@@ -1,5 +1,8 @@
 dump/
 .vagrant/
+*Zone.Identifier*
+apps/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
