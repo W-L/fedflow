@@ -1,9 +1,12 @@
 import argparse
+import os
 
 from dotenv import load_dotenv
+from fabric import SerialGroup
 
-from FedSim.utils import read_toml_config
-from FedSim.remote_client import Client
+from FedSim.utils import read_toml_config, construct_client_strings
+from FedSim.fabric_utils import write_to_file_remote, transfer_with_packing, upload_file
+    
 
 
 """
@@ -19,6 +22,7 @@ def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Prepare environment for FedSim clients.")
     parser.add_argument("-c", "--conf", help="Path to TOML config file")
     parser.add_argument("-e", "--creds", help="Path to dotenv file containing credentials for clients")
+    parser.add_argument("-i", "--sshkey", help="Path to SSH key file", default=None)
     args = parser.parse_args()
     return args
 
@@ -26,36 +30,55 @@ def get_args() -> argparse.Namespace:
 
 
 
+def transfer_data(conn, data: list, target_dir: str, config_file: str):
+    transfer_with_packing(conn=conn, paths=data, remote_dir=target_dir)
+    upload_file(conn=conn, local_path=config_file, remote_path=f"{target_dir}/config.toml", force=True)
 
-def main(config_path: str, credentials_path: str):
+
+def transfer_credentials(conn, target_dir: str, client_name: str) -> None:
+    fc_user = os.getenv(client_name)
+    fc_pass = os.getenv(f"{client_name}_P")
+    write_to_file_remote(conn=conn,
+                         remote_path=f"{target_dir}/.env",
+                         content=f"FC_USER={fc_user}\nFC_PASS={fc_pass}\n")
+    
+
+
+
+def main(args) -> None:
     # load config and credentials
-    conf = read_toml_config(config_path)
-    load_dotenv(dotenv_path=credentials_path, override=True)
-
-    # grab some directories
+    conf = read_toml_config(args.conf)
+    
+    # grab some values from config
     target_dir = conf['vm']['target_dir']
-    participants = conf['clients']
+    clients = conf['clients']
 
-    for pname, pinfo in participants.items():
-        # create clients
-        client = Client(name=pname, info=pinfo, target_dir=target_dir)
-        # write credentials to .env file in remote
-        client.get_credentials()
-        # transfer data to remote, and the config file as well
-        client.transfer_data(target_dir=target_dir, config_file=config_path)
-        
+    client_strings = construct_client_strings(config=args.conf)
+    print(client_strings)
+
+    # load credentials into environment
+    load_dotenv(dotenv_path=args.creds, override=True)
+
+
+    if args.sshkey:
+        serialg = SerialGroup(*client_strings, connect_kwargs={"key_filename": args.sshkey})
+    else:
+        serialg = SerialGroup(*client_strings)
+
+
+    for (pname, pinfo), cxn in zip(clients.items(), serialg):
+        transfer_credentials(conn=cxn, target_dir=target_dir, client_name=pname)
+        transfer_data(conn=cxn, data=pinfo['data'], target_dir=target_dir, config_file=args.conf)
+
+    # close connections
+    serialg.close()
 
   
 if __name__ == "__main__":
     args = get_args()
-    conf = args.conf
-    creds = args.creds
-    # debug
-    # conf = "resources/config_svd.toml"
-    # creds = "resources/.env"
+    main(args)
 
 
-    main(config_path=conf, credentials_path=creds)
     
 
 

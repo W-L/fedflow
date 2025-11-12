@@ -117,21 +117,22 @@ def write_to_file_remote(conn: Connection, remote_path: str, content: str) -> No
 
 def launch_featurecloud(conn: Connection):
     # launch featurecloud controller
-    fc_res = conn.run("featurecloud controller start")
+    stop_featurecloud(conn=conn)  # ensure stopped before starting
+    fc_res = conn.run("source .venv/bin/activate && featurecloud controller start")
     print(fc_res.stdout)
     check_featurecloud_status(conn=conn)
 
 
 def check_featurecloud_status(conn: Connection):
     # check featurecloud status
-    status_res = conn.run("featurecloud controller status")
+    status_res = conn.run("source .venv/bin/activate && featurecloud controller status")
     print(status_res.stdout)
     assert "running" in status_res.stdout.lower(), "FeatureCloud controller is not running."
 
 
 def stop_featurecloud(conn: Connection):
     # stop featurecloud controller
-    stop_res = conn.run("featurecloud controller stop")
+    stop_res = conn.run("source .venv/bin/activate && featurecloud controller stop")
     print(stop_res.stdout)
 
 

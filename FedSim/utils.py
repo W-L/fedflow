@@ -70,12 +70,24 @@ def construct_client_strings(config: str) -> list[str]:
     :return: A list of client strings.
     """
     clients = read_toml_config(config)['clients']
+    remote_username = list(clients.values())[0]['username']
+    port = list(clients.values())[0]['port']
+    add_port = port is not None
 
     client_strings = []
+    
     for cname, cinfo in clients.items():
-        cname = 'user'   # TODO for now they are all called user, not cname (client0 etc.)
-        cstr = f"{cname}@{cinfo['hostname']}:{cinfo['port']}"
+        cstr = f"{remote_username}@{cinfo['hostname']}"
+        if add_port:
+            cstr += f":{cinfo['port']}"
         client_strings.append(cstr)
+
     return client_strings
+
+
+
+def construct_serialgroup() -> None:
+    pass
+
 
 

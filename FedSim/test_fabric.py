@@ -14,6 +14,12 @@ conn.put('VMs/common_dependencies.sh', remote='/home/user/common_dependencies.sh
 conn.run('bash common_dependencies.sh')
 
 
+
+conn = Connection('ubuntu@134.158.249.96', connect_kwargs={"key_filename": "/home/lweilguny/.ssh/biosphere"})
+conn.put('VMs/biosphere_provision.sh', remote='/home/ubuntu/biosphere_provision.sh')
+
+
+
 launch_featurecloud(conn=conn)
 
 

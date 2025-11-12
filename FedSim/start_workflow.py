@@ -29,11 +29,15 @@ def get_args() -> argparse.Namespace:
 def main(config_path, credentials_path):
     # load config and credentials
     conf = read_toml_config(config_path)
-    load_dotenv(dotenv_path=credentials_path, override=True)
-
-
+    
+    # create the coordinator user
     user = Coordinator(username=conf['clients']['coordinator'])
 
+    # create connection object
+
+    # start featurecloud controller
+
+    # start interaction
     user.start_browser()
 
     user.fc_login()
