@@ -10,12 +10,12 @@ Vagrant.configure("2") do |config|
     config.vm.synced_folder ".", "/vagrant", disabled: true
     
 
-    (0..2).each do |i|
+    (0..0).each do |i|
         config.vm.define "node-#{i}" do |node|
             node.vm.hostname = "node-#{i}"
             # node.vm.synced_folder "./node-#{i}/", "/home/vagrant/node", create: true
             
-            node.vm.provision "shell", name: "common", path: "vagrant_provision.sh"
+            node.vm.provision "shell", name: "common", path: "VMs/vagrant_provision.sh"
 
         end
     end
