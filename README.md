@@ -96,12 +96,19 @@ conda install python==3.12 fabric rtoml python-dotenv
 
 # TODO
 
+step through a multiuser scenario with two laptops
+- this will make it clear how the running and the downloading actually works
+
+
+
 create a single log file that captures everything
 
 
 
-
-test if all tools work on the vms (docker, fc, playwright, ...)
+continue developing the fc api
+- add multiuser scenarios
+- add project creation and adding other users
+- add site registration
 
 
 test the fc workflow (IO e.g.) 

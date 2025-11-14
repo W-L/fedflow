@@ -4,6 +4,10 @@ dump/
 apps/
 biosphere/
 .vscode/
+data/
+results/
+destination_remote.tar.gz
+
 
 
 # Byte-compiled / optimized / DLL files
