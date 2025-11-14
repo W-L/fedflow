@@ -3,8 +3,8 @@
 
 [clients.client0]
 data = ["data/federated_svd_split/mnist_split_0.tsv", "data/federated_svd_split/config.yaml"]
-hostname = '134.158.249.96'
-username = 'ubuntu'
+hostname = '192.168.121.128'
+username = 'vagrant'
 port = '' # not needed for biosphere
 coordinator = true
 
@@ -14,5 +14,5 @@ pid = 17268
 
 
 [vm]
-target_dir = '/home/ubuntu/fedsim'
+target_dir = '/home/vagrant/fedsim'
 
