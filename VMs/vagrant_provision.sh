@@ -12,7 +12,7 @@ apt-get install -y curl pip python3.12 python3.12-venv \
 # install python dependencies
 python3 -m venv /home/$USER/.venv
 source /home/$USER/.venv/bin/activate
-pip install -r playwright featurecloud fabric rtoml python-dotenv
+pip install playwright featurecloud fabric rtoml python-dotenv
 # install playwright browsers
 playwright install-deps
 playwright install firefox
@@ -23,7 +23,7 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/
 chmod a+r /etc/apt/keyrings/docker.gpg
 echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt-get update
-apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+apt-get install -y docker-ce=5:28.5.2-1~ubuntu.24.04~noble docker-ce-cli=5:28.5.2-1~ubuntu.24.04~noble containerd.io docker-buildx-plugin docker-compose-plugin
 usermod -aG docker $USER
 
 
