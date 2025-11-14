@@ -2,10 +2,9 @@ import argparse
 import os
 
 from dotenv import load_dotenv
-from fabric import SerialGroup
 
-from FedSim.utils import read_toml_config, construct_client_strings
-from FedSim.fabric_utils import write_to_file_remote, transfer_with_packing, upload_file
+from utils import read_toml_config, construct_client_strings, construct_serialgroup
+from fabric_utils import write_to_file_remote, transfer_with_packing, upload_file
     
 
 
@@ -38,6 +37,7 @@ def transfer_data(conn, data: list, target_dir: str, config_file: str):
 def transfer_credentials(conn, target_dir: str, client_name: str) -> None:
     fc_user = os.getenv(client_name)
     fc_pass = os.getenv(f"{client_name}_P")
+    assert fc_user is not None and fc_pass is not None, f"credentials {client_name} not found"
     write_to_file_remote(conn=conn,
                          remote_path=f"{target_dir}/.env",
                          content=f"FC_USER={fc_user}\nFC_PASS={fc_pass}\n")
@@ -53,17 +53,11 @@ def main(args) -> None:
     target_dir = conf['vm']['target_dir']
     clients = conf['clients']
 
-    client_strings = construct_client_strings(config=args.conf)
-    print(client_strings)
-
     # load credentials into environment
     load_dotenv(dotenv_path=args.creds, override=True)
 
-
-    if args.sshkey:
-        serialg = SerialGroup(*client_strings, connect_kwargs={"key_filename": args.sshkey})
-    else:
-        serialg = SerialGroup(*client_strings)
+    # construct serial group    
+    serialg = construct_serialgroup(conf=args.conf, sshkey=args.sshkey)
 
 
     for (pname, pinfo), cxn in zip(clients.items(), serialg):
