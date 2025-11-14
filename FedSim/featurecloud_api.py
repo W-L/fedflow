@@ -132,8 +132,8 @@ class FCC:
     
 
 
-    def is_project_coordinator(self, project_id: str) -> bool:
-        r = self.client.get(f"/api/projects/{project_id}/")
+    def is_project_coordinator(self) -> bool:
+        r = self.client.get(f"/api/projects/{self.project.project_id}/")
         r.raise_for_status()      # raise error if project doesn't exist
         data = r.json()
         role = data.get("role")
@@ -146,9 +146,13 @@ class FCC:
         # checking that we are in prepare mode
         is_prepping = self.project.is_prepping()
         if not is_prepping:
-            print(f"Project {self.project.project_id} not in 'prepare' mode. Setting it now.")
+            if not self.is_project_coordinator():
+                raise PermissionError("Only the project coordinator can set the project to 'prepare' mode.")
+            
+            print(f"Project {self.project.project_id} not in 'prepare' mode. Setting it now as coordinator.")
             self.project.set_status("prepare")
             time.sleep(2)  # wait a bit for status to update
+
 
         results = {}
         headers = {
