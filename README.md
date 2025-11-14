@@ -80,6 +80,15 @@ also possible to use biosphere instead of local vms
 - they can be deployed via web interface
 
 
+## devoopy02
+
+
+TODO: create env file for this
+
+conda create -n fedsim
+conda activate fedsim
+conda install python==3.12 fabric rtoml python-dotenv
+
 
 
 
@@ -89,21 +98,11 @@ also possible to use biosphere instead of local vms
 
 create a single log file that captures everything
 
-create a function to create the serialgroup (is used multiple times)
 
 
-
-finally get the vm from kevin
-
-test if vagrant works on the vm
-
-launch and provision the vms
-
-get the ssh info from vms, generate a new toml config file in resources with that
 
 test if all tools work on the vms (docker, fc, playwright, ...)
 
-get rid of remotato in this project again, was only for temp testing
 
 test the fc workflow (IO e.g.) 
 
@@ -114,4 +113,10 @@ create other workflows for other tools
 write a snakemake workflow to run all analyses and compare them to centralised approaches
 
 
+in the provisioning script, the docker version is currently fixed due to FC restrictions
+- check once their container is updated
 
+get static ips from vagrant for the hostname, should be possible right?
+
+create a conda env for all development dependencies (same as on the vms)
+- playwright needs to be installed via pip it seems, then also run playwright install firefox
