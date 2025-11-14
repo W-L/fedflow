@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 import subprocess
 
+from fabric import SerialGroup
 import rtoml
 
 
@@ -72,13 +73,11 @@ def construct_client_strings(config: str) -> list[str]:
     clients = read_toml_config(config)['clients']
     remote_username = list(clients.values())[0]['username']
     port = list(clients.values())[0]['port']
-    add_port = port is not None
-
     client_strings = []
     
     for cname, cinfo in clients.items():
         cstr = f"{remote_username}@{cinfo['hostname']}"
-        if add_port:
+        if port is not None and port != '':
             cstr += f":{cinfo['port']}"
         client_strings.append(cstr)
 
@@ -86,8 +85,31 @@ def construct_client_strings(config: str) -> list[str]:
 
 
 
-def construct_serialgroup() -> None:
-    pass
+def construct_serialgroup(conf: str, sshkey: str = ''):
+    # generate the client strings
+    client_strings = construct_client_strings(config=conf)
+    print(client_strings)
+
+    if sshkey:
+        serialg = SerialGroup(*client_strings, connect_kwargs={"key_filename": sshkey})
+    else:
+        serialg = SerialGroup(*client_strings)
+
+    return serialg
+
+
+
+
+def is_vagrant_up(expected_nodes: int) -> bool:
+    vagrant_status = 'vagrant status | grep "running " | wc -l'
+    stdout, stderr = execute(vagrant_status)
+    assert not stderr, f"Error checking Vagrant status: {stderr}"
+    count = int(stdout.strip())
+    assert count == expected_nodes, f"Expected {expected_nodes} Vagrant machines running, found {count}"
+    return True
+
+
+
 
 
 
