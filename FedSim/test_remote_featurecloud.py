@@ -1,10 +1,10 @@
 import argparse
 
-from fabric import SerialGroup
+from utils import construct_serialgroup
 
-from FedSim.utils import construct_client_strings, read_toml_config
+from fabric_utils import launch_featurecloud, stop_featurecloud
 
-from FedSim.fabric_utils import launch_featurecloud, stop_featurecloud
+
 
 
 def get_args() -> argparse.Namespace:
@@ -17,14 +17,7 @@ def get_args() -> argparse.Namespace:
 
 
 def main(args) -> None:
-    client_strings = construct_client_strings(config=args.conf)
-    print(client_strings)
-
-    if args.sshkey:
-        serialg = SerialGroup(*client_strings, connect_kwargs={"key_filename": args.sshkey})
-    else:
-        serialg = SerialGroup(*client_strings)
-
+    serialg = construct_serialgroup(conf=args.conf, sshkey=args.sshkey)
 
     for cxn in serialg:
         launch_featurecloud(conn=cxn)
