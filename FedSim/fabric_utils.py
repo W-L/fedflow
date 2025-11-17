@@ -6,6 +6,9 @@ from pathlib import Path
 
 from fabric import Connection
 
+from logger import log
+from utils import execute_fabric
+
 
 
 def test_fabric_connection(conn: Connection, hostname: str, username: str) -> None:
@@ -33,14 +36,14 @@ def tarzip(paths: Iterable[str], archive_name: str, force: bool = False) -> None
     
     if ap.exists():
         if not force:
-            print(f"{archive_name} already exists. Skipping creation.")
+            log(f"{archive_name} already exists. Skipping creation.")
             return 
     
     # create gzipped tar
     with tarfile.open(ap, "w:gz") as tar:
         for p in paths:
             tar.add(p, arcname=Path(p).name)
-    print(f"Created archive {archive_name}.")
+    log(f"Created archive {archive_name}.")
     return 
 
 
@@ -58,19 +61,20 @@ def upload_file(conn: Connection, local_path: str, remote_path: str, force: bool
         if not force:
             print(f"{remote_path} already exists on remote. Skipping upload.")
             return
-    
-    conn.run('mkdir -p ' + str(Path(remote_path).parent))
-    print(f"Transferring {local_path} to remote...")
+
+    execute_fabric('mkdir -p ' + str(Path(remote_path).parent), cxn=conn)
+    log(f"Transferring {local_path} to remote...")
     conn.put(local_path, remote=remote_path)
-    print("done.")
+    log("done.")
  
 
 
 def remote_unpack(conn: Connection, remote_dir: str, remote_archive: str, remove_archive: bool = False) -> None:
     # extract on remote and remove archive
-    r = conn.run(f"tar -xzf {remote_dir}/{remote_archive} -C {remote_dir}")
-    assert r.ok, f"Remote extraction failed: {r.stderr}"
-    print("Remote extraction done.")
+    log(f"Extracting {remote_archive} on remote...")
+    cmd = f"tar -xzf {remote_dir}/{remote_archive} -C {remote_dir}"
+    execute_fabric(command=cmd, cxn=conn)
+    log("Remote extraction done.")
     if remove_archive:
         conn.run(f"rm -f {remote_dir}/{remote_archive}")
 
@@ -108,32 +112,11 @@ def write_to_file_remote(conn: Connection, remote_path: str, content: str) -> No
     :param content: content to write to the file
     """
     try:
-        mkdirres = conn.run(f'mkdir -p {str(Path(remote_path).parent)}', hide=True)
-        writeres = conn.run(f'echo {shlex.quote(content)} > {remote_path}', hide=True)
+        execute_fabric(f'mkdir -p {str(Path(remote_path).parent)}', cxn=conn, silent=True)
+        # mkdirres = conn.run(f'mkdir -p {str(Path(remote_path).parent)}', hide=True)
+        execute_fabric(f'echo {shlex.quote(content)} > {remote_path}', cxn=conn, silent=True)
+        # writeres = conn.run(f'echo {shlex.quote(content)} > {remote_path}', hide=True)
     except Exception as e:
-        print(f"Error writing to {remote_path}: {e}")
+        log(f"Error writing to {remote_path}: {e}")
     return
 
-
-def launch_featurecloud(conn: Connection):
-    # launch featurecloud controller
-    stop_featurecloud(conn=conn)  # ensure stopped before starting
-    fc_res = conn.run("source .venv/bin/activate && featurecloud controller start")
-    print(fc_res.stdout)
-    check_featurecloud_status(conn=conn)
-
-
-def check_featurecloud_status(conn: Connection):
-    # check featurecloud status
-    status_res = conn.run("source .venv/bin/activate && featurecloud controller status")
-    print(status_res.stdout)
-    assert "running" in status_res.stdout.lower(), "FeatureCloud controller is not running."
-
-
-def stop_featurecloud(conn: Connection):
-    # stop featurecloud controller
-    stop_res = conn.run("source .venv/bin/activate && featurecloud controller stop")
-    print(stop_res.stdout)
-
-
-    
