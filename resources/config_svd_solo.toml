@@ -1,18 +1,24 @@
+[general]
+
+sim = true
+fc_credentials = 'resources/.env'
+pid = 17268
+target_dir = '/home/vagrant/fedsim'
+
+
 [clients]
 
-
-[clients.client0]
-data = ["data/federated_svd_split/mnist_split_0.tsv", "data/federated_svd_split/config.yaml"]
-hostname = '192.168.121.128'
-username = 'vagrant'
-port = '' # not needed for biosphere
+[clients.0]
+fc_username = 'p73wzaml9@mozmail.com'
+data = ["test_data/svd_solo/mnist_200.tsv", "test_data/svd_solo/config.yaml"]
 coordinator = true
+hostname = ''
+username = ''
+port = '' 
+sshkey = '' 
 
 
-[project]
-pid = 17268
 
 
-[vm]
-target_dir = '/home/vagrant/fedsim'
+
 
