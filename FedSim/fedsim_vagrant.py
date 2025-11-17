@@ -1,64 +1,82 @@
+#%%
 
-from FedSim.utils import execute
+from logger import setup_logging, log
 
-from FedSim.fabric_utils import launch_featurecloud, stop_featurecloud
 
-# this is to orchestrate the entire simulated workflow
+from config import Config
 
+from utils_vm import VagrantManager
+from clients import Clients
+
+%cd /home/lweilguny/FedSim
+
+#%%
+
+
+
+# STEP load config
 CONFIG = "resources/config_svd_solo.toml"
-SSHKEY = ".vagrant/machines/node-0/libvirt/private_key"
 
-
-# TODO: write a log file here with all outputs and errors
-
-
-# prep the environment on each VM - this should work
-print('Transferring data and credentials to VMs...')
-prep = f'python FedSim/prep_environment.py -c {CONFIG} -e resources/.env -i {SSHKEY}'
-stdout, stderr = execute(prep)
-print(stderr)
-print(stdout)
+setup_logging('fedsim.log')
+log(f'Loading configuration from {CONFIG}...')
+conf = Config(toml_path=CONFIG)
+#%%
 
 
 
-# TODO: launching, status, and stopping fc on remote works as well!
-# tested with test_remote_featurecloud.py
-print('test fc...')
-fc = f'python FedSim/test_remote_featurecloud.py -c {CONFIG} -i {SSHKEY}'
-stdout, stderr = execute(fc)
-print(stderr)
-print(stdout)
+# STEP set up Vagrant VMs  (OPTIONAL if not using VMS)
+log('Setting up Vagrant VMs...')
+vms = VagrantManager(num_nodes=2)
+vms.launch()
+#%%
+
+
+# STEP get client connections
+if not conf.general['sim']:
+    # construct serialgroup from config
+    serialgroup = conf.construct_serialgroup()
+else:
+    # construct serialgroup from vagrant
+    serialgroup = vms.construct_serialgroup()
+
+clients = Clients(serialgroup=serialgroup, conf=conf)
+# clients.ping()
+#%%
+
+
+# STEP copy data and credentials to each client
+clients.distribute_credentials()
+clients.distribute_data()
+#%%
+
+
+# TODO continue here with testing the logger
+# and with the project creation api
+
+
+# STEP test featurecloud
+clients.test_featurecloud_controllers()
+# clients.start_featurecloud_controllers()
+# clients.stop_featurecloud_controllers()
+#%%
 
 
 
-# run featurecloud controller on each VM - this didn't work because of docker inside docker
-# print('Starting FeatureCloud controllers on VMs...')
-
-# for cxn in SerialGroup(*clients):
-    # launch_featurecloud(conn=cxn)
 
 
-# for cxn in SerialGroup(*clients):
-    # stop_featurecloud(conn=cxn)
 
+# STEP use API
+
+
+# create project and workflow as coordinator
 
 
 # start workflow as coordinator
-
-
 # participate with all other clients
-
 # check that the workflow ran successfully on all clients
 
 # clean up
-
 # shut down vms
 
 
-
-
-# TODO 
-# implement steps
-# add arg to swap out VMs and containers
-# add arg for real run?
 
