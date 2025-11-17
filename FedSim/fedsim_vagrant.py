@@ -39,6 +39,11 @@ else:
     # construct serialgroup from vagrant
     serialgroup = vms.construct_serialgroup()
 
+# TODO check that the serialgroup can be indexed and that we can still use individual connections from it
+# i.e. for running things from the coordinator and the participants separately
+# e.g. serialgroup[0].run(...)
+# participants = serialgroup[1:]
+
 clients = Clients(serialgroup=serialgroup, conf=conf)
 # clients.ping()
 #%%
