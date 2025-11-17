@@ -1,6 +1,9 @@
 #%%
 from types import SimpleNamespace
 import subprocess
+import random
+import string
+
 from logger import log
 
 
@@ -18,6 +21,9 @@ def empty_file(path: str) -> None:
 
 
 
+def randstr(l: int = 16) -> str:
+    alphabet = string.ascii_letters + string.digits
+    return ''.join(random.choices(alphabet, k=l))
 
 
 def execute(command: str):
