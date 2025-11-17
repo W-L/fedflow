@@ -98,6 +98,19 @@ conda install python==3.12 fabric rtoml python-dotenv
 
 step through a multiuser scenario with two laptops
 - this will make it clear how the running and the downloading actually works
+- there is a project already with 2 users assigned
+- prepping data for them in the test_data/svd_duo dir
+
+
+
+
+after that create a subclass of the fcc or something to demarcate the coordinator
+- then only that class can
+        start
+        monitor?
+        download?
+- all users can 
+        upload
 
 
 

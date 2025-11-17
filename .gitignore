@@ -2,7 +2,6 @@ dump/
 .vagrant/
 *Zone.Identifier*
 apps/
-biosphere/
 .vscode/
 data/
 results/
