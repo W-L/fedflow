@@ -1,3 +1,4 @@
+#%%
 from typing import List
 import os
 from pathlib import Path
@@ -6,14 +7,22 @@ import time
 import httpx
 from dotenv import load_dotenv
 
+from logger import log
+from utils import randstr
+
 # %%
-%cd ..
+%cd /home/lweilguny/proj/FedSim
 
 load_dotenv(dotenv_path='resources/.env', override=True)
 
 
         
 #%%
+
+TOOL_IDS = {
+    "federated-svd": 85,
+}
+
 
 
 class Controller:
@@ -27,15 +36,110 @@ class Controller:
             r = self.client.get(f"{self.host}/ping/", timeout=2)
             return r.status_code == 200
         except httpx.RequestError:
+            err_msg = "FeatureCloud controller is not running. Make sure to start it first."
+            log(err_msg)
             return False
 
 
 class Project: 
 
-    def __init__(self, project_id: str, client):
-        self.project_id = project_id
+    def __init__(self, client):
         self.client = client
-        print(f"Project status: {self.get_status()}")
+        
+        
+    @classmethod
+    def from_project_id(cls, project_id: str, client):
+        proj = cls(client=client)
+        proj.project_id = project_id
+        log(f"Using existing project {proj.project_id}.")
+        log(f"Project status: {proj.get_status()}")
+        return proj
+        
+        
+    @classmethod
+    def from_tool(cls, tool: str, client):
+        proj = cls(client=client)
+        proj.create_new_project()
+        proj.set_project_workflow(tool=tool)
+        log(f"Created new project {proj.project_id} {proj.project_name} with tool {proj.tool}.")
+        log(f"Project status: {proj.get_status()}")
+        return proj
+
+    @classmethod
+    def from_token(cls, token: str, project_id: str, client):
+        proj = cls(client=client)
+        proj.join_project(token=token)
+        proj.project_id = project_id  # set the project ID after joining
+        log(f"Joined existing project {proj.project_id} via token.")
+        log(f"Project status: {proj.get_status()}")
+        return proj
+        
+           
+
+
+    def create_new_project(self):
+        self.project_name = randstr()
+        new_proj = {
+            "name": self.project_name,
+            "description": "",
+            "status": ""
+        }
+        r = self.client.post("/api/projects/", json=new_proj)
+        r.raise_for_status()
+        data = r.json()
+        project_id = data.get("id")
+        self.project_id = project_id
+
+
+    
+
+    def set_project_workflow(self, tool: str):
+        """
+        Update a project's workflow to include one federated tool.
+        """
+        self.tool = tool
+        try:
+            tool_id = TOOL_IDS[tool]
+        except KeyError:
+            raise ValueError(f"{tool} not available. Available: {list(TOOL_IDS.keys())}")
+
+        payload = {
+            "id": self.project_id,
+            "name": self.project_name,
+            "description": "",
+            "status": "ready",   # the workflow can be added in multiple steps, then the status is 'init' first
+            "workflow": [
+                {
+                    "id": 0,
+                    "projectId": self.project_id,
+                    "federatedApp": {
+                        "id": tool_id
+                    },
+                    "order": 0,
+                    "versionCertificationLevel": 1
+                }
+            ]
+        }
+
+        r = self.client.put(f"/api/projects/{self.project_id}/", json=payload)
+        r.raise_for_status()
+        return r.json()
+
+
+    def create_project_tokens(self, n: int = 1):
+        tokens = []
+        for _ in range(n):
+            r = self.client.post(f"/api/project-tokens/{self.project_id}/", json={"cmd": "create"})
+            r.raise_for_status()
+            tokens.append(r.json())   # contains id, token, project, etc.
+        return tokens
+    
+
+    def join_project(self, token: str):
+        payload = {"token": token, "cmd": "join"}
+        r = self.client.post(f"/api/project-tokens/", json=payload)
+        r.raise_for_status()
+        return r.json()
 
 
     def get_status(self) -> str:
@@ -73,20 +177,24 @@ class Project:
 
 
 
+
 class User: 
 
-    def __init__(self, username, client):
-        self.username = os.getenv(username)
-        self.password = os.getenv(f"{username}_P")
-        assert self.username is not None, f"Environment variable {username} not set."
-        assert self.password is not None, f"Environment variable {username}_P not set."
+    def __init__(self, username):
+        self.client = httpx.Client(base_url="https://featurecloud.ai")
+        self.username = username
+        self.password = os.getenv(f"{username}")
+        assert self.password is not None, f"Credentials for {username} not found."
         self.access = None
         self.refresh = None
-        self.client = client
+        # login as soon as user is created
+        self.login()
+        self.is_logged_in()
+        
 
 
     def login(self):
-        print(f"Logging in user {self.username}...")
+        log(f"Logging in user {self.username}...")
         r = self.client.post("/api/auth/login/",
                              json={"username": self.username, "password": self.password})
         r.raise_for_status()
@@ -107,7 +215,7 @@ class User:
         try:
             r = self.client.get("/api/user/info/")
             ok = r.status_code == 200
-            print(f"User {self.username} logged in: {ok}")
+            log(f"User {self.username} logged in: {ok}")
             return ok
         except httpx.HTTPError:
             return False
@@ -115,25 +223,19 @@ class User:
 
 
 class FCC:
-    def __init__(self, username, project_id):
+    def __init__(self, user, project):
         # verify that controller is running
         self.controller = Controller()
-        err_msg = "FeatureCloud controller is not running. Make sure to start it first."
-        assert self.controller.controller_is_running(), err_msg
-        # create HTTP client
-        self.client = httpx.Client(base_url="https://featurecloud.ai")
-        # log in as user
-        self.user = User(username=username, client=self.client)
-        self.user.login()
-        self.user.is_logged_in()
-        # project object
-        self.project = Project(project_id=project_id, client=self.client)
+        assert self.controller.controller_is_running()
+        # attach objects
+        self.project = project
+        self.user = user
         
     
 
 
     def is_project_coordinator(self) -> bool:
-        r = self.client.get(f"/api/projects/{self.project.project_id}/")
+        r = self.user.client.get(f"/api/projects/{self.project.project_id}/")
         r.raise_for_status()      # raise error if project doesn't exist
         data = r.json()
         role = data.get("role")
@@ -149,7 +251,7 @@ class FCC:
             if not self.is_project_coordinator():
                 raise PermissionError("Only the project coordinator can set the project to 'prepare' mode.")
             
-            print(f"Project {self.project.project_id} not in 'prepare' mode. Setting it now as coordinator.")
+            log(f"Project {self.project.project_id} not in 'prepare' mode. Setting it now as coordinator.")
             self.project.set_status("prepare")
             time.sleep(2)  # wait a bit for status to update
 
@@ -199,7 +301,7 @@ class FCC:
         r.raise_for_status()
         # go into project monitoring mode
         end_status = self.monitor_project()
-        print(end_status)
+        log(end_status)
         return end_status
 
 
@@ -215,7 +317,7 @@ class FCC:
         while True:
             # GET project info
             status = self.project.get_status()
-            print(f"Project {self.project.project_id} status: {status}")
+            log(f"Project {self.project.project_id} status: {status}")
 
             if status == 'prepare':
                 time.sleep(interval)
@@ -250,7 +352,7 @@ class FCC:
         filepath = Path(out_dir) / filename
         with open(filepath, "wb") as f:
             f.write(r.content)
-        print(f"Downloaded {filepath}")
+        log(f"Downloaded {filepath}")
         return filepath
     
 
@@ -259,12 +361,10 @@ class FCC:
     def download_outcome(self, out_dir):
         Path(out_dir).mkdir(exist_ok=True, parents=True)
         runs = self._get_project_runs()
-        print(f"Downloading files for project {self.project.project_id}...")
+        log(f"Downloading files for project {self.project.project_id}...")
         most_recent = runs[0]  # assuming runs are sorted by recency
-        print(f"Found {len(runs)} runs. Downloading most recent run, started on {most_recent['startedOn']}")
-
-        
-       
+        log(f"Found {len(runs)} runs. Downloading most recent run, started on {most_recent['startedOn']}")
+        # download log files       
         for step in most_recent.get("logSteps", []):
             logpath = self._download_file(
                 endpoint="/logs-download/",
@@ -273,8 +373,7 @@ class FCC:
                 run=most_recent['runNr'],
                 step=step
             ) 
-        
-
+        # download result files
         for step in most_recent.get("resultSteps", []):
             resultpath = self._download_file(
                 endpoint="/file-download/",
@@ -283,16 +382,26 @@ class FCC:
                 run=most_recent['runNr'],
                 step=step
             )
-            
         return 
 
 
 
 
+
+
+
+
 #%%
+# user = User(username="p73wzaml9@mozmail.com")
 
+# project_id = "17274"
+# p1 = Project.from_project_id(project_id=project_id, client=user.client)
+# p2 = Project.from_tool(tool="federated-svd", client=user.client)
+# token = p2.create_project_tokens(n=1)[0]['token']
 
-fcc = FCC(username="client0", project_id="17268")
+# user2 = User(username="flxt56ucr@mozmail.com")
+# p3 = Project.from_token(token=token, project_id=p2.project_id, client=user2.client)
+
 
 
 # %%
@@ -313,7 +422,10 @@ fcc = FCC(username="client0", project_id="17268")
 
 
 #%%
-fcc.download_outcome(out_dir="results/")
+# fcc.download_outcome(out_dir="results/")
 
 
 # %%
+
+
+
