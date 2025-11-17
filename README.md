@@ -90,6 +90,16 @@ conda activate fedsim
 conda install python==3.12 fabric rtoml python-dotenv
 
 
+## 2 modes of operation
+
+either simulation with vagrant : everything in a single python script and 1 config file
+- even vagrantfile is abstracted away
+
+other mode is to give details for remotes in config file
+- no need to bring them up, but still need to provision (via fabric instead of vagrant file)
+- or ask sysadmin of the partners to install certain things 
+
+
 
 
 
@@ -114,15 +124,14 @@ after that create a subclass of the fcc or something to demarcate the coordinato
 
 
 
-create a single log file that captures everything
-
-
 
 continue developing the fc api
 - add multiuser scenarios
 - add project creation and adding other users
 - add site registration
 
+make sure the client is linked to the correct vm
+- i.e. I think the serialgroup and clients get linked incorrectly in the clients class
 
 test the fc workflow (IO e.g.) 
 
@@ -136,7 +145,18 @@ write a snakemake workflow to run all analyses and compare them to centralised a
 in the provisioning script, the docker version is currently fixed due to FC restrictions
 - check once their container is updated
 
-get static ips from vagrant for the hostname, should be possible right?
 
 create a conda env for all development dependencies (same as on the vms)
-- playwright needs to be installed via pip it seems, then also run playwright install firefox
+- also document that vagrant and libvirt is req
+
+
+document usage and the toml config file
+
+write type hints and function docstrings
+
+setup file and installable with pip install .
+
+
+write pytests for everything
+- trickier for remote stuff, but should be ok
+
