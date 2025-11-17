@@ -1,17 +1,15 @@
 # FedSim
-simulated federated analyses with VMs
 
-This project has 3 main layers:
+Automation of federated analyses with featurecloud.ai
 
-- federated vm infrastructure
-- using playwright to launch featurecloud
+Either simulated with VMs or with real machines via ssh
+
+
+This project has multiple layers:
+- vm/ssh infrastructure
+- sending commands to machines via fabric
+- a reverse engineered featurecloud API
 - featurecloud tools themselves (IO)
-
-
-need to remember that the vms need to be separated as much as possible to be realistic
-- there should not be any link between them
-
-
 
 
 
@@ -40,25 +38,10 @@ scripts:
 
 ## Setup
 
-Manual setup on FC GUI:
-
+Manual setup on FC GUI that are not automated:
 - register accounts on FC for all clients
-- create sites for all clients
-- controller creates a project and tools within project (the number from the project URL is persistent and goes into the toml file)
-- controller generates tokens and clients use tokens to join projects
+- create 'sites' for all clients
 
-
-for key-based ssh into VMs (check if this is actually necessary with vagrant VMS)
-maybe not, but for real deployment it well be
-`ssh-keygen -t rsa`
-`cp ~/.ssh/KEY.pub VMs/C0/ssh/authorized_keys VMs/C1/ssh/authorized_keys ...`
-
-
-Launching VMs
-`vagrant`
-
-Distribute data and credentials for all clients
-`python prep_environment.py -c resources/config_svd.toml -e resources/.env`
 
 
 
@@ -123,12 +106,15 @@ after that create a subclass of the fcc or something to demarcate the coordinato
         upload
 
 
+project creation and joining is now implemented
+- only simple projects with a single tool so far
+
 
 
 continue developing the fc api
 - add multiuser scenarios
-- add project creation and adding other users
-- add site registration
+
+
 
 make sure the client is linked to the correct vm
 - i.e. I think the serialgroup and clients get linked incorrectly in the clients class
@@ -160,3 +146,6 @@ setup file and installable with pip install .
 write pytests for everything
 - trickier for remote stuff, but should be ok
 
+
+automate user registration and site creation?
+and purchasing of apps?
