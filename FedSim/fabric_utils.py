@@ -2,7 +2,7 @@ import tarfile
 import shlex
 from typing import Iterable
 from pathlib import Path
-
+import logging
 
 from fabric import Connection
 
@@ -11,19 +11,19 @@ from utils import execute_fabric
 
 
 
-def test_fabric_connection(conn: Connection, hostname: str, username: str) -> None:
-    """
-    Test the fabric connection 
+# def test_fabric_connection(conn: Connection, hostname: str, username: str) -> None:
+#     """
+#     Test the fabric connection 
 
-    :param conn: The fabric Connection object.
-    """
-    uname_result = conn.run('uname', hide=True).stdout.strip()
-    assert uname_result != "", "Failed to get remote system info."
-    username_result = conn.run('whoami', hide=True).stdout.strip()
-    assert username_result == username, f"username {username_result} does not match expected {username}"
-    # hostname_result = conn.run('hostname', hide=True).stdout.strip()
-    # assert hostname_result == hostname, f"hostname {hostname_result} does not match expected {hostname}"
-    return
+#     :param conn: The fabric Connection object.
+#     """
+#     uname_result = conn.run('uname', hide=True).stdout.strip()
+#     assert uname_result != "", "Failed to get remote system info."
+#     username_result = conn.run('whoami', hide=True).stdout.strip()
+#     assert username_result == username, f"username {username_result} does not match expected {username}"
+#     # hostname_result = conn.run('hostname', hide=True).stdout.strip()
+#     # assert hostname_result == hostname, f"hostname {hostname_result} does not match expected {hostname}"
+#     return
 
 
 
@@ -43,7 +43,7 @@ def tarzip(paths: Iterable[str], archive_name: str, force: bool = False) -> None
     with tarfile.open(ap, "w:gz") as tar:
         for p in paths:
             tar.add(p, arcname=Path(p).name)
-    log(f"Created archive {archive_name}.")
+    log(f"Created archive {archive_name}.", level=logging.DEBUG)
     return 
 
 
@@ -62,25 +62,25 @@ def upload_file(conn: Connection, local_path: str, remote_path: str, force: bool
             print(f"{remote_path} already exists on remote. Skipping upload.")
             return
 
-    execute_fabric('mkdir -p ' + str(Path(remote_path).parent), cxn=conn)
-    log(f"Transferring {local_path} to remote...")
+    execute_fabric('mkdir -p ' + str(Path(remote_path).parent), cxn=conn, silent=True)
+    log(f"Transferring {local_path} to remote...", level=logging.DEBUG)
     conn.put(local_path, remote=remote_path)
-    log("done.")
+    log("done.", level=logging.DEBUG)
  
 
 
-def remote_unpack(conn: Connection, remote_dir: str, remote_archive: str, remove_archive: bool = False) -> None:
+def remote_unpack(conn: Connection, remote_archive: str, remove_archive: bool = False) -> None:
     # extract on remote and remove archive
-    log(f"Extracting {remote_archive} on remote...")
-    cmd = f"tar -xzf {remote_dir}/{remote_archive} -C {remote_dir}"
+    log(f"Extracting {remote_archive} on remote...", level=logging.DEBUG)
+    cmd = f"tar -xzf {remote_archive}"
     execute_fabric(command=cmd, cxn=conn)
-    log("Remote extraction done.")
+    log("Remote extraction done.", level=logging.DEBUG)
     if remove_archive:
-        conn.run(f"rm -f {remote_dir}/{remote_archive}")
+        conn.run(f"rm -f {remote_archive}")
 
 
 
-def transfer_with_packing(conn: Connection, paths: Iterable[str], remote_dir: str) -> None:
+def transfer_with_packing(conn: Connection, paths: Iterable[str]) -> None:
     """
     Create a gzipped tar archive from `paths`, upload it to the remote via `conn`,
     unpack it into `remote_dir`, and remove the remote archive.
@@ -97,9 +97,9 @@ def transfer_with_packing(conn: Connection, paths: Iterable[str], remote_dir: st
     archive_name = 'destination_remote.tar.gz'
     tarzip(paths=paths, archive_name=archive_name, force=True)
     # transfer to remote
-    upload_file(conn=conn, local_path=archive_name, remote_path=f"{remote_dir}/{archive_name}", force=True)
+    upload_file(conn=conn, local_path=archive_name, remote_path=archive_name, force=True)
     # unpack on remote
-    remote_unpack(conn=conn, remote_dir=remote_dir, remote_archive=archive_name, remove_archive=True)
+    remote_unpack(conn=conn, remote_archive=archive_name, remove_archive=True)
 
 
 
