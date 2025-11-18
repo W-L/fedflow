@@ -1,87 +1,87 @@
-#%%
-
 from logger import setup_logging, log
-
-
 from config import Config
-
 from utils_vm import VagrantManager
 from clients import Clients
-
-%cd /home/lweilguny/FedSim
-
-#%%
 
 
 
 # STEP load config
-CONFIG = "resources/config_svd_solo.toml"
+CONFIG = "configs/config_svd_solo.toml"
 
-setup_logging('fedsim.log')
+
+setup_logging('fedsim.log', mode='quiet')
 log(f'Loading configuration from {CONFIG}...')
 conf = Config(toml_path=CONFIG)
-#%%
 
-
-
-# STEP set up Vagrant VMs  (OPTIONAL if not using VMS)
-log('Setting up Vagrant VMs...')
-vms = VagrantManager(num_nodes=2)
-vms.launch()
-#%%
 
 
 # STEP get client connections
-if not conf.general['sim']:
+if not conf.config['general']['sim']:
     # construct serialgroup from config
+    log('Connecting to remote clients defined in config...')
     serialgroup = conf.construct_serialgroup()
 else:
     # construct serialgroup from vagrant
+    log('Setting up Vagrant VMs...')
+    nnodes = len(conf.config['clients'])
+    # nnodes = 2  # TODO debug
+    vms = VagrantManager(num_nodes=nnodes)
+    vms.launch()
     serialgroup = vms.construct_serialgroup()
 
-# TODO check that the serialgroup can be indexed and that we can still use individual connections from it
-# i.e. for running things from the coordinator and the participants separately
-# e.g. serialgroup[0].run(...)
-# participants = serialgroup[1:]
 
-clients = Clients(serialgroup=serialgroup, conf=conf)
-# clients.ping()
-#%%
+# STEP set up fabric clients
+log("Setting up Fabric clients...")
+clients = Clients(serialgroup=serialgroup, clients=conf.config['clients'])
+clients.ping(nodes=clients.all)
 
 
 # STEP copy data and credentials to each client
-clients.distribute_credentials()
-clients.distribute_data()
-#%%
+log("Distributing credentials to clients...")
+clients.distribute_credentials(nodes=clients.all, fc_creds=conf.fc_creds)
+log("Distributing data to clients...")
+clients.distribute_data(nodes=clients.all)
 
 
-# TODO continue here with testing the logger
-# and with the project creation api
-
-
-# STEP test featurecloud
-clients.test_featurecloud_controllers()
-# clients.start_featurecloud_controllers()
-# clients.stop_featurecloud_controllers()
-#%%
+# STEP launch featurecloud controller on each client
+log("Launching FeatureCloud controllers on clients...")
+# clients.test_featurecloud_controllers(nodes=clients.all)
+clients.start_featurecloud_controllers(nodes=clients.all)
+# clients.stop_featurecloud_controllers(nodes=clients.all)
 
 
 
+# STEP attach featurecloud project
+if 'project_id' in conf.config['general']:
+    # attach to existing project
+    project_id = conf.config['general']['project_id']
+else:
+    # create and join new project
+    log("Creating and joining FeatureCloud project...")
+    project_id = clients.create_and_join_project(
+        coordinator=clients.coordinator,
+        participants=clients.participants,
+        tool="federated-svd"
+    )
 
 
 
-# STEP use API
+# STEP contribute data to project - this triggers the start of the workflow
+log("Contributing data to FeatureCloud project...")
+clients.contribute_data_to_project(nodes=clients.all, project_id=project_id)
+
+# STEP monitor run and download logs and results
+log("Monitoring FeatureCloud project run...")
+clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id)
 
 
-# create project and workflow as coordinator
 
-
-# start workflow as coordinator
-# participate with all other clients
-# check that the workflow ran successfully on all clients
-
-# clean up
-# shut down vms
-
+# STEP clean up
+# TODO delete everything on the remotes
+# stop fc controller and vms
+# clients.stop_featurecloud_controllers(nodes=clients.all)
+# if conf.config['general']['sim']:
+    # log("Halting Vagrant VMs...")
+    # vms.stop()
 
 
