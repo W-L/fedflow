@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import subprocess
 import random
 import string
+import logging
 
 from logger import log
 
@@ -33,7 +34,7 @@ def execute(command: str):
     :param command: The command to execute.
     :return: The stdout and stderr as a tuple.
     """
-    log(f"CMD: {command}")
+    log(f"CMD: {command}", level=logging.DEBUG)
     # create the unix process
     running = subprocess.Popen(
         command,
@@ -44,7 +45,7 @@ def execute(command: str):
     )
     
     stdout, stderr = running.communicate()
-    log(f"STDOUT: \n{stdout}\n")
+    log(f"STDOUT: \n{stdout}\n", level=logging.DEBUG)
     if stderr.strip() != "":
         log(f"STDERR: \n{stderr}\n")
     return stdout, stderr
@@ -53,10 +54,10 @@ def execute(command: str):
 def execute_fabric(command: str, cxn, silent: bool = False):
     # silent switch to make sure we don't expose credentials in logs
     if not silent:
-        log(f'[{cxn.host}] CMD {command}')
+        log(f'[{cxn.host}] CMD {command}', level=logging.DEBUG)
     result = cxn.run(command, hide=True)
     if not silent:
-        log(f'[{cxn.host}] STDOUT: \n{result.stdout}\n')
+        log(f'[{cxn.host}] STDOUT: {result.stdout}')
         if result.stderr.strip() != "":
             log(f'[{cxn.host}] STDERR: \n{result.stderr}\n')
         return result.stdout, result.stderr
