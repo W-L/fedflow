@@ -15,11 +15,7 @@ class Config:
         with open(toml_path, "r") as f:
             self.config = rtoml.load(f)
         # set the clients
-        self.clients = self.config.get('clients', {})
-        self.general = self.config.get('general', {})
-        self.n = len(self.clients)
-        self.sim = self.general.get('sim', False)
-        self.target_dir = self.general.get('target_dir', None)
+        self.n = len(self.config['clients'])
         self.fc_users = self.get_fc_users()
         self.fc_creds = self.load_fc_credentials()
         self.data_paths = self.get_data_paths()
@@ -27,7 +23,7 @@ class Config:
         
     def construct_client_strings(self) -> list[str]:
         client_strings = []
-        for cname, cinfo in self.clients.items():
+        for cname, cinfo in self.config['clients'].items():
             cstr = f"{cinfo['username']}@{cinfo['hostname']}"
             if cinfo['port'] != '' and cinfo['port'] is not None:
                 cstr += f":{cinfo['port']}"
@@ -38,7 +34,7 @@ class Config:
 
     def get_sshkeys(self) -> list[str]:
         sshkeys = []
-        for cname, cinfo in self.clients.items():
+        for cname, cinfo in self.config['clients'].items():
             sshkey = cinfo.get('sshkey', None)
             sshkeys.append(sshkey)
         return sshkeys
@@ -55,7 +51,7 @@ class Config:
 
     def get_fc_users(self) -> list[str]:
         users = []
-        for cname, cinfo in self.clients.items():
+        for cname, cinfo in self.config['clients'].items():
             fc_user = cinfo.get('fc_username', None)
             users.append(fc_user)
         return users
@@ -63,14 +59,14 @@ class Config:
 
     def get_data_paths(self) -> list[str]:
         data_paths = []
-        for cname, cinfo in self.clients.items():
+        for cname, cinfo in self.config['clients'].items():
             data_path = cinfo.get('data', None)
             data_paths.append(data_path)
         return data_paths
     
 
     def load_fc_credentials(self):
-        load_dotenv(dotenv_path=self.general['fc_credentials'], override=True)
+        load_dotenv(dotenv_path='.env', override=True)
         fc_cred = {}
         for fc_user in self.fc_users:
             fc_pass = os.getenv(f"{fc_user}")
