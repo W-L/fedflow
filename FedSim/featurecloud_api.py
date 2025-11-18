@@ -11,9 +11,9 @@ from logger import log
 from utils import randstr
 
 # %%
-%cd /home/lweilguny/proj/FedSim
+# %cd /home/lweilguny/proj/FedSim
 
-load_dotenv(dotenv_path='resources/.env', override=True)
+load_dotenv(dotenv_path='.env', override=True)
 
 
         
@@ -190,6 +190,7 @@ class User:
         # login as soon as user is created
         self.login()
         self.is_logged_in()
+        self.get_site_info()
         
 
 
@@ -219,6 +220,16 @@ class User:
             return ok
         except httpx.HTTPError:
             return False
+        
+
+    def get_site_info(self):
+        r = self.client.get("/api/site/")
+        r.raise_for_status()
+        site_info = r.json()
+        # write to file for the local controller
+        with open("data/site_info.json", "w") as f:
+            f.write(r.text)
+        return site_info
 
 
 
@@ -254,6 +265,7 @@ class FCC:
             log(f"Project {self.project.project_id} not in 'prepare' mode. Setting it now as coordinator.")
             self.project.set_status("prepare")
             time.sleep(2)  # wait a bit for status to update
+            assert self.project.is_prepping(), "Failed to set project to 'prepare' mode."
 
 
         results = {}
@@ -276,33 +288,21 @@ class FCC:
                 r = self.controller.client.post("/file-upload/", params=params, content=f.read(), headers=headers)
                 r.raise_for_status()
                 results[file_name] = r.text  # or r.json() if backend returns JSON
-        return results
+            time.sleep(2)  # to avoid overwhelming the server
 
-
-
-
-    def start_project(self):
-        """
-        Signal the controller to finalize and start the project.
-        No file content is sent; only the finalize flag is set.
-        """
+        # finalize upload from this participant
+        time.sleep(5)
         params = {
             "projectId": self.project.project_id,
-            "fileName": "",     # can be empty if no file is sent
+            "fileName": "",     
             "finalize": "true", # triggers processing
-            "consent": ""       # keep consistent with upload requests
+            "consent": ""       
         }
-        headers = {
-            "Origin": "https://featurecloud.ai",
-            "Accept": "application/json, text/plain, */*"
-        }
-
         r = self.controller.client.post("/file-upload/", params=params, headers=headers, content=b"")
         r.raise_for_status()
-        # go into project monitoring mode
-        end_status = self.monitor_project()
-        log(end_status)
-        return end_status
+        time.sleep(2)
+        return results
+
 
 
 
@@ -324,6 +324,7 @@ class FCC:
                 continue
             
             if status != "running":
+                log(f"Project {self.project.project_id} ended with status: {status}")
                 return status  # finished, failed, or any other state
             
             if time.time() - start_time > timeout:
@@ -358,13 +359,14 @@ class FCC:
 
     
 
-    def download_outcome(self, out_dir):
+    def download_outcome(self, out_dir):    
         Path(out_dir).mkdir(exist_ok=True, parents=True)
         runs = self._get_project_runs()
         log(f"Downloading files for project {self.project.project_id}...")
         most_recent = runs[0]  # assuming runs are sorted by recency
-        log(f"Found {len(runs)} runs. Downloading most recent run, started on {most_recent['startedOn']}")
-        # download log files       
+        log(f"Found {len(runs)} run(s). Downloading most recent run, started on {most_recent['startedOn']}")
+        # download log files    
+        downloaded = []   
         for step in most_recent.get("logSteps", []):
             logpath = self._download_file(
                 endpoint="/logs-download/",
@@ -373,6 +375,7 @@ class FCC:
                 run=most_recent['runNr'],
                 step=step
             ) 
+            downloaded.append(logpath)
         # download result files
         for step in most_recent.get("resultSteps", []):
             resultpath = self._download_file(
@@ -382,7 +385,8 @@ class FCC:
                 run=most_recent['runNr'],
                 step=step
             )
-        return 
+            downloaded.append(resultpath)
+        return downloaded
 
 
 
