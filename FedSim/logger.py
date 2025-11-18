@@ -2,24 +2,36 @@ import logging
 
 
 
-def setup_logging(logfile="output.log"):
+def setup_logging(logfile="output.log", mode="debug"):
     with open(logfile, 'w'):
         pass
     logger = logging.getLogger("fedsim")
     logger.setLevel(logging.DEBUG)
     fmt = '%(asctime)s %(message)s'
+    
+    logger.handlers.clear()
+    
+    
+    # Console handler
+    sh = logging.StreamHandler()
+    sh.setFormatter(logging.Formatter(fmt))
 
-    if not logger.handlers:  
-        # Console handler
-        sh = logging.StreamHandler()
+    # File handler
+    fh = logging.FileHandler(logfile, mode="w")
+    fh.setFormatter(logging.Formatter(fmt))
+
+
+    if mode == "debug":
         sh.setLevel(logging.DEBUG)
-        sh.setFormatter(logging.Formatter(fmt))
-        logger.addHandler(sh)
-        # File handler
-        fh = logging.FileHandler(logfile, mode="w")
         fh.setLevel(logging.DEBUG)
-        fh.setFormatter(logging.Formatter(fmt))
-        logger.addHandler(fh)
+    elif mode == "quiet":
+        sh.setLevel(logging.INFO)
+        fh.setLevel(logging.INFO)
+    else:
+        raise ValueError("mode must be 'debug' or 'quiet'")
+
+    logger.addHandler(sh)
+    logger.addHandler(fh)
 
     logger.info("FedSim v0.1")
     return logger
@@ -28,14 +40,14 @@ def setup_logging(logfile="output.log"):
 logger = logging.getLogger("fedsim")
 
 
-def log(msg):
+def log(msg, level=logging.INFO):
     """
     Fallback-safe logging:
     - If logger is configured → send to logger
     - If not → print()
     """
     if logger.handlers:
-        logger.info(msg)
+        logger.log(level, msg)
     else:
         print(msg)
 
