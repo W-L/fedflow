@@ -1,0 +1,19 @@
+[general]
+
+sim = true
+project_id = 17282
+
+
+[clients]
+
+[clients.0]
+fc_username = 'p73wzaml9@mozmail.com'
+data = ["test_data/svd_solo/mnist_200.tsv", "test_data/svd_solo/config.yaml"]
+coordinator = true
+
+
+
+
+
+
+
