@@ -21,6 +21,8 @@ load_dotenv(dotenv_path='.env', override=True)
 
 TOOL_IDS = {
     "federated-svd": 85,
+    "random-forest": 50,
+    "mean-app": 66,
 }
 
 

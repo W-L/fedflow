@@ -1,4 +1,5 @@
 import argparse
+import time
 
 
 from featurecloud_api import User, Project, FCC
@@ -20,6 +21,7 @@ def main(username, project_id) -> None:
     # monitor the project run
     final_status = fcc.monitor_project()
     print(f"Project {project_id} status: {final_status}")
+    time.sleep(5)
     # download outcome
     out_dir = 'results/'
     downloaded_files = fcc.download_outcome(out_dir=out_dir)

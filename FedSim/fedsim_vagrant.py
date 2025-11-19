@@ -6,7 +6,7 @@ from clients import Clients
 
 
 # STEP load config
-CONFIG = "configs/config_svd_solo.toml"
+CONFIG = "configs/config_mean_trio.toml"
 
 
 setup_logging('fedsim.log', mode='quiet')
@@ -61,7 +61,7 @@ else:
     project_id = clients.create_and_join_project(
         coordinator=clients.coordinator,
         participants=clients.participants,
-        tool="federated-svd"
+        tool=conf.config['general']['tool'],
     )
 
 
