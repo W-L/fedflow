@@ -399,39 +399,28 @@ class FCC:
 
 #%%
 # user = User(username="p73wzaml9@mozmail.com")
-
-# project_id = "17274"
+# project_id = "17286"
 # p1 = Project.from_project_id(project_id=project_id, client=user.client)
 # p2 = Project.from_tool(tool="federated-svd", client=user.client)
 # token = p2.create_project_tokens(n=1)[0]['token']
-
 # user2 = User(username="flxt56ucr@mozmail.com")
 # p3 = Project.from_token(token=token, project_id=p2.project_id, client=user2.client)
 
 
-
-# %%
-# fcc.upload_files(filepaths=["test_data/svd_solo/config.yaml",
-                            # "test_data/svd_solo/mnist_200.tsv"])
-# fcc.start_project()
-
-
-
 #%%
+# user = User(username="p73wzaml9@mozmail.com")
 
-# fcc.project.reset_project()
+# project_id = "17286"
+# proj = Project.from_project_id(project_id=project_id, client=user.client)
+# proj.reset_project()
+# proj.get_status()
 
+# fcc = FCC(user=user, project=proj)
 
-#%%
+# fcc.upload_files(filepaths=["test_data/mean_solo/config.yml",
+                            # "test_data/mean_solo/data.csv"])
 
-
-
-
-#%%
-# fcc.download_outcome(out_dir="results/")
-
-
-# %%
-
+# fcc.monitor_project()
+# fcc.download_outcome(out_dir="results/")    
 
 

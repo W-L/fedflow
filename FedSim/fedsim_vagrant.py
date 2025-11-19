@@ -6,7 +6,7 @@ from clients import Clients
 
 
 # STEP load config
-CONFIG = "configs/config_mean_trio.toml"
+CONFIG = "configs/config_mean_solo.toml"
 
 
 setup_logging('fedsim.log', mode='quiet')
