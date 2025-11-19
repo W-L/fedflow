@@ -9,17 +9,18 @@ def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create a FeatureCloud project as coordinator")
     parser.add_argument("-u", "--user", help="Username for FeatureCloud login")
     parser.add_argument("-p", "--project", help="project ID")
+    parser.add_argument("-d", "--data", help="Path to data folder", default="fedsim_data/")
     args = parser.parse_args()
     return args
 
 
-def main(username, project_id) -> None:
+def main(username, project_id, data_path) -> None:
     user = User(username=username)
     proj = Project.from_project_id(project_id=project_id, client=user.client)    
     fcc = FCC(user=user, project=proj)
-    # upload all files in fedsim_data/
+    # upload all files in data_path
     # finalisation of upload is triggered at the end
-    files_to_upload = list(glob.glob("fedsim_data/*"))
+    files_to_upload = list(glob.glob(f"{data_path}/*"))
     fcc.upload_files(filepaths=files_to_upload)
     # the project starts when all participants have uploaded their data
     print(f"{username} uploaded data to project {project_id}")
@@ -31,7 +32,8 @@ if __name__ == "__main__":
    
     username = args.user
     project_id = args.project
-    
-    main(username=username, project_id=project_id)
+    data_path = args.data
+
+    main(username=username, project_id=project_id, data_path=data_path)
 
 
