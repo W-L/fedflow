@@ -258,6 +258,13 @@ class FCC:
 
 
     def upload_files(self, filepaths: List[str]):
+        # check the project status first
+        status = self.project.get_status()
+        log(f"Project {self.project.project_id} status: {status}")
+        if status in ["finished", "error", "failed"]:
+            self.project.reset_project()
+            log(f"Project {self.project.project_id} reset to 'ready' status.")
+        
         # checking that we are in prepare mode
         is_prepping = self.project.is_prepping()
         if not is_prepping:
@@ -293,7 +300,7 @@ class FCC:
             time.sleep(2)  # to avoid overwhelming the server
 
         # finalize upload from this participant
-        # time.sleep(5)
+        time.sleep(5)
         params = {
             "projectId": self.project.project_id,
             "fileName": "",     
@@ -408,19 +415,19 @@ class FCC:
 
 
 #%%
-# user = User(username="p73wzaml9@mozmail.com")
+user = User(username="p73wzaml9@mozmail.com")
 
-# project_id = "17286"
-# proj = Project.from_project_id(project_id=project_id, client=user.client)
-# proj.reset_project()
-# proj.get_status()
+project_id = "17286"
+proj = Project.from_project_id(project_id=project_id, client=user.client)
+proj.reset_project()
+proj.get_status()
 
-# fcc = FCC(user=user, project=proj)
+fcc = FCC(user=user, project=proj)
 
-# fcc.upload_files(filepaths=["test_data/mean_solo/config.yml",
-                            # "test_data/mean_solo/data.csv"])
+fcc.upload_files(filepaths=["test_data/mean_solo/config.yml",
+                            "test_data/mean_solo/data.csv"])
 
-# fcc.monitor_project()
-# fcc.download_outcome(out_dir="results/")    
+fcc.monitor_project()
+fcc.download_outcome(out_dir="results/")    
 
 
