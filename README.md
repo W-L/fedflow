@@ -89,6 +89,10 @@ other mode is to give details for remotes in config file
 
 # TODO
 
+write a single interface script so that the argparser and all the other crap does not need to be duplicated so much
+- i.e. have a behaviour switch in the argparser (subprogram or whatever it's called)
+
+
 step through a multiuser scenario with two laptops
 - this will make it clear how the running and the downloading actually works
 - there is a project already with 2 users assigned
