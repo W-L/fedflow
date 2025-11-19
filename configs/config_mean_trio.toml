@@ -1,0 +1,25 @@
+[general]
+
+sim = true
+tool = 'mean-app'
+
+[clients]
+
+[clients.0]
+fc_username = 'p73wzaml9@mozmail.com'
+data = ["test_data/mean_trio/c0/data.csv", "test_data/mean_trio/c0/config.yaml"]
+coordinator = true
+
+
+[clients.1]
+fc_username = 'flxt56ucr@mozmail.com'
+data = ["test_data/mean_trio/c1/data.csv", "test_data/mean_trio/c1/config.yaml"]
+
+
+[clients.2]
+fc_username = 'tsfl7biss@mozmail.com'
+data = ["test_data/mean_trio/c2/data.csv", "test_data/mean_trio/c2/config.yaml"]
+
+
+
+
