@@ -415,19 +415,19 @@ class FCC:
 
 
 #%%
-user = User(username="p73wzaml9@mozmail.com")
+# user = User(username="p73wzaml9@mozmail.com")
 
-project_id = "17286"
-proj = Project.from_project_id(project_id=project_id, client=user.client)
-proj.reset_project()
-proj.get_status()
+# project_id = "17286"
+# proj = Project.from_project_id(project_id=project_id, client=user.client)
+# proj.reset_project()
+# proj.get_status()
 
-fcc = FCC(user=user, project=proj)
+# fcc = FCC(user=user, project=proj)
 
-fcc.upload_files(filepaths=["test_data/mean_solo/config.yml",
-                            "test_data/mean_solo/data.csv"])
+# fcc.upload_files(filepaths=["test_data/mean_solo/config.yml",
+#                             "test_data/mean_solo/data.csv"])
 
-fcc.monitor_project()
-fcc.download_outcome(out_dir="results/")    
+# fcc.monitor_project()
+# fcc.download_outcome(out_dir="results/")    
 
 
