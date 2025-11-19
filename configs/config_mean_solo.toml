@@ -1,0 +1,17 @@
+[general]
+
+sim = true
+project_id = 17286
+
+[clients]
+
+[clients.0]
+fc_username = 'p73wzaml9@mozmail.com'
+data = ["test_data/mean_trio/c0/data.csv", "test_data/mean_trio/c0/config.yml"]
+coordinator = true
+
+
+
+
+
+
