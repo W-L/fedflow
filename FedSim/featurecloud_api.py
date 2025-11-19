@@ -291,7 +291,7 @@ class FCC:
             time.sleep(2)  # to avoid overwhelming the server
 
         # finalize upload from this participant
-        time.sleep(5)
+        # time.sleep(5)
         params = {
             "projectId": self.project.project_id,
             "fileName": "",     
