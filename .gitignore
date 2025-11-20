@@ -6,7 +6,7 @@ apps/
 data/
 results/
 destination_remote.tar.gz
-
+mnist.tsv
 
 
 # Byte-compiled / optimized / DLL files
