@@ -11,34 +11,22 @@ from utils import execute_fabric
 
 
 
-# def test_fabric_connection(conn: Connection, hostname: str, username: str) -> None:
-#     """
-#     Test the fabric connection 
-
-#     :param conn: The fabric Connection object.
-#     """
-#     uname_result = conn.run('uname', hide=True).stdout.strip()
-#     assert uname_result != "", "Failed to get remote system info."
-#     username_result = conn.run('whoami', hide=True).stdout.strip()
-#     assert username_result == username, f"username {username_result} does not match expected {username}"
-#     # hostname_result = conn.run('hostname', hide=True).stdout.strip()
-#     # assert hostname_result == hostname, f"hostname {hostname_result} does not match expected {hostname}"
-#     return
-
-
 
 def tarzip(paths: Iterable[str], archive_name: str, force: bool = False) -> None:
     """
-    Create a gzipped tar archive from `paths`.
+    Create a gzipped tar archive from `paths` for easy transfer.
+
+    :param paths: Data to gzip and tar into an archive
+    :param archive_name: name of the target archive
+    :param force: whether to overwrite existing archive, defaults to False
     """
     # check that archive does not already exist
     ap = Path(archive_name)
-    
+    # only overwrite if force == True
     if ap.exists():
         if not force:
             log(f"{archive_name} already exists. Skipping creation.")
             return 
-    
     # create gzipped tar
     with tarfile.open(ap, "w:gz") as tar:
         for p in paths:
@@ -50,18 +38,19 @@ def tarzip(paths: Iterable[str], archive_name: str, force: bool = False) -> None
 
 def upload_file(conn: Connection, local_path: str, remote_path: str, force: bool = False) -> None:
     """
-    Upload a file to the remote via `conn`.
+    Upload a file to a fabric Connection. Wrapper around Connection.put()
 
-    - conn: fabric Connection to the remote host
-    - local_path: path to the local file
-    - remote_path: target path on the remote host
+    :param conn: fabric Connection to the remote host
+    :param local_path: path of the local file to upload
+    :param remote_path: remote target path
+    :param force: whether to overwrite existing file, defaults to False
     """
     # check whether file exists remotely
     if conn.run(f"test -e {remote_path}", warn=True).ok:
         if not force:
             print(f"{remote_path} already exists on remote. Skipping upload.")
             return
-
+    # ensure parent directory exists
     execute_fabric('mkdir -p ' + str(Path(remote_path).parent), cxn=conn, silent=True)
     log(f"Transferring {local_path} to remote...", level=logging.DEBUG)
     conn.put(local_path, remote=remote_path)
@@ -70,6 +59,13 @@ def upload_file(conn: Connection, local_path: str, remote_path: str, force: bool
 
 
 def remote_unpack(conn: Connection, remote_archive: str, remove_archive: bool = False) -> None:
+    """
+    Extract a gzipped tar archive on a fabric remote.
+
+    :param conn: fabric Connection to the remote host
+    :param remote_archive: path to the remote archive file
+    :param remove_archive: whether to remove the archive after extraction, defaults to False
+    """
     # extract on remote and remove archive
     log(f"Extracting {remote_archive} on remote...", level=logging.DEBUG)
     cmd = f"tar -xzf {remote_archive}"
@@ -82,16 +78,10 @@ def remote_unpack(conn: Connection, remote_archive: str, remove_archive: bool = 
 
 def transfer_with_packing(conn: Connection, paths: Iterable[str]) -> None:
     """
-    Create a gzipped tar archive from `paths`, upload it to the remote via `conn`,
-    unpack it into `remote_dir`, and remove the remote archive.
+    Transfer files to a remote host with packing.
 
-    - paths: iterable of file or directory paths on the local machine
-    - conn: fabric Connection to the remote host
-    - remote_dir: target directory on the remote to extract into (will be created)
-    - archive_name: optional archive filename (defaults to files_<ts>.tar.gz)
-
-    Example:
-        transfer_with_packing(conn, ['data/file1.csv', 'data/subdir'], '/home/user/target')
+    :param conn: Fabric Connection to the remote host
+    :param paths: Iterable of file paths to transfer
     """
     # zip up files
     archive_name = 'destination_remote.tar.gz'
@@ -113,9 +103,7 @@ def write_to_file_remote(conn: Connection, remote_path: str, content: str) -> No
     """
     try:
         execute_fabric(f'mkdir -p {str(Path(remote_path).parent)}', cxn=conn, silent=True)
-        # mkdirres = conn.run(f'mkdir -p {str(Path(remote_path).parent)}', hide=True)
         execute_fabric(f'echo {shlex.quote(content)} > {remote_path}', cxn=conn, silent=True)
-        # writeres = conn.run(f'echo {shlex.quote(content)} > {remote_path}', hide=True)
     except Exception as e:
         log(f"Error writing to {remote_path}: {e}")
     return
