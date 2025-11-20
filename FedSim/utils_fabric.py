@@ -108,3 +108,47 @@ def write_to_file_remote(conn: Connection, remote_path: str, content: str) -> No
         log(f"Error writing to {remote_path}: {e}")
     return
 
+
+
+def launch_featurecloud(conn: Connection) -> None:
+    """
+    Launch the Featurecloud controller on a remote.
+
+    :param conn: fabric Connection to the remote host
+    """
+    # launch featurecloud controller
+    # ensure stopped before starting
+    # this will also ensure that we have a fresh log file
+    stop_featurecloud(conn=conn)  
+    cmd = "source .venv/bin/activate && featurecloud controller start"
+    stdout, stderr = execute_fabric(command=cmd, cxn=conn)
+    assert is_controller_running(conn=conn), "Failed to start FeatureCloud controller"
+
+
+
+def is_controller_running(conn: Connection) -> bool:
+    """
+    Check whether the Featurecloud controller is running on a remote.
+
+    :param conn: fabric Connection to the remote host
+    :return: boolean indicating whether the controller is running
+    """
+    cmd = "source .venv/bin/activate && featurecloud controller status"
+    stdout, stderr = execute_fabric(command=cmd, cxn=conn)
+    if "running" in str(stdout).lower():
+        return True
+    else:
+        return False
+
+
+
+def stop_featurecloud(conn: Connection) -> None:
+    """
+    Stop Featurecloud controller on a remote.
+
+    :param conn: fabric Connection to the remote host
+    """
+    cmd = "source .venv/bin/activate && featurecloud controller stop"
+    stdout, stderr = execute_fabric(command=cmd, cxn=conn)
+         
+
