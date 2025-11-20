@@ -1,86 +1,106 @@
 # FedSim
 
-Automation of federated analyses with featurecloud.ai
+The aim of this project is to automate federated analyses of featurecloud.ai either as simulation or to orchestrate real machines.
 
-Either simulated with VMs or with real machines via ssh
+The main components are: 
 
-
-This project has multiple layers:
-- vm/ssh infrastructure
-- sending commands to machines via fabric
-- a reverse engineered featurecloud API
-- featurecloud tools themselves (IO)
+- setup and provisioning of VMs using vagrant
+- instructions are sent to clients via the python module fabric
+- a reverse engineered featurecloud API that allows for headless interaction with featurecloud.ai
 
 
+What this project does not automate:
 
-config is done in 2 ways
-
-- credentials are in dotfiles per vm and loaded with os.getenv (because the controller does not have the other user's credentials)
-- project specifications, clients, data etc. is in a toml file
-
-
-## provisioning
-
-installation:
-
-- docker
-- python
-- pip 
-- featurecloud CLI
-- playwright
-- dask
-
-scripts: 
-
-- initialise dask scheduler and workers on the vms
-- initialise the fc controller on each vm
-- on the controller, run a python script that registers as Client and orchestrates the tasks across the vms
-
-## Setup
-
-Manual setup on FC GUI that are not automated:
-- register accounts on FC for all clients
-- create 'sites' for all clients
+- user creation at featurecloud.ai
+- user's site registration at featurecloud.ai
+- 'purchasing' apps in the featurecloud.ai app store
+- featurecloud apps that require frontend interaction of the coordinator
 
 
+## Configuration
+
+Configuration of this project requires 2 components. An environment file that contains all credentials of the featurecloud.ai users. This should be in the format USER=PASSWORD and be placed in `.env` in the root of the project.
+
+The configuration of simulations/real runs of featurecloud is done in a single toml file. The format is as follows:
+
+```
+[general]
+
+sim = true                              # whether vagrant VMs or real machine are used
+project_id = PROJECT_ID                 # numeric ID of a featurecloud project (in it's URL)
+tool = TOOL_NAME                        # alternatively to a project_id, then a project is created automatically
+
+
+[clients]
+
+[clients.0]
+fc_username = USERNAME
+data = ["path/to/file1", "path/to/file2"]
+coordinator = true
+hostname = ''                           # these fields can be left empty when using vagrant
+username = ''                           # if real machines are used, their details go here
+port = '' 
+sshkey = '' 
+
+
+[clients.1]
+fc_username = USERNAME
+data = ["path/to/file1", "path/to/file2"]
+hostname = ''
+username = ''
+port = '' 
+sshkey = '' 
+
+...
+
+
+```
+
+
+If `sim = true` is set, `hostname, username, port, sshkey` are ignored and vagrant vms are used instead. When real machines should be used, their connection details need to be provided.
+
+
+## Requirements
+
+For execution a python virtual environment with a few dependencies is needed. 
+The dependencies and the project itself can be installed with pip.
+
+```
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+For simulations vagrant and some virtualisation provider are required. (Using libvirt in development)
+
+```
+wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install vagrant
+vagrant plugin install vagrant-libvirt
+```
 
 
 
-The rest should be all automated, except if there are tools that need manual intervention in the FC GUI
+## Provisioning of client VMs/participating machines
 
+For simulations, the VMs are provisioned automatically (`VMs/vagrant_provision.sh`). 
+The script can also be used to set up other ubuntu-based participants. (not automated for now)
+
+It installs these dependencies:
+
+- python and the environment mentioned above
+- docker (used by featurecloud)
+
+There's also a short script specifically for biosphere VMs (which already have python and docker installed).
 
 
 ## Usage
 
-in the end this should be a single python script 
-`python fedsim.py ...`
 
 
 
-## biosphere
 
-also possible to use biosphere instead of local vms
-- they can be deployed via web interface
-
-
-## devoopy02
-
-
-TODO: create env file for this
-
-conda create -n fedsim
-conda activate fedsim
-conda install python==3.12 fabric rtoml python-dotenv
-
-
-## 2 modes of operation
-
-either simulation with vagrant : everything in a single python script and 1 config file
-- even vagrantfile is abstracted away
-
-other mode is to give details for remotes in config file
-- no need to bring them up, but still need to provision (via fabric instead of vagrant file)
-- or ask sysadmin of the partners to install certain things 
 
 
 
@@ -89,67 +109,32 @@ other mode is to give details for remotes in config file
 
 # TODO
 
-write a single interface script so that the argparser and all the other crap does not need to be duplicated so much
+write two interface scripts
+- one for the api alone
+- one for fedsim itself
 - i.e. have a behaviour switch in the argparser (subprogram or whatever it's called)
 
 
-step through a multiuser scenario with two laptops
-- this will make it clear how the running and the downloading actually works
-- there is a project already with 2 users assigned
-- prepping data for them in the test_data/svd_duo dir
+currently experiencing multiple issues with FC apps:
+- inconsistent finishing behaviour (mean-app, random-forest)
+- shutil copy error of the config file (federated-svd)
 
 
+issue on the VMs: mounting of input data into the container fails
+- this is prohibitive for execution at the moment
+- but has nothing to do with the reverse-engineered featurecloud API
 
-
-after that create a subclass of the fcc or something to demarcate the coordinator
-- then only that class can
-        start
-        monitor?
-        download?
-- all users can 
-        upload
-
-
-project creation and joining is now implemented
-- only simple projects with a single tool so far
-
-
-
-continue developing the fc api
-- add multiuser scenarios
-
-
-
-make sure the client is linked to the correct vm
-- i.e. I think the serialgroup and clients get linked incorrectly in the clients class
-
-test the fc workflow (IO e.g.) 
 
 write some convenience scripts that check the log files of all machines
-
-create other workflows for other tools
-
-write a snakemake workflow to run all analyses and compare them to centralised approaches
+- including the logs of the fc controllers and the fc apps
 
 
 in the provisioning script, the docker version is currently fixed due to FC restrictions
 - check once their container is updated
 
 
-create a conda env for all development dependencies (same as on the vms)
-- also document that vagrant and libvirt is req
-
-
-document usage and the toml config file
-
 write type hints and function docstrings
 
-setup file and installable with pip install .
-
-
 write pytests for everything
-- trickier for remote stuff, but should be ok
 
 
-automate user registration and site creation?
-and purchasing of apps?
