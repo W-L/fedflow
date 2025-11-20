@@ -1,5 +1,5 @@
-#%%
 import os
+
 import rtoml
 from fabric import SerialGroup
 from dotenv import load_dotenv
@@ -7,23 +7,36 @@ from dotenv import load_dotenv
 from logger import logger
 
 
+
 class Config:
 
     def __init__(self, toml_path: str):
-        # load config from toml file
+        """
+        Load configuration from a toml file. 
+        Init and creation of SerialGroup are the only public methods.
+
+        :param toml_path: path to the toml config file
+        """
         self.toml_path = toml_path
         with open(toml_path, "r") as f:
             self.config = rtoml.load(f)
-        # set the clients
+        # grab client information
         self.n = len(self.config['clients'])
-        self.fc_users = self.get_fc_users()
-        self.fc_creds = self.load_fc_credentials()
-        self.data_paths = self.get_data_paths()
+        self.fc_users = self._get_fc_users()
+        self.fc_creds = self._load_fc_credentials()
+        self.data_paths = self._get_data_paths()
 
         
-    def construct_client_strings(self) -> list[str]:
+
+    def _construct_client_strings(self) -> list[str]:
+        """
+        Generate strings for ssh connection to remote clients. 
+        I.e. "user@hostname:port"
+
+        :return: list of client connection strings
+        """
         client_strings = []
-        for cname, cinfo in self.config['clients'].items():
+        for cinfo in self.config['clients'].values():
             cstr = f"{cinfo['username']}@{cinfo['hostname']}"
             if cinfo['port'] != '' and cinfo['port'] is not None:
                 cstr += f":{cinfo['port']}"
@@ -32,40 +45,55 @@ class Config:
         return client_strings
 
 
-    def get_sshkeys(self) -> list[str]:
+
+    def _get_sshkeys(self) -> list[str]:
+        """
+        Grab the paths to ssh private keys for the remote connections
+
+        :return: list of ssh key paths
+        """
         sshkeys = []
-        for cname, cinfo in self.config['clients'].items():
+        for cinfo in self.config['clients'].values():
             sshkey = cinfo.get('sshkey', None)
             sshkeys.append(sshkey)
         return sshkeys
 
 
-    def construct_serialgroup(self):
-        # generate the client strings
-        client_strings = self.construct_client_strings()
-        sshkeys = self.get_sshkeys()
-        self.serialg = SerialGroup(*client_strings, connect_kwargs={"key_filename": sshkeys})
-        logger.info(f"serial group: {self.serialg}")
-        return self.serialg
 
+    def _get_fc_users(self) -> list[str]:
+        """
+        Grab the Featurecloud usernames of each client from the config file.
 
-    def get_fc_users(self) -> list[str]:
+        :return: list of Featurecloud users
+        """
         users = []
-        for cname, cinfo in self.config['clients'].items():
+        for cinfo in self.config['clients'].values():
             fc_user = cinfo.get('fc_username', None)
             users.append(fc_user)
         return users
 
 
-    def get_data_paths(self) -> list[str]:
+
+    def _get_data_paths(self) -> list[str]:
+        """
+        Grab the paths to the data contributed by each client.
+
+        :return: list of paths
+        """
         data_paths = []
-        for cname, cinfo in self.config['clients'].items():
+        for cinfo in self.config['clients'].values():
             data_path = cinfo.get('data', None)
             data_paths.append(data_path)
         return data_paths
     
 
-    def load_fc_credentials(self):
+
+    def _load_fc_credentials(self) -> dict[str, str]:
+        """
+        Load the Featurecloud credentials of all clients from an environment file.
+
+        :return: dictionary of Featurecloud credentials
+        """
         load_dotenv(dotenv_path='.env', override=True)
         fc_cred = {}
         for fc_user in self.fc_users:
@@ -75,8 +103,21 @@ class Config:
         return fc_cred
     
 
-#%%
+    
+    def construct_serialgroup(self) -> SerialGroup:
+        """
+        Generate a group of fabric Connections from the info in the config file.
+        This is used when the target remotes are actual machines instead of vagrant VMs.
 
-# conf = Config(toml_path="resources/config_svd_solo.toml")
+        :return: SerialGroup of fabric Connections
+        """
+        # generate the client strings
+        client_strings = self._construct_client_strings()
+        # grab ssh keys for connect_kwargs
+        sshkeys = self._get_sshkeys()
+        self.serialg = SerialGroup(*client_strings, connect_kwargs={"key_filename": sshkeys})
+        logger.info(f"serial group: {self.serialg}")
+        return self.serialg
 
-# %%
+
+    
