@@ -37,33 +37,36 @@ class ClientManager:
         # list of all nodes to apply operations to
         self.all = self.coordinator + self.participants
 
-        
 
-    @staticmethod
-    def ping(nodes: list) -> None:
+
+    def _nodes_or_all(self, nodes = None) -> list:
+        return nodes if nodes is not None else self.all
+
+
+
+    def ping(self, nodes = None) -> None:
         """
         Ping all nodes to check connectivity.
 
         :param nodes: list of fabric Connections to ping
         """
-        for cxn in nodes:
+        for cxn in self._nodes_or_all(nodes):
             try:
                cmd = 'echo "Ping from $(hostname)"'
                _ = execute_fabric(cmd, cxn)
             except Exception as e:
-                log(f"Error during ping of {cxn.host}: {e}")
+                log(f"Error during ping of {cxn.get('host', '')}: {e}")
         return
 
+    
 
-
-    @staticmethod
-    def distribute_data(nodes: list) -> None:
+    def distribute_data(self, nodes = None) -> None:
         """
         Load the data defined in the config file onto all nodes.
 
         :param nodes: list of fabric Connections to distribute data to
         """
-        for cxn in nodes:
+        for cxn in self._nodes_or_all(nodes):
             # data from the config file
             utils_fabric.transfer_with_packing(conn=cxn, paths=cxn['data'])
             # upload code to run on nodes
@@ -78,15 +81,14 @@ class ClientManager:
 
 
 
-    @staticmethod
-    def distribute_credentials(nodes: list, fc_creds: dict) -> None:
+    def distribute_credentials(self, fc_creds: dict, nodes = None) -> None:
         """
         Transfer the credentials of the Featurecloud accounts to the remotes.
 
-        :param nodes: list of fabric Connections to distribute credentials to
         :param fc_creds: dictionary of Featurecloud credentials
+        :param nodes: list of fabric Connections to distribute credentials to
         """
-        for cxn in nodes:
+        for cxn in self._nodes_or_all(nodes):
             fc_user = cxn['fc_username']
             fc_pass = fc_creds.get(fc_user, '')
             utils_fabric.write_to_file_remote(
@@ -97,48 +99,44 @@ class ClientManager:
 
 
 
-    @staticmethod
-    def test_featurecloud_controllers(nodes: list) -> None:
+    def test_featurecloud_controllers(self, nodes = None) -> None:
         """
         Test launching and stopping the Featurecloud controllers.
 
         :param nodes: list of fabric Connections to test
         """
-        for cxn in nodes:
+        for cxn in self._nodes_or_all(nodes):
             utils_fabric.launch_featurecloud(conn=cxn)
             utils_fabric.stop_featurecloud(conn=cxn)
         return
 
 
 
-    @staticmethod
-    def start_featurecloud_controllers(nodes: list) -> None:
+    def start_featurecloud_controllers(self, nodes = None) -> None:
         """
         Start the Featurecloud controller on multiple remotes.
 
         :param nodes: list of fabric Connections to start controllers on
         """
-        for cxn in nodes:
+        for cxn in self._nodes_or_all(nodes):
             utils_fabric.launch_featurecloud(conn=cxn)
         return
     
 
 
-    @staticmethod
-    def stop_featurecloud_controllers(nodes: list) -> None:
+    def stop_featurecloud_controllers(self, nodes = None) -> None:
         """
         Stop the Featurecloud controller on multiple remotes.
 
         :param nodes: list of fabric Connections to stop controllers on
         """
-        for cxn in nodes:
+        for cxn in self._nodes_or_all(nodes):
             utils_fabric.stop_featurecloud(conn=cxn)
         return
     
 
 
-    @staticmethod
-    def create_and_join_project(coordinator: list, participants: list, tool: str) -> str:
+    def create_and_join_project(self, coordinator: list, participants: list, tool: str) -> str:
         """
         Use the featurecloud API to create a project with the coordinator node 
         and generate tokens for participants. Parse the tokens and used them on the participant nodes
@@ -181,8 +179,7 @@ class ClientManager:
 
 
 
-    @staticmethod
-    def contribute_data_to_project(nodes: list, project_id: str) -> None:
+    def contribute_data_to_project(self, project_id: str, nodes = None) -> None:
         """
         Contribute data to a Featurecloud project from all participants.
         Finalizing the upload from all participants will trigger project execution.
@@ -190,7 +187,7 @@ class ClientManager:
         :param nodes: list of fabric Connections to contribute data from
         :param project_id: ID of the Featurecloud project
         """
-        for cxn in nodes:
+        for cxn in self._nodes_or_all(nodes):
             fc_user = cxn['fc_username']
             # TODO change here once we have proper entry point script
             cmd = f"source .venv/bin/activate && python FedSim/contribute_project.py -u {fc_user} -p {project_id}"
@@ -199,8 +196,7 @@ class ClientManager:
     
 
 
-    @staticmethod
-    def monitor_project_run(coordinator: list, project_id: str) -> None:
+    def monitor_project_run(self, coordinator: list, project_id: str) -> None:
         """
         Monitor the status of a (running) project with the coordinator node.
 
@@ -215,5 +211,4 @@ class ClientManager:
         return
 
 
-    
     
