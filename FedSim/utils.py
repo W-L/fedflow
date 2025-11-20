@@ -1,5 +1,3 @@
-#%%
-from types import SimpleNamespace
 import subprocess
 import random
 import string
@@ -23,8 +21,15 @@ def empty_file(path: str) -> None:
 
 
 def randstr(l: int = 16) -> str:
+    """
+    Generate random alphanum string of length l
+
+    :param l: length of random string to generate, defaults to 16
+    :return: random alphanum 
+    """
     alphabet = string.ascii_letters + string.digits
     return ''.join(random.choices(alphabet, k=l))
+
 
 
 def execute(command: str):
@@ -32,7 +37,7 @@ def execute(command: str):
     Execute a command in a shell and return the stdout and stderr.
 
     :param command: The command to execute.
-    :return: The stdout and stderr as a tuple.
+    :return: stdout and stderr as a tuple.
     """
     log(f"CMD: {command}", level=logging.DEBUG)
     # create the unix process
@@ -43,7 +48,7 @@ def execute(command: str):
         encoding='utf-8',
         shell=True,
     )
-    
+    # wait for process to finish and log
     stdout, stderr = running.communicate()
     log(f"STDOUT: \n{stdout}\n", level=logging.DEBUG)
     if stderr.strip() != "":
@@ -51,8 +56,16 @@ def execute(command: str):
     return stdout, stderr
     
 
+
 def execute_fabric(command: str, cxn, silent: bool = False):
-    # silent switch to make sure we don't expose credentials in logs
+    """
+    Execute a command on a remote host using Fabric.
+
+    :param command: Command to execute on remote
+    :param cxn: fabric Connection instance to connect to
+    :param silent: do not show any details of command or outputs
+    :return: tuple stdout and stderr, or None
+    """
     if not silent:
         log(f'[{cxn.host}] CMD {command}', level=logging.DEBUG)
     result = cxn.run(command, hide=True)
@@ -63,9 +76,3 @@ def execute_fabric(command: str, cxn, silent: bool = False):
         return result.stdout, result.stderr
     return None, None
     
-
-
-#%%
-
-# execute('vagrant --version')
-# %%
