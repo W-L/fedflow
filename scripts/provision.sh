@@ -7,8 +7,7 @@ DOCKER_VERSION="5:28.5.2-1~ubuntu.24.04~noble"
 
 
 apt-get update
-apt-get install -y curl pip python3.12 python3.12-venv \
-                   ca-certificates curl gnupg
+apt-get install -y curl pip python3.12 python3.12-venv ca-certificates curl gnupg
 
 
 # Install Docker (from vagrant tutorial)
