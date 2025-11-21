@@ -1,4 +1,4 @@
-from glob import glob
+import logging
 import os
 from pathlib import Path
 import time
@@ -313,7 +313,7 @@ class User:
         try:
             r = self.client.get("/api/user/info/")
             ok = r.status_code == 200
-            log(f"User {self.username} logged in: {ok}")
+            log(f"User {self.username} logged in: {ok}", level=logging.DEBUG)
             return ok
         except httpx.HTTPError:
             return False
@@ -329,6 +329,7 @@ class User:
         r.raise_for_status()
         site_info = r.json()
         # write to file for the local controller
+        Path("data").mkdir(parents=True, exist_ok=True)
         with open("data/site_info.json", "w") as f:
             f.write(r.text)
         return site_info
@@ -379,9 +380,11 @@ class FCC:
         # 'prepare' can only be reached from 'ready'
         status = self.project.get_status()
         log(f"Project {self.project.project_id} status: {status}")
-        if status in ["finished", "error", "failed"]:
+        if status in ["finished", "error", "failed", "stopped"]:
             self.project.reset_project()
             log(f"Project {self.project.project_id} reset to 'ready' status.")
+        elif status == "running":
+            raise PermissionError("Cannot upload files to a running project.")
         
         # checking that we are in prepare mode
         is_prepping = self.project.is_prepping()
@@ -458,6 +461,7 @@ class FCC:
                 return status  # finished, failed, or any other state
             
             if time.time() - start_time > timeout:
+                # TODO stop the project through the api if timeout is reached
                 raise TimeoutError(f"Project {self.project.project_id} did not finish within {timeout} seconds.")
 
             time.sleep(interval)
@@ -609,6 +613,36 @@ def monitor_project(username: str, project_id: str):
     downloaded_files = fcc.download_outcome(out_dir=out_dir)
     print(f"Run finished with status {final_status}. Logs (& Results) downloaded to {out_dir}: \n{downloaded_files}")
    
+
+
+def query_project(username: str, project_id: str):
+    """
+    Query the status of a FeatureCloud project.
+
+    :param username: FeatureCloud username
+    :param project_id: ID of the project to monitor
+    """
+    user = User(username=username)
+    proj = Project.from_project_id(project_id=project_id, client=user.client)    
+    status = proj.get_status()
+    log(f"{status}")
+    
+    
+    
+def download_project(username: str, project_id: str, out_dir: str):
+    """
+    Download logs and results of the most recent run of a FeatureCloud project.
+
+    :param username: FeatureCloud username
+    :param project_id: ID of the project to download from
+    :param out_dir: Directory to save the output at
+    """
+    user = User(username=username)
+    proj = Project.from_project_id(project_id=project_id, client=user.client)    
+    fcc = FCC(user=user, project=proj)
+    downloaded_files = fcc.download_outcome(out_dir=out_dir)
+    log(f"Downloaded files to {out_dir}: \n{downloaded_files}")
+
 
 
 def reset_project(username: str, project_id: str):
