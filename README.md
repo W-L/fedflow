@@ -152,6 +152,21 @@ There's also a shorter script specifically for biosphere VMs (which already have
 
 ## TODO
 
+
+go over readme and adjust how provisioning works
+
+check the python version in the biosphere machines, adjust the version for venv in the provisioning script
+or check if venv is already available, then we don't need any provisioning at all
+apart from installing our own package
+
+stop project and reset if timeout in monitor is reached
+- set timeout very low for testing
+
+think about a switch for reinstallation of fedsim on the vms
+- and a no-deps as well
+
+
+
 describe the usage of the 2 entry poin scripts
 
 
