@@ -1,9 +1,11 @@
+.vscode/
+.vagrant/
+.venv/ 
+.hatch/
+*Zone.Identifier*
 dump/
 data/
-.vagrant/
-*Zone.Identifier*
 apps/
-.vscode/
 results/
 destination_remote.tar.gz
 mnist.tsv
