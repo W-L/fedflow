@@ -1,6 +1,6 @@
 # FedSim
 
-The aim of this project is to automate federated analyses of featurecloud.ai either as simulation or to orchestrate real machines.
+The aim of this project is to automate federated analyses of FeatureCloud.ai either as simulations or to orchestrate real machines.
 
 The main components are: 
 
@@ -17,11 +17,81 @@ What this project does not automate:
 - featurecloud apps that require frontend interaction of the coordinator
 
 
+## Requirements
+
+Clone the project and install it.
+
+```
+git clone X && cd FedSim/
+pip install .
+```
+
+For simulations vagrant and some virtualisation provider needs to be installed on the system. For development I'm using libvirt and the vagrant-libvirt plugin
+
+
+
+## Usage
+
+There are 2 main executables in this project: 
+
+1) a program to interact with FeatureCloud.ai headlessly. This is called `fcauto`. 
+2) a program to run simulations/real analyses headlessly. This is called `fedsim` and uses the first component internally.
+
+
+### fcauto
+
+This is based on a reverse-engineered API for the FeatureCloud.ai website. 
+There are several subcommands to interact with FeatureCloud projects.
+Check `fcauto SUBCOMMAND --help` for arguments/options.
+
+
+```
+usage: fcauto [-h] {create,join,monitor,contribute,reset} ...
+
+FeatureCloud automation tool
+
+positional arguments:
+  {create,join,monitor,contribute,reset}
+    create              Create a new FeatureCloud project (as coordinator)
+    join                Join an existing FeatureCloud project
+    monitor             Monitor a running FeatureCloud project
+    contribute          Contribute data to a FeatureCloud project
+    reset               Reset a FeatureCloud project to status 'ready'
+
+options:
+  -h, --help            show this help message and exit
+```
+
+
+
+
+### fedsim
+
+This program orchestrates the participants/client machines and instructs them to interact with the FeatureCloud.ai website.
+
+```
+usage: fedsim [-h] -c CONFIG [-v]
+
+Simulated federated analyses with VMs
+
+options:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        Path to the config file
+  -v, --verbose         Enable verbose logging
+```
+
+
+
 ## Configuration
 
-Configuration of this project requires 2 components. An environment file that contains all credentials of the featurecloud.ai users. This should be in the format USER=PASSWORD and be placed in `.env` in the root of the project.
+Configuration of this project requires 2 files. 
+An environment file that contains all credentials of the featurecloud.ai users.
+This needs to be in the format USER=PASSWORD and be placed in `.env` in the root of the project.
 
-The configuration of simulations/real runs of featurecloud is done in a single toml file. The format is as follows:
+
+The second file is a toml configuration of simulations/real runs of featurecloud. The format is as follows:
+
 
 ```
 [general]
@@ -31,7 +101,7 @@ project_id = PROJECT_ID                 # numeric ID of a featurecloud project (
 tool = TOOL_NAME                        # alternatively to a project_id, then a project is created automatically
 
 
-[clients]
+[clients]                               # a list of the participating clients
 
 [clients.0]
 fc_username = USERNAME
@@ -60,26 +130,6 @@ sshkey = ''
 If `sim = true` is set, `hostname, username, port, sshkey` are ignored and vagrant vms are used instead. When real machines should be used, their connection details need to be provided.
 
 
-## Requirements
-
-For execution a python virtual environment with a few dependencies is needed. 
-The dependencies and the project itself can be installed with pip.
-
-```
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
-For simulations vagrant and some virtualisation provider are required. (Using libvirt in development)
-
-```
-wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-sudo apt update && sudo apt install vagrant
-vagrant plugin install vagrant-libvirt
-```
-
 
 
 ## Provisioning of client VMs/participating machines
@@ -89,30 +139,21 @@ The script can also be used to set up other ubuntu-based participants. (not auto
 
 It installs these dependencies:
 
-- python and the environment mentioned above
+- python and a venv to run the programs
+- the featurecloud controller
 - docker (used by featurecloud)
 
-There's also a short script specifically for biosphere VMs (which already have python and docker installed).
-
-
-## Usage
+There's also a shorter script specifically for biosphere VMs (which already have python and docker installed).
 
 
 
 
 
 
+## TODO
 
+describe the usage of the 2 entry poin scripts
 
-
-
-
-# TODO
-
-write two interface scripts
-- one for the api alone
-- one for fedsim itself
-- i.e. have a behaviour switch in the argparser (subprogram or whatever it's called)
 
 
 currently experiencing multiple issues with FC apps:
@@ -125,15 +166,14 @@ issue on the VMs: mounting of input data into the container fails
 - but has nothing to do with the reverse-engineered featurecloud API
 
 
+### long-term
+
 write some convenience scripts that check the log files of all machines
 - including the logs of the fc controllers and the fc apps
 
 
 in the provisioning script, the docker version is currently fixed due to FC restrictions
 - check once their container is updated
-
-
-write type hints and function docstrings
 
 write pytests for everything
 
