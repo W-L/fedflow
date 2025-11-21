@@ -34,7 +34,6 @@ fcauto = "fedsim.fcauto:main"
 [tool.hatch.build.targets.sdist]
 only-include = [
   "fedsim/",
-  "VMs/",
   "configs/",
   "scripts/",
 ]
