@@ -1,10 +1,3 @@
-import sys, os, fedsim
-
-print("CWD=", os.getcwd())
-print("SYS.PATH=", sys.path)
-print("PACKAGE LOADED FROM:", fedsim.__file__)
-
-
 import argparse
 from datetime import datetime
 
@@ -58,6 +51,8 @@ def prep_clients(clients: ClientManager, conf: Config):
     clients.distribute_credentials(fc_creds=conf.fc_creds)
     log("Distributing data to clients...")
     clients.distribute_data()
+    log("Installing fedsim package on clients...")
+    clients.install_package()
     log("Starting FeatureCloud controllers on clients...")
     clients.start_featurecloud_controllers()
     # clients.test_featurecloud_controllers()
