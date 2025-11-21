@@ -1,15 +1,15 @@
 import argparse
 from datetime import datetime
 
-from logger import setup_logging, log
-from config import Config
-from VagrantManager import VagrantManager
-from ClientManager import ClientManager
+from fedsim.logger import setup_logging, log
+from fedsim.config import Config
+from fedsim.VagrantManager import VagrantManager
+from fedsim.ClientManager import ClientManager
 
 
 def get_args() -> argparse.Namespace:
      parser = argparse.ArgumentParser(description="Simulated federated analyses with VMs")
-     parser.add_argument("-c", "--config", help="Path to the config file")
+     parser.add_argument("-c", "--config", help="Path to the config file", required=True)
      parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
      args = parser.parse_args()
      return args
@@ -94,7 +94,8 @@ def cleanup():
     pass
 
 
-def main(args) -> None:
+def main():
+    args = get_args()
     log_mode = "debug" if args.verbose else "quiet"
     conf = setup_run(config=args.config, log_mode=log_mode)
     clients = get_client_connections(conf=conf)
@@ -105,7 +106,6 @@ def main(args) -> None:
 
 
 if __name__ == "__main__":
-    args = get_args()
-    main(args)
+    main()
 
 

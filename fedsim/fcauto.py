@@ -1,6 +1,6 @@
 import argparse
 
-import featurecloud_api
+import fedsim.featurecloud_api as featurecloud_api
 
 
 
@@ -55,8 +55,9 @@ def get_args() -> argparse.Namespace:
 
 
 
-def main(args) -> None:
-    
+def main():
+    args = get_args()
+
     if args.cmd == "create":
         featurecloud_api.create_project_and_tokens(
             username=args.user,
@@ -89,8 +90,7 @@ def main(args) -> None:
 
 
 if __name__ == "__main__":
-    args = get_args()
-    main(args)
+    main()
     
     
     
