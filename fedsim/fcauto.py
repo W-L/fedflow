@@ -47,7 +47,7 @@ def get_args() -> argparse.Namespace:
     # arguments to join a project
     join.add_argument("-t", "--token", help="Token to join project")
     # arguments for uploading data to a project
-    contribute.add_argument("-d", "--data", help="Path to directory containing data to contribute")
+    contribute.add_argument("-d", "--data", help="Paths of data to contribute. Can be multiple arguments.", nargs='+')
     # monitor and reset have no additional arguments
     args = parser.parse_args()
     return args
@@ -79,7 +79,7 @@ def main():
         featurecloud_api.contribute_data(
             username=args.user,
             project_id=args.project,
-            data_path=args.data,
+            data_list=args.data,
         )
     elif args.cmd == "reset":
         featurecloud_api.reset_project(

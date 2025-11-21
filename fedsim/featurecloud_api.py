@@ -557,21 +557,20 @@ def create_project_and_tokens(username: str, tool: str, n_participants: int):
 
 
 
-def contribute_data(username: str, project_id: str, data_path: str):
+def contribute_data(username: str, project_id: str, data_list: str):
     """
     Contribute data to a project
 
     :param username: username of the user contributing data
     :param project_id: ID of the project to contribute data to
-    :param data_path: Path to the data to be contributed
+    :param data_list: List of paths to be contributed
     """
     user = User(username=username)
     proj = Project.from_project_id(project_id=project_id, client=user.client)    
     fcc = FCC(user=user, project=proj)
     # upload all files in data_path
     # finalisation of upload is triggered at the end
-    files_to_upload = list(glob(f"{data_path}/*"))
-    fcc.upload_files(filepaths=files_to_upload)
+    fcc.upload_files(filepaths=data_list)
     # the project starts when all participants have uploaded their data
     print(f"{username} uploaded data to project {project_id}")
 
