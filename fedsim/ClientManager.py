@@ -152,8 +152,7 @@ class ClientManager:
         coord_cxn = coordinator[0]
         fc_user = coord_cxn['fc_username']
         n_participants = len(participants)
-        # TODO change here once we have proper entry point script
-        cmd = f"source .venv/bin/activate && python FedSim/create_project.py -u {fc_user} -t {tool} -p {n_participants}"
+        cmd = f"fcauto create -u {fc_user} -t {tool} -n {n_participants}"
         stdout, stderr = execute_fabric(command=cmd, cxn=coord_cxn)
         
         # parse output for project ID and tokens
@@ -172,8 +171,7 @@ class ClientManager:
         # use tokens to join project from participant nodes
         for cxn, token in zip(participants, tokens):
             fc_user = cxn['fc_username']
-            # TODO change here once we have proper entry point script
-            cmd = f"source .venv/bin/activate && python FedSim/join_project.py -t {token} -u {fc_user} -p {project_id}"
+            cmd = f"fcauto join -t {token} -u {fc_user} -p {project_id}"
             stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
         return project_id
 
@@ -189,8 +187,10 @@ class ClientManager:
         """
         for cxn in self._nodes_or_all(nodes):
             fc_user = cxn['fc_username']
-            # TODO change here once we have proper entry point script
-            cmd = f"source .venv/bin/activate && python FedSim/contribute_project.py -u {fc_user} -p {project_id}"
+            # create a list of data paths to contribute
+            data_paths = cxn.get('data', [])
+            data_args = ' '.join([f"{path}" for path in data_paths])
+            cmd = f"fcauto contribute -u {fc_user} -p {project_id} -d {data_args}"
             stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
         return
     
@@ -205,8 +205,7 @@ class ClientManager:
         """
         cxn = coordinator[0]
         fc_user = cxn['fc_username']
-        # TODO change here once we have proper entry point script
-        cmd = f"source .venv/bin/activate && python FedSim/monitor_project.py -u {fc_user} -p {project_id}"
+        cmd = f"fcauto monitor -u {fc_user} -p {project_id}"
         stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
         return
 
