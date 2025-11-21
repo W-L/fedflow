@@ -1,5 +1,6 @@
 from glob import glob
 from pathlib import Path
+import time
 
 import fedsim.utils_fabric as utils_fabric
 from fedsim.utils import execute_fabric
@@ -77,8 +78,10 @@ class ClientManager:
                 remote_path=f"{Path(whl).name}",
                 force=True
             )
-            cxn.run('python3 -m venv .venv && source .venv/bin/activate')
-            cxn.run(f"pip install {Path(whl).name} --force-reinstall --no-deps")
+            cxn.run("python3 -m venv .venv")
+            install_cmd = f"source .venv/bin/activate && pip install {Path(whl).name} --force-reinstall"# --no-deps"
+            cxn.run(install_cmd)
+            # execute_fabric(command=install_cmd, cxn=cxn)
         return
 
     
@@ -166,7 +169,7 @@ class ClientManager:
         coord_cxn = coordinator[0]
         fc_user = coord_cxn['fc_username']
         n_participants = len(participants)
-        cmd = f"fcauto create -u {fc_user} -t {tool} -n {n_participants}"
+        cmd = f"source .venv/bin/activate && fcauto create -u {fc_user} -t {tool} -n {n_participants}"
         stdout, stderr = execute_fabric(command=cmd, cxn=coord_cxn)
         
         # parse output for project ID and tokens
@@ -185,7 +188,7 @@ class ClientManager:
         # use tokens to join project from participant nodes
         for cxn, token in zip(participants, tokens):
             fc_user = cxn['fc_username']
-            cmd = f"fcauto join -t {token} -u {fc_user} -p {project_id}"
+            cmd = f"source .venv/bin/activate && fcauto join -t {token} -u {fc_user} -p {project_id}"
             stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
         return project_id
 
@@ -204,24 +207,49 @@ class ClientManager:
             # create a list of data paths to contribute
             data_paths = cxn['data']
             data_args = ' '.join([f"{Path(path).name}" for path in data_paths])
-            cmd = f"fcauto contribute -u {fc_user} -p {project_id} -d {data_args}"
+            cmd = f"source .venv/bin/activate && fcauto contribute -u {fc_user} -p {project_id} -d {data_args}"
             stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
         return
     
 
 
-    def monitor_project_run(self, coordinator: list, project_id: str) -> None:
+    def monitor_project_run(self, coordinator: list, project_id: str, interval: int = 5, timeout: int = 600) -> str:
         """
         Monitor the status of a (running) project with the coordinator node.
 
         :param coordinator: Single-item list of fabric Connection for the coordinator node
         :param project_id: ID of the Featurecloud project to monitor
+        :param interval: Time interval (in seconds) between status checks
+        :param timeout: Maximum time (in seconds) to wait for project completion
+        :raises TimeoutError: If the project does not finish within the timeout period
+        :return: Final status of the project
         """
         cxn = coordinator[0]
         fc_user = cxn['fc_username']
-        cmd = f"fcauto monitor -u {fc_user} -p {project_id}"
-        stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
-        return
+        cmd = f"source .venv/bin/activate && fcauto monitor -u {fc_user} -p {project_id}"
+        cxn.run(cmd)
+        
+        # start_time = time.time()
+        
+        # while True:
+        #     # query the project status
+        #     stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
+        #     status = str(stdout).splitlines()[-1].strip()  # last line contains the status
+        #     log(f"Project {self.project.project_id}: {status}")
+            
+        #     if status == 'prepare':
+        #         time.sleep(interval)
+        #         continue
+            
+        #     if status != "running":
+        #         log(f"Project {self.project.project_id} ended with status: {status}")
+        #         return status  # finished, error, or any other state
+            
+        #     if time.time() - start_time > timeout:
+        #         raise TimeoutError(f"Project {self.project.project_id} did not finish within {timeout} seconds.")
+
+        #     time.sleep(interval)
+
 
 
     
