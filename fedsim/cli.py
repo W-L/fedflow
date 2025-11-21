@@ -1,3 +1,10 @@
+import sys, os, fedsim
+
+print("CWD=", os.getcwd())
+print("SYS.PATH=", sys.path)
+print("PACKAGE LOADED FROM:", fedsim.__file__)
+
+
 import argparse
 from datetime import datetime
 
