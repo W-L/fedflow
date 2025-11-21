@@ -10,7 +10,7 @@ from fedsim.utils import execute
 class VagrantManager:
 
 
-    def __init__(self, num_nodes: int, box: str = 'bento/ubuntu-24.04', provision_script: str = 'VMs/vagrant_provision.sh'):
+    def __init__(self, num_nodes: int, box: str = 'bento/ubuntu-24.04', provision_script: str = 'scripts/provision.sh'):
         """
         A class to manage Vagrant virtual machines for fedsim simulations.
 

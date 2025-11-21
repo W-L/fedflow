@@ -1,4 +1,5 @@
 from glob import glob
+from pathlib import Path
 
 import fedsim.utils_fabric as utils_fabric
 from fedsim.utils import execute_fabric
@@ -57,6 +58,28 @@ class ClientManager:
             except Exception as e:
                 log(f"Error during ping of {cxn.get('host', '')}: {e}")
         return
+    
+
+
+    def install_package(self, nodes = None) -> None:
+        """
+        Install the fedsim package on all nodes.
+        TODO this is used because the package is not on PyPI, so the wheel is transferred and installed locally.
+
+        :param nodes: list of fabric Connections to install package on
+        """
+        for cxn in self._nodes_or_all(nodes):
+            # find the wheel file for installation
+            whl = glob("dist/fedsim-*.whl")[0]
+            utils_fabric.upload_file(
+                conn=cxn,
+                local_path=whl,
+                remote_path=f"{Path(whl).name}",
+                force=True
+            )
+            cxn.run('python3 -m venv .venv && source .venv/bin/activate')
+            cxn.run(f"pip install {Path(whl).name} --force-reinstall --no-deps")
+        return
 
     
 
@@ -69,15 +92,6 @@ class ClientManager:
         for cxn in self._nodes_or_all(nodes):
             # data from the config file
             utils_fabric.transfer_with_packing(conn=cxn, paths=cxn['data'])
-            # upload code to run on nodes
-            src = glob("FedSim/*.py")
-            for file in src:
-                utils_fabric.upload_file(
-                    conn=cxn,
-                    local_path=file,
-                    remote_path=f"{file}",
-                    force=True
-                )
 
 
 
@@ -188,8 +202,8 @@ class ClientManager:
         for cxn in self._nodes_or_all(nodes):
             fc_user = cxn['fc_username']
             # create a list of data paths to contribute
-            data_paths = cxn.get('data', [])
-            data_args = ' '.join([f"{path}" for path in data_paths])
+            data_paths = cxn['data']
+            data_args = ' '.join([f"{Path(path).name}" for path in data_paths])
             cmd = f"fcauto contribute -u {fc_user} -p {project_id} -d {data_args}"
             stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
         return

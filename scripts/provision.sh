@@ -5,18 +5,11 @@ set -e
 USER="vagrant"
 DOCKER_VERSION="5:28.5.2-1~ubuntu.24.04~noble"
 
-# install common dependencies for FedSim VMs
+
 apt-get update
 apt-get install -y curl pip python3.12 python3.12-venv \
                    ca-certificates curl gnupg
 
-# install python dependencies
-python3 -m venv /home/$USER/.venv
-source /home/$USER/.venv/bin/activate
-pip install featurecloud fabric rtoml python-dotenv httpx  # playwright
-# install playwright browsers
-# playwright install-deps
-# playwright install firefox
 
 # Install Docker (from vagrant tutorial)
 install -m 0755 -d /etc/apt/keyrings
