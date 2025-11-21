@@ -1,8 +1,8 @@
 from glob import glob
 
-import utils_fabric
-from utils import execute_fabric
-from logger import log
+import fedsim.utils_fabric as utils_fabric
+from fedsim.utils import execute_fabric
+from fedsim.logger import log
 
 
 

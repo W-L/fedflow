@@ -4,7 +4,7 @@ import rtoml
 from fabric import SerialGroup
 from dotenv import load_dotenv
 
-from logger import logger
+from fedsim.logger import logger
 
 
 

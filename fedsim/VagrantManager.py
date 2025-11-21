@@ -1,8 +1,8 @@
 import paramiko
 from fabric import SerialGroup
 
-from logger import log
-from utils import execute
+from fedsim.logger import log
+from fedsim.utils import execute
 
 
 

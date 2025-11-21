@@ -6,8 +6,8 @@ import logging
 
 from fabric import Connection
 
-from logger import log
-from utils import execute_fabric
+from fedsim.logger import log
+from fedsim.utils import execute_fabric
 
 
 
