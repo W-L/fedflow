@@ -46,7 +46,6 @@ packages = ["fedsim"]
 
 [tool.hatch.envs.dev]
 dependencies = [
-  "hatch",
   "pytest",
   "pytest-cov",
 ]
