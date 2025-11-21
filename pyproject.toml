@@ -27,7 +27,7 @@ disable = true
 
 
 [project.scripts]
-fedsim = "fedsim.fedsim:main"
+fedsim = "fedsim.cli:main"
 fcauto = "fedsim.fcauto:main"
 
 
