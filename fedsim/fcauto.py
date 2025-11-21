@@ -29,6 +29,11 @@ def get_args() -> argparse.Namespace:
         help="Monitor a running FeatureCloud project", 
         parents=[common]
     )
+    query = sub.add_parser(
+        "query", 
+        help="Query FeatureCloud project status",
+        parents=[common]
+    )
     contribute = sub.add_parser(
         "contribute", 
         help="Contribute data to a FeatureCloud project",
@@ -39,6 +44,7 @@ def get_args() -> argparse.Namespace:
         help="Reset a FeatureCloud project to status 'ready' ",
         parents=[common]
     )
+    # TODO add download subcommand
 
     # arguments for project creation
     create.add_argument("-t", "--tool", help="Tool to use in project")
@@ -48,7 +54,7 @@ def get_args() -> argparse.Namespace:
     join.add_argument("-t", "--token", help="Token to join project")
     # arguments for uploading data to a project
     contribute.add_argument("-d", "--data", help="Paths of data to contribute. Can be multiple arguments.", nargs='+')
-    # monitor and reset have no additional arguments
+    # monitor, query and reset have no additional arguments
     args = parser.parse_args()
     return args
 
@@ -72,6 +78,11 @@ def main():
     )
     elif args.cmd == "monitor":
         featurecloud_api.monitor_project(
+            username=args.user,
+            project_id=args.project,
+        )
+    elif args.cmd == "query":
+        featurecloud_api.query_project(
             username=args.user,
             project_id=args.project,
         )
