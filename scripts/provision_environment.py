@@ -12,7 +12,6 @@ Script to provision remote machines from a shell script. E.g. if vagrant/ansible
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Provision remotes with a shell script")
     parser.add_argument("-c", "--conf", help="Path to fedsim TOML config file")
-    parser.add_argument("-i", "--sshkey", help="Path to SSH key file to access remote")
     parser.add_argument("-p", "--provision", help="Path to provisioning script to run on remotes")
     args = parser.parse_args()
     return args
