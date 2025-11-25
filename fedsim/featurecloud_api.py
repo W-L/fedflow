@@ -436,12 +436,12 @@ class FCC:
         return results
 
 
-    def monitor_project(self, interval: int = 5, timeout: int = 600) -> str:
+    def monitor_project(self, interval: int = 5, timeout: int = 60) -> str:
         """
         Poll the project status until it changes from 'running'.
 
         :param interval: time between queries, defaults to 5
-        :param timeout: maximum time to wait for project to finish, defaults to 600
+        :param timeout: maximum time to wait for project to finish, defaults to 60
         :raises TimeoutError: if not finishing within timeout
         :return: final status
         """
@@ -462,6 +462,12 @@ class FCC:
             
             if time.time() - start_time > timeout:
                 # TODO stop the project through the api if timeout is reached
+                self.project.set_status("shutdown")
+                time.sleep(5)
+                status = self.project.get_status()
+                if status == "stopped":
+                    self.project.reset_project()
+
                 raise TimeoutError(f"Project {self.project.project_id} did not finish within {timeout} seconds.")
 
             time.sleep(interval)
@@ -561,7 +567,7 @@ def create_project_and_tokens(username: str, tool: str, n_participants: int):
 
 
 
-def contribute_data(username: str, project_id: str, data_list: str):
+def contribute_data(username: str, project_id: str, data_list: list[str]):
     """
     Contribute data to a project
 
