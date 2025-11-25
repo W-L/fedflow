@@ -1,4 +1,3 @@
-.vscode/
 .vagrant/
 .venv/ 
 .hatch/
@@ -9,6 +8,10 @@ apps/
 results/
 destination_remote.tar.gz
 mnist.tsv
+
+.vscode/*.code-workspace
+.vscode/settings.json
+.vscode/launch.local.json
 
 
 # Byte-compiled / optimized / DLL files
