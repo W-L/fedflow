@@ -134,15 +134,14 @@ If `sim = true` is set, `hostname, username, port, sshkey` are ignored and vagra
 
 ## Provisioning of client VMs/participating machines
 
-For simulations, the VMs are provisioned automatically (`VMs/vagrant_provision.sh`). 
-The script can also be used to set up other ubuntu-based participants. (not automated for now)
+For simulations, the VMs are provisioned automatically (`scripts/provision.sh`). 
 
 It installs these dependencies:
 
 - python and a venv to run the programs
-- the featurecloud controller
 - docker (used by featurecloud)
 
+The provisioning script can also be used on other ubuntu-based machines. This can be done with `scripts/provision_environment.py`, and a config file (e.g. `configs/config_provision_biosphere.toml`)
 There's also a shorter script specifically for biosphere VMs (which already have python and docker installed).
 
 
@@ -153,32 +152,16 @@ There's also a shorter script specifically for biosphere VMs (which already have
 ## TODO
 
 
-go over readme and adjust how provisioning works
-
-check the python version in the biosphere machines, adjust the version for venv in the provisioning script
-or check if venv is already available, then we don't need any provisioning at all
-apart from installing our own package
-
-stop project and reset if timeout in monitor is reached
-- set timeout very low for testing
-
-think about a switch for reinstallation of fedsim on the vms
-- and a no-deps as well
-
-
-
-describe the usage of the 2 entry poin scripts
-
-
-
 currently experiencing multiple issues with FC apps:
 - inconsistent finishing behaviour (mean-app, random-forest)
 - shutil copy error of the config file (federated-svd)
+- seems to be a related problem where an incorrect number of participants is assumed by featurecloud
 
 
-issue on the VMs: mounting of input data into the container fails
-- this is prohibitive for execution at the moment
-- but has nothing to do with the reverse-engineered featurecloud API
+sometimes running into issue on the VMs: mounting of input data into the container fails
+- this is prohibitive for execution of some apps
+- has nothing to do with the reverse-engineered featurecloud API
+
 
 
 ### long-term
