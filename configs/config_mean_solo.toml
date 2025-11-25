@@ -11,7 +11,11 @@ data = ["test_data/mean_trio/c0/data.csv", "test_data/mean_trio/c0/config.yml"]
 coordinator = true
 
 
+[debug]
 
+vmonly = false
+reinstall = true
+nodeps = true
 
 
 
