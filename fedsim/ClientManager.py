@@ -62,12 +62,14 @@ class ClientManager:
     
 
 
-    def install_package(self, nodes = None) -> None:
+    def install_package(self, nodes = None, reinstall: bool = False, nodeps: bool = False) -> None:
         """
         Install the fedsim package on all nodes.
         TODO this is used because the package is not on PyPI, so the wheel is transferred and installed locally.
 
         :param nodes: list of fabric Connections to install package on
+        :param reinstall: whether to force reinstall the package
+        :param nodeps: whether to skip installing dependencies
         """
         for cxn in self._nodes_or_all(nodes):
             # find the wheel file for installation
@@ -79,7 +81,11 @@ class ClientManager:
                 force=True
             )
             cxn.run("python3 -m venv .venv")
-            install_cmd = f"source .venv/bin/activate && pip install {Path(whl).name} --force-reinstall"# --no-deps"
+            install_cmd = f"source .venv/bin/activate && pip install {Path(whl).name}"
+            if reinstall:
+                install_cmd += " --force-reinstall"
+            if nodeps:
+                install_cmd += " --no-deps"
             cxn.run(install_cmd)
             # execute_fabric(command=install_cmd, cxn=cxn)
         return
@@ -213,7 +219,7 @@ class ClientManager:
     
 
 
-    def monitor_project_run(self, coordinator: list, project_id: str, interval: int = 5, timeout: int = 600) -> str:
+    def monitor_project_run(self, coordinator: list, project_id: str, interval: int = 5, timeout: int = 600) -> None:
         """
         Monitor the status of a (running) project with the coordinator node.
 
@@ -222,7 +228,6 @@ class ClientManager:
         :param interval: Time interval (in seconds) between status checks
         :param timeout: Maximum time (in seconds) to wait for project completion
         :raises TimeoutError: If the project does not finish within the timeout period
-        :return: Final status of the project
         """
         cxn = coordinator[0]
         fc_user = cxn['fc_username']

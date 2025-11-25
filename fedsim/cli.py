@@ -46,13 +46,13 @@ def get_client_connections(conf: Config):
     return clients
 
 
-def prep_clients(clients: ClientManager, conf: Config):
+def prep_clients(clients: ClientManager, conf: Config, reinstall: bool = False, nodeps: bool = False):
     log("Distributing credentials to clients...")
     clients.distribute_credentials(fc_creds=conf.fc_creds)
     log("Distributing data to clients...")
     clients.distribute_data()
     log("Installing fedsim package on clients...")
-    clients.install_package()
+    clients.install_package(reinstall=reinstall, nodeps=nodeps)
     log("Starting FeatureCloud controllers on clients...")
     clients.start_featurecloud_controllers()
     # clients.test_featurecloud_controllers()
@@ -100,8 +100,14 @@ def main():
     args = get_args()
     log_mode = "debug" if args.verbose else "quiet"
     conf = setup_run(config=args.config, log_mode=log_mode)
+
+    debug = conf.config.get('debug', {})
+
     clients = get_client_connections(conf=conf)
-    prep_clients(clients=clients, conf=conf)
+    if debug.get('vmonly', False):
+        log("Vagrant VMs launched. Exiting.")
+        return
+    prep_clients(clients=clients, conf=conf, reinstall=debug.get('reinstall', False), nodeps=debug.get('nodeps', False))
     project_id = prep_project(clients=clients, conf=conf)
     run_project(clients=clients, project_id=project_id)
     cleanup()
