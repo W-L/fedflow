@@ -28,8 +28,8 @@ def main(args):
     prov_name = prov.name
     # loop through the remotes
     for cxn in serialg:
-        print(f'copying {prov_name} to {cxn["host"]}')
-        remote_user = cxn['user']
+        print(f'copying {prov_name} to {cxn.host}')
+        remote_user = cxn.user
         cxn.put(f'{prov}', remote=f'/home/{remote_user}/{prov_name}')
         print('running script')
         provision = cxn.run(f'bash /home/{remote_user}/{prov_name}')
