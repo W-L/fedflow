@@ -4,12 +4,8 @@
 [clients]
 
 [clients.0]
-fc_username = ''
-data = []
-coordinator = true
 hostname = '134.158.248.72'
 username = 'ubuntu'
-port = '' 
-sshkey = '~/.ssh/biosphere' 
+sshkey = '/home/lweilguny/.ssh/biosphere' 
 
 
