@@ -4,7 +4,7 @@ import rtoml
 from fabric import SerialGroup
 from dotenv import load_dotenv
 
-from fedsim.logger import logger
+from fedsim.logger import log
 
 
 
@@ -38,10 +38,11 @@ class Config:
         client_strings = []
         for cinfo in self.config['clients'].values():
             cstr = f"{cinfo['username']}@{cinfo['hostname']}"
-            if cinfo['port'] != '' and cinfo['port'] is not None:
-                cstr += f":{cinfo['port']}"
+            port = cinfo.get('port', None)
+            if port:
+                cstr += f":{port}"
             client_strings.append(cstr)
-        logger.info(f"client strings: {client_strings}")
+        log(f"client strings: {client_strings}")
         return client_strings
 
 
@@ -97,8 +98,11 @@ class Config:
         load_dotenv(dotenv_path='.env', override=True)
         fc_cred = {}
         for fc_user in self.fc_users:
+            if not fc_user:
+                log('no Featurecloud user specified for a client, skipping credential load')
+                continue
             fc_pass = os.getenv(f"{fc_user}")
-            assert fc_user is not None and fc_pass is not None, f"credentials {fc_user} not found"
+            assert fc_pass is not None, f"credentials {fc_user} not found"
             fc_cred[fc_user] = fc_pass
         return fc_cred
     
@@ -116,7 +120,7 @@ class Config:
         # grab ssh keys for connect_kwargs
         sshkeys = self._get_sshkeys()
         self.serialg = SerialGroup(*client_strings, connect_kwargs={"key_filename": sshkeys})
-        logger.info(f"serial group: {self.serialg}")
+        log(f"serial group: {self.serialg}")
         return self.serialg
 
 
