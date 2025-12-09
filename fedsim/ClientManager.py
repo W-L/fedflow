@@ -232,29 +232,11 @@ class ClientManager:
         cxn = coordinator[0]
         fc_user = cxn['fc_username']
         cmd = f"source .venv/bin/activate && fcauto monitor -u {fc_user} -p {project_id}"
-        cxn.run(cmd)
+        result = cxn.run(cmd)
+        log(f'[{cxn.host}] STDOUT: {result.stdout}')
+        if result.stderr.strip() != "":
+            log(f'[{cxn.host}] STDERR: \n{result.stderr}\n')
         
-        # start_time = time.time()
-        
-        # while True:
-        #     # query the project status
-        #     stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
-        #     status = str(stdout).splitlines()[-1].strip()  # last line contains the status
-        #     log(f"Project {self.project.project_id}: {status}")
-            
-        #     if status == 'prepare':
-        #         time.sleep(interval)
-        #         continue
-            
-        #     if status != "running":
-        #         log(f"Project {self.project.project_id} ended with status: {status}")
-        #         return status  # finished, error, or any other state
-            
-        #     if time.time() - start_time > timeout:
-        #         raise TimeoutError(f"Project {self.project.project_id} did not finish within {timeout} seconds.")
-
-        #     time.sleep(interval)
-
 
 
     
