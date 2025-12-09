@@ -86,13 +86,12 @@ def run_project(clients: ClientManager, project_id: str):
     clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id)
 
 
-def cleanup():
-    # TODO delete everything on the remotes
+def cleanup(clients: ClientManager, conf: Config):
     # stop fc controller and vms
-    # clients.stop_featurecloud_controllers(nodes=clients.all)
-    # if conf.config['general']['sim']:
-        # log("Halting Vagrant VMs...")
-        # vms.stop()
+    clients.stop_featurecloud_controllers(nodes=clients.all)
+    if conf.config['general']['sim']:
+        log("Halting Vagrant VMs...")
+        VagrantManager.stop()
     pass
 
 
@@ -110,7 +109,7 @@ def main():
     prep_clients(clients=clients, conf=conf, reinstall=debug.get('reinstall', False), nodeps=debug.get('nodeps', False))
     project_id = prep_project(clients=clients, conf=conf)
     run_project(clients=clients, project_id=project_id)
-    cleanup()
+    cleanup(clients=clients, conf=conf)
 
 
 if __name__ == "__main__":
