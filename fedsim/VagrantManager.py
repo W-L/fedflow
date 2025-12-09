@@ -143,14 +143,11 @@ class VagrantManager:
             raise RuntimeError("Vagrant VMs failed to launch.")
         
 
-
-    def stop(self):
+    @staticmethod
+    def stop():
         """
         Stop vagrant machines if they are running
         """
-        if not self._is_up():
-            log(f"Vagrant VMs are not running.")
-            return
         try:
             stop_cmd = 'vagrant halt'
             stdout, stderr = execute(stop_cmd)
