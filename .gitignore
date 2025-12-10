@@ -8,6 +8,8 @@ apps/
 results/
 destination_remote.tar.gz
 mnist.tsv
+test_data/public_cohorts/
+
 
 .vscode/*.code-workspace
 .vscode/settings.json
