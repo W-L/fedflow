@@ -55,6 +55,7 @@ def get_args() -> argparse.Namespace:
     # arguments for uploading data to a project
     contribute.add_argument("-d", "--data", help="Paths of data to contribute. Can be multiple arguments.", nargs='+')
     # monitor, query and reset have no additional arguments
+    monitor.add_argument("-t", "--timeout", help="Maximum time to wait for project to finish (in seconds)", type=int, default=60)
     args = parser.parse_args()
     return args
 
@@ -80,6 +81,7 @@ def main():
         featurecloud_api.monitor_project(
             username=args.user,
             project_id=args.project,
+            timeout=args.timeout,
         )
     elif args.cmd == "query":
         featurecloud_api.query_project(

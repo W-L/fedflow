@@ -600,18 +600,19 @@ def join_project(username: str, token: str, project_id: str):
 
 
 
-def monitor_project(username: str, project_id: str):
+def monitor_project(username: str, project_id: str, timeout: int = 60):
     """
     Monitor a running FeatureCloud project until status changes from 'running'.
 
     :param username: FeatureCloud username
     :param project_id: ID of the project to monitor
+    :param timeout: maximum time to wait for project to finish, defaults to 60
     """
     user = User(username=username)
     proj = Project.from_project_id(project_id=project_id, client=user.client)    
     fcc = FCC(user=user, project=proj)
     # monitor the project run
-    final_status = fcc.monitor_project()
+    final_status = fcc.monitor_project(timeout=timeout)
     print(f"Project {project_id} status: {final_status}")
     time.sleep(5)
     # download outcome

@@ -219,19 +219,18 @@ class ClientManager:
     
 
 
-    def monitor_project_run(self, coordinator: list, project_id: str, interval: int = 5, timeout: int = 600) -> None:
+    def monitor_project_run(self, coordinator: list, project_id: str, timeout: int = 60) -> None:
         """
         Monitor the status of a (running) project with the coordinator node.
 
         :param coordinator: Single-item list of fabric Connection for the coordinator node
         :param project_id: ID of the Featurecloud project to monitor
-        :param interval: Time interval (in seconds) between status checks
         :param timeout: Maximum time (in seconds) to wait for project completion
         :raises TimeoutError: If the project does not finish within the timeout period
         """
         cxn = coordinator[0]
         fc_user = cxn['fc_username']
-        cmd = f"source .venv/bin/activate && fcauto monitor -u {fc_user} -p {project_id}"
+        cmd = f"source .venv/bin/activate && fcauto monitor -u {fc_user} -p {project_id} -t {timeout}"
         result = cxn.run(cmd)
         log(f'[{cxn.host}] STDOUT: {result.stdout}')
         if result.stderr.strip() != "":

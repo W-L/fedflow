@@ -76,14 +76,14 @@ def prep_project(clients: ClientManager, conf: Config):
     return project_id
 
 
-def run_project(clients: ClientManager, project_id: str):
+def run_project(clients: ClientManager, project_id: str, timeout: int = 60):
     # contribute data to project
     # once all participants have contributed, the project is started
     log("Contributing data to FeatureCloud project...")
     clients.contribute_data_to_project(nodes=clients.all, project_id=project_id)
     # monitor run, then download logs and results
     log("Monitoring FeatureCloud project run...")
-    clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id)
+    clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id, timeout=timeout)
 
 
 def cleanup(clients: ClientManager, conf: Config):
@@ -91,7 +91,7 @@ def cleanup(clients: ClientManager, conf: Config):
     clients.stop_featurecloud_controllers(nodes=clients.all)
     if conf.config['general']['sim']:
         log("Halting Vagrant VMs...")
-        VagrantManager.stop()
+        # VagrantManager.stop()
     pass
 
 
@@ -108,7 +108,7 @@ def main():
         return
     prep_clients(clients=clients, conf=conf, reinstall=debug.get('reinstall', False), nodeps=debug.get('nodeps', False))
     project_id = prep_project(clients=clients, conf=conf)
-    run_project(clients=clients, project_id=project_id)
+    run_project(clients=clients, project_id=project_id, timeout=debug.get('timeout', 60))
     cleanup(clients=clients, conf=conf)
 
 
