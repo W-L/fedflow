@@ -1,8 +1,13 @@
 [general]
 
 sim = true
-project_id = 17285
+project_id = 17295
+outdir = "results_randfor"
 # tool = 'random-forest'
+
+# [debug]
+# nodeps = false
+# reinstall = true
 
 
 [clients]
@@ -16,44 +21,38 @@ data = [
 ]
 
 
-# [clients.1]
-# fc_username = 'flxt56ucr@mozmail.com'
-# data = [
-#     "test_data/public_cohorts/PRJEB7774/species.csv",
-#     "test_data/public_cohorts/PRJEB7774/config.yml"
-# ]
+[clients.1]
+fc_username = 'flxt56ucr@mozmail.com'
+data = [
+    "test_data/public_cohorts/PRJEB7774/species.csv",
+    "test_data/public_cohorts/PRJEB7774/config.yml"
+]
 
 
-# [clients.2]
-# fc_username = 'tsfl7biss@mozmail.com'
-# data = [
-#     "test_data/public_cohorts/PRJEB10878/species.csv",
-#     "test_data/public_cohorts/PRJEB10878/config.yml"
-# ]
+[clients.2]
+fc_username = 'tsfl7biss@mozmail.com'
+data = [
+    "test_data/public_cohorts/PRJEB10878/species.csv",
+    "test_data/public_cohorts/PRJEB10878/config.yml"
+]
 
 
-# [clients.3]
-# fc_username = '@mozmail.com'
-# data = [
-#     "test_data/public_cohorts/PRJNA429097/species.csv",
-#     "test_data/public_cohorts/PRJNA429097/config.yml"
-# ]
+[clients.3]
+fc_username = '6h7cz6xtm@mozmail.com'
+data = [
+    "test_data/public_cohorts/PRJNA429097/species.csv",
+    "test_data/public_cohorts/PRJNA429097/config.yml"
+]
 
 
-# [clients.4]
-# fc_username = '@mozmail.com'
-# data = [
-#     "test_data/public_cohorts/PRJNA731589/species.csv",
-#     "test_data/public_cohorts/PRJNA731589/config.yml"
-# ]
+[clients.4]
+fc_username = 'nhned60q0@mozmail.com'
+data = [
+    "test_data/public_cohorts/PRJNA731589/species.csv",
+    "test_data/public_cohorts/PRJNA731589/config.yml"
+]
 
 
-
-[debug]
-vmonly = false
-reinstall = true
-nodeps = true
-timeout = 600
 
 
 
