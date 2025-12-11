@@ -151,16 +151,9 @@ There's also a shorter script specifically for biosphere VMs (which already have
 
 ## TODO
 
+2 operations on the VMs are currently using elevated permisions
+- this is because featurecloud writes output as root?
 
-currently experiencing multiple issues with FC apps:
-- inconsistent finishing behaviour (mean-app, random-forest)
-- shutil copy error of the config file (federated-svd)
-- seems to be a related problem where an incorrect number of participants is assumed by featurecloud
-
-
-sometimes running into issue on the VMs: mounting of input data into the container fails
-- this is prohibitive for execution of some apps
-- has nothing to do with the reverse-engineered featurecloud API
 
 
 
