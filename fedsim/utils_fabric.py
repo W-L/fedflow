@@ -113,7 +113,7 @@ def fetch_remote_dir(conn: Connection, remote_dir: str, local_dir: str | Path):
     # Create archive remotely
     parent = str(Path(remote_dir).parent)
     base = Path(remote_dir).name
-    conn.run(f"tar -czf {archive_name} -C {parent} {base}")
+    conn.run(f"sudo tar -czf {archive_name} -C {parent} {base}")
     # Transfer archive
     conn.get(archive_name, str(local_archive))
     # Extract locally
@@ -195,8 +195,8 @@ def reset_node(conn: Connection) -> None:
     log(f"Resetting node {conn.host}...")
     # stop docker containers
     execute_fabric("docker ps -q | xargs -r docker stop", cxn=conn)
-    # remove data directory, deactivated for now 
-    # execute_fabric("rm -rf data/", cxn=conn)
+    # remove data directory
+    execute_fabric("sudo rm -rf data/", cxn=conn)
     
 
 
