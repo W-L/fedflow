@@ -49,6 +49,8 @@ def get_client_connections(conf: Config):
 
 
 def prep_clients(clients: ClientManager, conf: Config, reinstall: bool = False, nodeps: bool = False):
+    log("Resetting clients...")
+    clients.reset_clients()
     log("Distributing credentials to clients...")
     clients.distribute_credentials(fc_creds=conf.fc_creds)
     log("Distributing data to clients...")
@@ -108,14 +110,18 @@ def main():
     outdir = conf.config['general'].get('outdir', 'results/')
 
     debug = conf.config.get('debug', {})
+    reinstall = debug.get('reinstall', True)
+    nodeps = debug.get('nodeps', True)
+    timeout = debug.get('timeout', 60)
+    vmonly = debug.get('vmonly', False)
 
     clients = get_client_connections(conf=conf)
-    if debug.get('vmonly', False):
+    if vmonly:
         log("Vagrant VMs launched. Exiting.")
         return
-    prep_clients(clients=clients, conf=conf, reinstall=debug.get('reinstall', False), nodeps=debug.get('nodeps', False))
+    prep_clients(clients=clients, conf=conf, reinstall=reinstall, nodeps=nodeps)
     project_id = prep_project(clients=clients, conf=conf)
-    run_project(clients=clients, project_id=project_id, timeout=debug.get('timeout', 60), outdir=outdir)
+    run_project(clients=clients, project_id=project_id, timeout=timeout, outdir=outdir)
     cleanup(clients=clients, conf=conf)
 
 

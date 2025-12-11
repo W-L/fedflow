@@ -159,6 +159,19 @@ class ClientManager:
     
 
 
+    def reset_clients(self, nodes = None) -> None:
+        """
+        Reset multiple remotes by stopping any stray docker processes
+        and removing all data.
+
+        :param nodes: list of fabric Connections to reset
+        """
+        for cxn in self._nodes_or_all(nodes):
+            utils_fabric.reset_node(conn=cxn)
+        return
+    
+
+
     def create_and_join_project(self, coordinator: list, participants: list, tool: str) -> str:
         """
         Use the featurecloud API to create a project with the coordinator node 

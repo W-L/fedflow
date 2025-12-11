@@ -184,3 +184,19 @@ def stop_featurecloud(conn: Connection) -> None:
     stdout, stderr = execute_fabric(command=cmd, cxn=conn)
          
 
+
+def reset_node(conn: Connection) -> None:
+    """
+    Reset a remote node by stopping any stray docker processes
+    and removing all data.
+
+    :param conn: fabric Connection to the remote host
+    """
+    log(f"Resetting node {conn.host}...")
+    # stop docker containers
+    execute_fabric("docker ps -q | xargs -r docker stop", cxn=conn)
+    # remove data directory, deactivated for now 
+    # execute_fabric("rm -rf data/", cxn=conn)
+    
+
+
