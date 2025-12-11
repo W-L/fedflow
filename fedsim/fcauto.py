@@ -44,18 +44,15 @@ def get_args() -> argparse.Namespace:
         help="Reset a FeatureCloud project to status 'ready' ",
         parents=[common]
     )
-    # TODO add download subcommand
 
-    # arguments for project creation
+    # additional arguments for each subcommand
     create.add_argument("-t", "--tool", help="Tool to use in project")
     create.add_argument("-n", "--num", help="Number of participant tokens to create",
                          type=int, default=0)
-    # arguments to join a project
     join.add_argument("-t", "--token", help="Token to join project")
-    # arguments for uploading data to a project
     contribute.add_argument("-d", "--data", help="Paths of data to contribute. Can be multiple arguments.", nargs='+')
-    # monitor, query and reset have no additional arguments
     monitor.add_argument("-t", "--timeout", help="Maximum time to wait for project to finish (in seconds)", type=int, default=60)
+    #
     args = parser.parse_args()
     return args
 
