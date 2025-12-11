@@ -614,11 +614,6 @@ def monitor_project(username: str, project_id: str, timeout: int = 60):
     # monitor the project run
     final_status = fcc.monitor_project(timeout=timeout)
     print(f"Project {project_id} status: {final_status}")
-    time.sleep(5)
-    # download outcome
-    out_dir = 'results/'
-    downloaded_files = fcc.download_outcome(out_dir=out_dir)
-    print(f"Run finished with status {final_status}. Logs (& Results) downloaded to {out_dir}: \n{downloaded_files}")
    
 
 
