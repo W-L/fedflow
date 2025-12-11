@@ -93,6 +93,37 @@ def transfer_with_packing(conn: Connection, paths: Iterable[str]) -> None:
 
 
 
+def fetch_remote_dir(conn: Connection, remote_dir: str, local_dir: str | Path):
+    """
+    Download a remote directory by archiving it on the remote host,
+    transferring the archive, extracting locally, and cleaning up.
+
+    :param conn: fabric Connection to the remote host
+    :param remote_dir: path to the remote directory to download
+    :param local_dir: local directory to save the downloaded content
+    """
+    remote_dir = remote_dir.rstrip("/")
+    local_dir = Path(local_dir)
+    local_dir.mkdir(parents=True, exist_ok=True)
+
+    archive_name = Path(remote_dir).name + ".tar.gz"
+    local_archive = local_dir / archive_name
+
+    # Create archive remotely
+    parent = str(Path(remote_dir).parent)
+    base = Path(remote_dir).name
+    conn.run(f"tar -czf {archive_name} -C {parent} {base}")
+    # Transfer archive
+    conn.get(archive_name, str(local_archive))
+    # Extract locally
+    with tarfile.open(local_archive, "r:gz") as tar:
+        tar.extractall(local_dir)
+    # cleanup
+    conn.run(f"rm -f {archive_name}")
+    local_archive.unlink()
+
+
+
 def write_to_file_remote(conn: Connection, remote_path: str, content: str) -> None:
     """
     Write content to a file on the remote host via `conn`.
