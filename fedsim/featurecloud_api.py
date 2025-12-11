@@ -423,7 +423,7 @@ class FCC:
 
         # finalize upload from this participant
         # setting the 'finalize' flag finishes the upload from a single participant
-        time.sleep(5)
+        time.sleep(2)
         params = {
             "projectId": self.project.project_id,
             "fileName": "",     
