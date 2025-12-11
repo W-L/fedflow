@@ -1,5 +1,6 @@
 import argparse
 from datetime import datetime
+from time import sleep
 
 from fedsim.logger import setup_logging, log
 from fedsim.config import Config
@@ -85,9 +86,10 @@ def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: s
     # monitor run, then download logs and results
     log("Monitoring FeatureCloud project run...")
     clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id, timeout=timeout)
-    # download outcome
-    fetch_remote_dir(conn=clients.coordinator[0], remote_dir="data/", local_dir=outdir)
-    log(f"Run finished. Results at: {outdir}")
+    sleep(10)
+    # download outcome from all clients
+    clients.fetch_results(outdir=outdir)
+
 
 
 def cleanup(clients: ClientManager, conf: Config):

@@ -237,5 +237,16 @@ class ClientManager:
             log(f'[{cxn.host}] STDERR: \n{result.stderr}\n')
         
 
+    def fetch_results(self, outdir, nodes=None):
+        """
+        Fetch results from nodes
 
-    
+        :param nodes: list of fabric Connections to fetch results from
+        """
+        for cxn in self._nodes_or_all(nodes):
+            utils_fabric.fetch_remote_dir(
+                conn=cxn,
+                remote_dir="data/",
+                local_dir=outdir
+            )
+

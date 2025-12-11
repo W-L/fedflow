@@ -102,10 +102,11 @@ def fetch_remote_dir(conn: Connection, remote_dir: str, local_dir: str | Path):
     :param remote_dir: path to the remote directory to download
     :param local_dir: local directory to save the downloaded content
     """
-    remote_dir = remote_dir.rstrip("/")
-    local_dir = Path(local_dir)
+    fcuser = conn["fc_username"]
+    local_dir = Path(f"{local_dir}/{fcuser}")
     local_dir.mkdir(parents=True, exist_ok=True)
 
+    remote_dir = remote_dir.rstrip("/")
     archive_name = Path(remote_dir).name + ".tar.gz"
     local_archive = local_dir / archive_name
 
