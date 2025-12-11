@@ -5,6 +5,7 @@ from fedsim.logger import setup_logging, log
 from fedsim.config import Config
 from fedsim.VagrantManager import VagrantManager
 from fedsim.ClientManager import ClientManager
+from fedsim.utils_fabric import fetch_remote_dir
 
 
 def get_args() -> argparse.Namespace:
@@ -76,7 +77,7 @@ def prep_project(clients: ClientManager, conf: Config):
     return project_id
 
 
-def run_project(clients: ClientManager, project_id: str, timeout: int = 60):
+def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: str):
     # contribute data to project
     # once all participants have contributed, the project is started
     log("Contributing data to FeatureCloud project...")
@@ -84,6 +85,9 @@ def run_project(clients: ClientManager, project_id: str, timeout: int = 60):
     # monitor run, then download logs and results
     log("Monitoring FeatureCloud project run...")
     clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id, timeout=timeout)
+    # download outcome
+    fetch_remote_dir(conn=clients.coordinator[0], remote_dir="data/", local_dir=outdir)
+    log(f"Run finished. Results at: {outdir}")
 
 
 def cleanup(clients: ClientManager, conf: Config):
@@ -99,6 +103,7 @@ def main():
     args = get_args()
     log_mode = "debug" if args.verbose else "quiet"
     conf = setup_run(config=args.config, log_mode=log_mode)
+    outdir = conf.config['general'].get('outdir', 'results/')
 
     debug = conf.config.get('debug', {})
 
@@ -108,7 +113,7 @@ def main():
         return
     prep_clients(clients=clients, conf=conf, reinstall=debug.get('reinstall', False), nodeps=debug.get('nodeps', False))
     project_id = prep_project(clients=clients, conf=conf)
-    run_project(clients=clients, project_id=project_id, timeout=debug.get('timeout', 60))
+    run_project(clients=clients, project_id=project_id, timeout=debug.get('timeout', 60), outdir=outdir)
     cleanup(clients=clients, conf=conf)
 
 
