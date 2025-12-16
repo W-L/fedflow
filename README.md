@@ -33,16 +33,27 @@ The steps executed for each VM can be seen here:
 
 
 
-## Requirements
+## Requirements & installation
 
-Clone the project and install it.
+- For simulations vagrant and some virtualisation provider needs to be installed on the system. For development I'm using libvirt and the vagrant-libvirt plugin.
 
-```
-git clone X && cd FedSim/
-pip install .
-```
+  - Instructions to install vagrant: https://developer.hashicorp.com/vagrant/install
 
-For simulations vagrant and some virtualisation provider needs to be installed on the system. For development I'm using libvirt and the vagrant-libvirt plugin
+  - Instructions for the vagrant-libvirt plugin: https://vagrant-libvirt.github.io/vagrant-libvirt/installation.html#ubuntu--debian
+
+- To build the fedsim package 'hatch' is required. E.g.:
+
+  `pipx install hatch`
+
+
+- Clone the project and install it.
+
+  ```
+  git clone https://github.com/W-L/FedSim.git && cd FedSim/
+  pip install .
+  ```
+
+
 
 
 
@@ -146,6 +157,14 @@ sshkey = ''
 
 If `sim = true` is set, `hostname, username, port, sshkey` are ignored and vagrant vms are used instead. When real machines should be used, their connection details need to be provided.
 The field sshkey is the path to the public key used to authenticate the user on the host. Exchange of connection credentials is only automated in the simulation with vagrant.
+
+
+## Example usage
+
+
+A config is provided to run the 'mean' test app across 3 clients (with the same sample data provided in the repo of the app). Featurecloud users need to be provided in the config.
+
+`fedsim -c configs/config_mean_trio.toml`
 
 
 
