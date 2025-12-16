@@ -145,6 +145,12 @@ The provisioning script can also be used on other ubuntu-based machines. This ca
 There's also a shorter script specifically for biosphere VMs (which already have python and docker installed).
 
 
+# Terms of accceptable use and responsible automation
+
+This library provides programmatic access to functionality of featurecloud.ai that is normally available through manual interaction with the website. It does not bypass authentication mechanisms or access controls.
+To promote responsible use, the library enforces request limits and identifies itself explicitly via a User-Agent header at each request. These measures are intended to reduce the risk of excessive load or unintended disruption to the website.
+Users are responsible for ensuring that their use of this library complies with the website’s Terms of Service and applicable policies. High-volume scraping, aggressive polling, or other usage patterns that exceed normal interactive behavior are out of scope and may result in blocking by the website operator.
+If the website signals rate limiting or access restrictions (e.g. HTTP 429 or 403 responses), users need to reduce their request frequency or stop usage. The author does not operate or control the target website and makes no guarantees regarding access or compatibility.
 
 
 
@@ -152,19 +158,16 @@ There's also a shorter script specifically for biosphere VMs (which already have
 ## TODO
 
 2 operations on the VMs are currently using elevated permisions
-- this is because featurecloud writes output as root?
+- is this because featurecloud/docker writes output as root?
 
 
-
-
-### long-term
 
 write some convenience scripts that check the log files of all machines
 - including the logs of the fc controllers and the fc apps
 
 
 in the provisioning script, the docker version is currently fixed due to FC restrictions
-- check once their container is updated
+
 
 write pytests for everything
 
