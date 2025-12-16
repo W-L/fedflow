@@ -1,6 +1,5 @@
 from glob import glob
 from pathlib import Path
-import time
 
 import fedsim.utils_fabric as utils_fabric
 from fedsim.utils import execute_fabric
@@ -116,7 +115,7 @@ class ClientManager:
             fc_pass = fc_creds.get(fc_user, '')
             utils_fabric.write_to_file_remote(
                 conn=cxn,
-                remote_path=f".env",
+                remote_path=".env",
                 content=f"{fc_user}={fc_pass}\n"
             )
 

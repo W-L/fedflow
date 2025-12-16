@@ -6,7 +6,7 @@ from fedsim.logger import setup_logging, log
 from fedsim.config import Config
 from fedsim.VagrantManager import VagrantManager
 from fedsim.ClientManager import ClientManager
-from fedsim.utils_fabric import fetch_remote_dir
+
 
 
 def get_args() -> argparse.Namespace:

@@ -255,6 +255,6 @@ class VagrantManager:
             self.construct_serialgroup()
         # ping each vm
         for cxn in self.serialg:
-            result = cxn.run('echo "Ping from $(hostname)"', hide=True)
+            _ = cxn.run('echo "Ping from $(hostname)"', hide=True)
         return
 

@@ -241,7 +241,7 @@ class Project:
         """
         payload = {"token": token, "cmd": "join"}
         self.limiter.wait()
-        r = self.client.post(f"/api/project-tokens/", json=payload)
+        r = self.client.post("/api/project-tokens/", json=payload)
         r.raise_for_status()
         return r.json()
 
@@ -618,7 +618,7 @@ def create_project_and_tokens(username: str, tool: str, n_participants: int):
     log(f"\nPROJECT: {new_proj.project_id}")
     for t in tokens:
         log(f"TOKEN: {t['token']}")
-    log(f"\n")
+    log("\n")
 
 
 

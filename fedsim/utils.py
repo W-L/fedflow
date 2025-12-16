@@ -20,7 +20,7 @@ def empty_file(path: str) -> None:
 
 
 
-def randstr(l: int = 16) -> str:
+def randstr(l: int = 16) -> str:  # noqa: E741
     """
     Generate random alphanum string of length l
 
