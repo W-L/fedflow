@@ -129,6 +129,7 @@ sshkey = ''
 
 
 If `sim = true` is set, `hostname, username, port, sshkey` are ignored and vagrant vms are used instead. When real machines should be used, their connection details need to be provided.
+The field sshkey is the path to the public key used to authenticate the user on the host. Exchange of connection credentials is only automated in the simulation with vagrant.
 
 
 
