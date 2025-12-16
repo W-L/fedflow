@@ -21,6 +21,47 @@ TOOL_IDS = {
 }
 
 
+DEFAULT_HEADERS = {
+    "User-Agent": "fedsim (https://github.com/W-L/FedSim)"
+}
+
+
+
+
+
+class RateLimiter:
+
+    def __init__(self, rate: int = 3, per: int = 1):
+        """
+        :param rate: Max requests per unit time
+        :param per: seconds
+        """
+        self.rate = rate
+        self.per = per
+        self.allowance = rate
+        self.last_check = time.monotonic()
+
+
+
+    def wait(self):
+        now = time.monotonic()
+        elapsed = now - self.last_check
+        self.last_check = now
+
+        self.allowance += elapsed * (self.rate / self.per)
+        self.allowance = min(self.allowance, self.rate)
+
+        if self.allowance < 1:
+            sleep_time = (1 - self.allowance) * (self.per / self.rate)
+            time.sleep(sleep_time)
+            self.allowance = 0
+        else:
+            self.allowance -= 1
+
+
+
+
+
 
 class Controller:
 
@@ -36,6 +77,7 @@ class Controller:
         """
         self.client = httpx.Client(base_url=host)
         self.host = host
+        self.limiter = RateLimiter() 
 
 
     def controller_is_running(self) -> bool:
@@ -45,6 +87,7 @@ class Controller:
         :return: _description_
         """
         try:
+            self.limiter.wait()
             r = self.client.get(f"{self.host}/ping/", timeout=2)
             return r.status_code == 200
         except httpx.RequestError:
@@ -62,6 +105,7 @@ class Project:
 
     def __init__(self, client: httpx.Client):
         self.client = client
+        self.limiter = RateLimiter()
         
 
         
@@ -126,6 +170,7 @@ class Project:
             "description": "",
             "status": ""
         }
+        self.limiter.wait()
         r = self.client.post("/api/projects/", json=new_proj)
         r.raise_for_status()
         data = r.json()
@@ -165,6 +210,7 @@ class Project:
             ]
         }
         # send the payload to FeatureCloud
+        self.limiter.wait()
         r = self.client.put(f"/api/projects/{self.project_id}/", json=payload)
         r.raise_for_status()
         return r.json()
@@ -179,6 +225,7 @@ class Project:
         """
         tokens = []
         for _ in range(n):
+            self.limiter.wait()
             r = self.client.post(f"/api/project-tokens/{self.project_id}/", json={"cmd": "create"})
             r.raise_for_status()
             tokens.append(r.json())   # contains id, token, project, etc.
@@ -193,6 +240,7 @@ class Project:
         :return: json string
         """
         payload = {"token": token, "cmd": "join"}
+        self.limiter.wait()
         r = self.client.post(f"/api/project-tokens/", json=payload)
         r.raise_for_status()
         return r.json()
@@ -204,6 +252,7 @@ class Project:
 
         :return: status description string
         """
+        self.limiter.wait()
         r = self.client.get(f"/api/projects/{self.project_id}/")
         r.raise_for_status()
         data = r.json()
@@ -218,6 +267,7 @@ class Project:
         :param status: string describing the status
         :return: json response
         """
+        self.limiter.wait()
         status_change = {"status": status}
         r = self.client.put(f"/api/projects/{self.project_id}/", json=status_change)
         r.raise_for_status()
@@ -267,12 +317,13 @@ class User:
 
         :param username: name on FeatureCloud.ai
         """
-        self.client = httpx.Client(base_url="https://featurecloud.ai")
+        self.client = httpx.Client(base_url="https://featurecloud.ai", headers=DEFAULT_HEADERS)
         self.username = username
         self.password = os.getenv(f"{username}")
         assert self.password is not None, f"Credentials for {username} not found."
         self.access = None
         self.refresh = None
+        self.limiter = RateLimiter()
         # login as soon as user is created
         self.login()
         self.is_logged_in()
@@ -285,6 +336,7 @@ class User:
         Login as this user
         """
         log(f"Logging in user {self.username}...")
+        self.limiter.wait()
         r = self.client.post("/api/auth/login/",
                              json={"username": self.username, "password": self.password})
         r.raise_for_status()
@@ -298,6 +350,7 @@ class User:
         """
         Method to refresh a temporary token. Currently unused.
         """
+        self.limiter.wait()
         r = self.client.post("/api/auth/token/refresh/", json={"refresh": self.refresh})
         r.raise_for_status()
         self.access = r.json()["access"]
@@ -311,6 +364,7 @@ class User:
         :return: True if logged in
         """
         try:
+            self.limiter.wait()
             r = self.client.get("/api/user/info/")
             ok = r.status_code == 200
             log(f"User {self.username} logged in: {ok}", level=logging.DEBUG)
@@ -325,6 +379,7 @@ class User:
 
         :return: json snippet
         """
+        self.limiter.wait()
         r = self.client.get("/api/site/")
         r.raise_for_status()
         site_info = r.json()
@@ -359,6 +414,7 @@ class FCC:
 
         :return: True if user is coordinator
         """
+        self.user.limiter.wait()
         r = self.user.client.get(f"/api/projects/{self.project.project_id}/")
         r.raise_for_status()      # raise error if project doesn't exist
         data = r.json()
@@ -461,7 +517,7 @@ class FCC:
                 return status  # finished, failed, or any other state
             
             if time.time() - start_time > timeout:
-                # TODO stop the project through the api if timeout is reached
+                # stop the project through the api
                 self.project.set_status("shutdown")
                 time.sleep(5)
                 status = self.project.get_status()
