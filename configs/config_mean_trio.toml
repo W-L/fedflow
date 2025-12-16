@@ -3,6 +3,7 @@
 sim = true
 # tool = 'mean-app'
 project_id = 17288
+outdir = "results_mean3"
 
 [clients]
 
