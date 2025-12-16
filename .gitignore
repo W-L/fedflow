@@ -11,7 +11,7 @@ mnist.tsv
 test_data/public_cohorts/
 Vagrantfile
 *.excalidraw
-
+conf/
 
 .vscode/*.code-workspace
 .vscode/settings.json

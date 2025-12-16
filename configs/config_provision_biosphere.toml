@@ -4,8 +4,8 @@
 [clients]
 
 [clients.0]
-hostname = '134.158.248.72'
+hostname = 'HOST'
 username = 'ubuntu'
-sshkey = '/home/lweilguny/.ssh/biosphere' 
+sshkey = '/home/USER/.ssh/biosphere' 
 
 
