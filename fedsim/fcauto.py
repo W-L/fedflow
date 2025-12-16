@@ -29,7 +29,7 @@ def get_args() -> argparse.Namespace:
         help="Monitor a running FeatureCloud project", 
         parents=[common]
     )
-    query = sub.add_parser(
+    query = sub.add_parser(  # noqa: F841
         "query", 
         help="Query FeatureCloud project status",
         parents=[common]
@@ -39,7 +39,7 @@ def get_args() -> argparse.Namespace:
         help="Contribute data to a FeatureCloud project",
         parents=[common]
     )
-    reset = sub.add_parser(
+    reset = sub.add_parser(  # noqa: F841
         "reset", 
         help="Reset a FeatureCloud project to status 'ready' ",
         parents=[common]
