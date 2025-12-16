@@ -111,7 +111,7 @@ def main():
 
     debug = conf.config.get('debug', {})
     reinstall = debug.get('reinstall', True)
-    nodeps = debug.get('nodeps', True)
+    nodeps = debug.get('nodeps', False)
     timeout = debug.get('timeout', 60)
     vmonly = debug.get('vmonly', False)
 
