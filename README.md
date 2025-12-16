@@ -35,13 +35,13 @@ The steps executed for each VM can be seen here:
 
 ## Requirements & installation
 
-- For simulations vagrant and some virtualisation provider needs to be installed on the system. For development I'm using libvirt and the vagrant-libvirt plugin.
+- For simulations vagrant and some virtualisation provider are required. For development I'm using libvirt and the vagrant-libvirt plugin.
 
   - Instructions to install vagrant: https://developer.hashicorp.com/vagrant/install
 
   - Instructions for the vagrant-libvirt plugin: https://vagrant-libvirt.github.io/vagrant-libvirt/installation.html#ubuntu--debian
 
-- To build the fedsim package 'hatch' is required. E.g.:
+- To build the fedsim package `hatch` is required. E.g.:
 
   `pipx install hatch`
 
