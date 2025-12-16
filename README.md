@@ -46,15 +46,16 @@ Check `fcauto SUBCOMMAND --help` for arguments/options.
 
 
 ```
-usage: fcauto [-h] {create,join,monitor,contribute,reset} ...
+usage: fcauto [-h] {create,join,monitor,query,contribute,reset} ...
 
 FeatureCloud automation tool
 
 positional arguments:
-  {create,join,monitor,contribute,reset}
+  {create,join,monitor,query,contribute,reset}
     create              Create a new FeatureCloud project (as coordinator)
     join                Join an existing FeatureCloud project
     monitor             Monitor a running FeatureCloud project
+    query               Query FeatureCloud project status
     contribute          Contribute data to a FeatureCloud project
     reset               Reset a FeatureCloud project to status 'ready'
 
