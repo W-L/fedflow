@@ -10,6 +10,8 @@ destination_remote.tar.gz
 mnist.tsv
 test_data/public_cohorts/
 Vagrantfile
+*.excalidraw
+
 
 .vscode/*.code-workspace
 .vscode/settings.json

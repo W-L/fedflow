@@ -17,6 +17,22 @@ What this project does not automate:
 - featurecloud apps that require frontend interaction of the coordinator
 
 
+## Concept
+
+Fedsim is essentially an infrastructure wrapper to use featurecloud.ai without manual interaction. 
+It's design is intended to allow the use of local simulated VMs (on the same hardware), or connection to machines at other participating institutes. 
+The second use case could for example be in the context of a collaboration where data remains at participating institutes but access to a VM with that data is granted to the controller of the analysis.
+
+
+<img src="figures/fedsim_deploy.png" alt="fedsim_deploy" width="500"/>
+
+
+The steps executed for each VM can be seen here:
+
+<img src="figures/fedsim_vm.png" alt="fedsim_vm" width="500"/>
+
+
+
 ## Requirements
 
 Clone the project and install it.
