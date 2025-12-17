@@ -14,13 +14,6 @@ from fedsim.utils import randstr
 load_dotenv(dotenv_path='.env', override=True)
         
 
-TOOL_IDS = {
-    "federated-svd": 85,
-    "random-forest": 50,
-    "mean-app": 66,
-}
-
-
 DEFAULT_HEADERS = {
     "User-Agent": "fedsim (https://github.com/W-L/FedSim)"
 }
@@ -126,18 +119,18 @@ class Project:
         
         
     @classmethod
-    def from_tool(cls, tool: str, client: httpx.Client):
+    def from_tool(cls, app_id: int, client: httpx.Client):
         """
-        Create a new Featurecloud project from the name of a tool
+        Create a new Featurecloud project from the ID of an app
 
-        :param tool: name of a FeatureCloud tool
+        :param app_id: ID of app on FeatureCloud
         :param client: httpx.Client connection of User
         :return: Project instance
         """
         proj = cls(client=client)
         proj.create_new_project()
-        proj.set_project_workflow(tool=tool)
-        log(f"Created new project {proj.project_id} {proj.project_name} with tool {proj.tool}.")
+        proj.set_project_workflow(app_id=app_id)
+        log(f"Created new project {proj.project_id} {proj.project_name}")
         log(f"Project status: {proj.get_status()}")
         return proj
     
@@ -178,20 +171,14 @@ class Project:
         self.project_id = project_id
 
 
-    def set_project_workflow(self, tool: str):
+    def set_project_workflow(self, app_id: int):
         """
-        Set a tool to use in the workflow of a project.        
+        Set an app to use in the workflow of a project.
 
-        :param tool: Name of the tool to use
+        :param app_id: ID of the tool to use
         :raises ValueError: If the given tool is not implemented
         :return: json response
         """
-        self.tool = tool
-        try:
-            tool_id = TOOL_IDS[tool]
-        except KeyError:
-            raise ValueError(f"{tool} not available. Available: {list(TOOL_IDS.keys())}")
-
         payload = {
             "id": self.project_id,
             "name": self.project_name,
@@ -202,7 +189,7 @@ class Project:
                     "id": 0,
                     "projectId": self.project_id,
                     "federatedApp": {
-                        "id": tool_id
+                        "id": app_id
                     },
                     "order": 0,
                     "versionCertificationLevel": 1
@@ -308,6 +295,32 @@ class Project:
 
 
 
+class AppTable:
+
+    def __init__(self):
+        """
+        Class to represent the app table on FeatureCloud
+        """
+        self.client = httpx.Client(base_url="https://featurecloud.ai", headers=DEFAULT_HEADERS)
+        self.limiter = RateLimiter()
+        self.apps = self._get_app_list()
+        
+
+    def _get_app_list(self) -> dict:
+        """
+        Get the list of available apps on FeatureCloud.ai
+
+        :return: dict of app slugs and their IDs
+        """
+        self.limiter.wait()
+        r = self.client.get("/api/apps/")
+        r.raise_for_status()
+        apps = r.json()
+        # get dict of slugs to IDs
+        apps = {app["slug"]: app["id"] for app in apps}
+        return apps
+
+
 
 class User: 
 
@@ -328,6 +341,8 @@ class User:
         self.login()
         self.is_logged_in()
         self.get_site_info()
+        # get the app list
+        self.apps = AppTable().apps
         
 
 
@@ -388,6 +403,76 @@ class User:
         with open("data/site_info.json", "w") as f:
             f.write(r.text)
         return site_info
+    
+
+    def get_purchased_apps(self) -> dict:
+        """
+        Get the list of apps owned by this user on FeatureCloud.ai
+
+        :return: dict of app slugs and IDs
+        """
+        self.limiter.wait()
+        r = self.client.get("/api/apps/purchase/")
+        r.raise_for_status()
+        apps = r.json()
+        # get dict of slugs to IDs
+        apps = {app["slug"]: app["id"] for app in apps}
+        return apps
+
+    
+    def owns_app(self, slug: str) -> bool:
+        """
+        Check whether the user owns a specific app on FeatureCloud.ai
+
+        :param slug: slug of the app to check
+        :return: bool ownership
+        """
+        app_id = self.apps.get(slug)
+        if app_id is None:
+            raise ValueError(f"App {slug} invalid")
+        owned_apps = self.get_purchased_apps()
+        if app_id not in owned_apps.values():
+            return False
+        return True
+    
+    
+    def purchase_app(self, slug: str):
+        """
+        purchase an app on FeatureCloud.ai
+
+        :return: bool success
+        """
+        if self.owns_app(slug):
+            log(f"User {self.username} already has app {slug}.", level=logging.DEBUG)
+            return True
+        # add app to purchased apps
+        app_id = self.apps.get(slug)
+        self.limiter.wait()
+        r = self.client.post(f"/api/apps/{app_id}/purchase/")
+        r.raise_for_status()
+        assert self.owns_app(slug), f"Failed to purchase app {slug} for user {self.username}."
+        return True
+    
+
+    def remove_app(self, slug: str):
+        """
+        Remove an app from the purchased apps of this user
+
+        :param slug: slug of the app to remove
+        :return: bool success
+        """
+        app_id = self.apps.get(slug)
+        if app_id is None:
+            raise ValueError(f"App {slug} invalid")
+        if not self.owns_app(slug):
+            log(f"User {self.username} does not have app {slug}.", level=logging.DEBUG)
+            return True
+        # remove app from purchased apps
+        self.limiter.wait()
+        r = self.client.delete(f"/api/apps/{app_id}/purchase/")
+        r.raise_for_status()
+        assert not self.owns_app(slug), f"Failed to remove app {slug} for user {self.username}."
+        return True
 
 
 
@@ -613,7 +698,16 @@ def create_project_and_tokens(username: str, tool: str, n_participants: int):
     :param n_participants: Number of participant tokens to create.
     """
     user = User(username=username)
-    new_proj = Project.from_tool(tool=tool, client=user.client)
+    # check if user owns the app otherwise purchase it
+    app_id = user.apps.get(tool)
+    if app_id is None:
+        raise ValueError(f"App {tool} not found on FeatureCloud.ai, "
+                         f"available apps: \n {list(user.apps.keys())}")
+    if not user.owns_app(tool):
+        user.purchase_app(tool)
+        log(f"Added app {tool} to user {username}.")
+    # proceed with project creation
+    new_proj = Project.from_tool(app_id=app_id, client=user.client)
     tokens = new_proj.create_project_tokens(n=n_participants)
     log(f"\nPROJECT: {new_proj.project_id}")
     for t in tokens:
