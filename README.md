@@ -13,7 +13,6 @@ What this project does not automate:
 
 - user creation at featurecloud.ai
 - user's site registration at featurecloud.ai
-- 'purchasing' apps in the featurecloud.ai app store
 - featurecloud apps that require frontend interaction of the coordinator
 
 
