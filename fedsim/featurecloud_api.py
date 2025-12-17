@@ -810,3 +810,12 @@ def reset_project(username: str, project_id: str):
     log(f"Project {project_id} has been reset to 'ready' status.")
 
 
+
+def list_apps():
+    """
+    List available apps on FeatureCloud.ai
+    """
+    apps = AppTable().apps.keys()
+    for app in apps:
+        log(f"{app}")
+

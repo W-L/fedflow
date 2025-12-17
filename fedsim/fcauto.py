@@ -44,6 +44,10 @@ def get_args() -> argparse.Namespace:
         help="Reset a FeatureCloud project to status 'ready' ",
         parents=[common]
     )
+    list_apps = sub.add_parser(     # noqa: F841
+        "list-apps",
+        help="List available apps on FeatureCloud",
+    )
 
     # additional arguments for each subcommand
     create.add_argument("-t", "--tool", help="Tool to use in project")
@@ -96,6 +100,8 @@ def main():
             username=args.user,
             project_id=args.project,
         )
+    elif args.cmd == "list-apps":
+        featurecloud_api.list_apps()
 
 
 
