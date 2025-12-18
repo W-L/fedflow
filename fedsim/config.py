@@ -96,11 +96,12 @@ class Config:
         :return: dictionary of Featurecloud credentials
         """
         load_dotenv(dotenv_path='.env', override=True)
+        load_dotenv(dotenv_path='tests/env', override=True)
         fc_cred = {}
         for fc_user in self.fc_users:
-            if not fc_user:
-                log('no Featurecloud user specified for a client, skipping credential load')
-                continue
+            # if not fc_user:  # if coordinator does not contribute data
+            #     log('no Featurecloud user specified for a client, skipping credential load')
+            #     continue
             fc_pass = os.getenv(f"{fc_user}")
             assert fc_pass is not None, f"credentials {fc_user} not found"
             fc_cred[fc_user] = fc_pass
