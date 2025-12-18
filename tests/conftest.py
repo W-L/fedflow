@@ -1,6 +1,4 @@
 import os
-from pathlib import Path
-
 import pytest
 from dotenv import load_dotenv
 
@@ -39,11 +37,3 @@ def vagrant_manager():
     vm = VagrantManager(num_nodes=3)
     return vm
 
-
-@pytest.fixture
-def client_manager_sim(config_mean_trio, vagrant_manager):
-    vm = vagrant_manager
-    vm.construct_serialgroup()
-    conf = config_mean_trio
-    clients = ClientManager(serialgroup=vm.serialg, clients=conf.config['clients'])
-    return clients
