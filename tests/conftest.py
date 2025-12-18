@@ -1,14 +1,13 @@
 import os
+from pathlib import Path
 
 import pytest
 from dotenv import load_dotenv
 
 from fedsim.config import Config
-
-
-TOML_MEAN_TRIO = "tests/configs/config_mean_trio.toml" 
-TOML_MEAN_TRIO_NOSIM = "tests/configs/config_mean_trio_nosim.toml" 
-TEST_ENV_FILE = "tests/env"
+from fedsim.VagrantManager import VagrantManager
+from fedsim.ClientManager import ClientManager
+from tests.constants import TOML_MEAN_TRIO, TOML_MEAN_TRIO_NOSIM, TEST_ENV_FILE
 
 
 
@@ -35,5 +34,16 @@ def fc_creds() -> dict[str, str]:
 
 
 
+@pytest.fixture
+def vagrant_manager():    
+    vm = VagrantManager(num_nodes=3)
+    return vm
 
 
+@pytest.fixture
+def client_manager_sim(config_mean_trio, vagrant_manager):
+    vm = vagrant_manager
+    vm.construct_serialgroup()
+    conf = config_mean_trio
+    clients = ClientManager(serialgroup=vm.serialg, clients=conf.config['clients'])
+    return clients
