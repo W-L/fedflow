@@ -80,16 +80,11 @@ class VagrantManager:
             end
         end
     end
-        """
-
-        try:
-            with open("Vagrantfile", "w") as vf:
-                vf.write(vagrantfile_content)
-                vf.write("\n")
-
-        except Exception as e:
-            log(f"Error writing Vagrantfile: {e}")
-            return False
+        """        
+        with open("Vagrantfile", "w") as vf:
+            vf.write(vagrantfile_content)
+            vf.write("\n")
+            
         log("Vagrantfile written")
         return True
 
@@ -239,22 +234,4 @@ class VagrantManager:
         self.serialg = serialg
         return serialg
 
-
-
-    def ping(self):
-        """
-        Test whether the VMs can be reached via the fabric Connections
-        """
-        # check if vms are up
-        if not self._is_up():
-            log("Vagrant VMs are not running.")
-            return
-        # check if serialgroup is constructed
-        if not self.serialg:
-            log("Constructing SerialGroup...")
-            self.construct_serialgroup()
-        # ping each vm
-        for cxn in self.serialg:
-            _ = cxn.run('echo "Ping from $(hostname)"', hide=True)
-        return
 
