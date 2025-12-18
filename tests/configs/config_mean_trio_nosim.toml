@@ -1,0 +1,38 @@
+[general]
+
+sim = false
+tool = 'mean-app'
+# project_id = XXXXX
+outdir = "results_mean3"
+
+[clients]
+
+[clients.0]
+fc_username = 'USER0'
+data = ["test_data/mean_trio/c0/data.csv", "test_data/mean_trio/c0/config.yml"]
+coordinator = true
+hostname = 'host0'
+username = 'user0'
+port = '00' 
+sshkey = 'not_a_real_key' 
+
+
+[clients.1]
+fc_username = 'USER1'
+data = ["test_data/mean_trio/c1/data.csv", "test_data/mean_trio/c1/config.yml"]
+hostname = 'host1'
+username = 'user1'
+port = '01' 
+sshkey = 'not_a_real_key' 
+
+
+[clients.2]
+fc_username = 'USER2'
+data = ["test_data/mean_trio/c2/data.csv", "test_data/mean_trio/c2/config.yml"]
+hostname = 'host2'
+username = 'user2'
+port = '02' 
+sshkey = 'not_a_real_key' 
+
+
+
