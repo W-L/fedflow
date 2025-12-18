@@ -9,11 +9,11 @@ from fedsim.ClientManager import ClientManager
 
 
 
-def get_args() -> argparse.Namespace:
+def get_args(argv=None) -> argparse.Namespace:
      parser = argparse.ArgumentParser(description="Simulated federated analyses with VMs")
      parser.add_argument("-c", "--config", help="Path to the config file", required=True)
      parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
-     args = parser.parse_args()
+     args = parser.parse_args(argv)
      return args
 
 
@@ -103,8 +103,8 @@ def cleanup(clients: ClientManager, conf: Config):
     pass
 
 
-def main():
-    args = get_args()
+def main(argv=None):
+    args = get_args(argv=argv)
     log_mode = "debug" if args.verbose else "quiet"
     conf = setup_run(config=args.config, log_mode=log_mode)
     outdir = conf.config['general'].get('outdir', 'results/')
