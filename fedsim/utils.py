@@ -7,19 +7,6 @@ from fedsim.logger import log
 
 
 
-
-def empty_file(path: str) -> None:
-    """
-    Create an empty file at the specified path.
-
-    :param path: The path to the file.
-    """
-    with open(path, 'w'):
-        pass
-    return
-
-
-
 def randstr(l: int = 16) -> str:  # noqa: E741
     """
     Generate random alphanum string of length l
