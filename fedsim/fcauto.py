@@ -4,7 +4,7 @@ import fedsim.featurecloud_api as featurecloud_api
 
 
 
-def get_args() -> argparse.Namespace:
+def get_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog='fcauto', description='FeatureCloud automation tool')
     sub = parser.add_subparsers(dest="cmd", required=True)
 
@@ -57,14 +57,14 @@ def get_args() -> argparse.Namespace:
     contribute.add_argument("-d", "--data", help="Paths of data to contribute. Can be multiple arguments.", nargs='+')
     monitor.add_argument("-t", "--timeout", help="Maximum time to wait for project to finish (in seconds)", type=int, default=60)
     #
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     return args
 
 
 
 
-def main():
-    args = get_args()
+def main(argv=None):
+    args = get_args(argv)
 
     if args.cmd == "create":
         featurecloud_api.create_project_and_tokens(
