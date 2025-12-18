@@ -1,42 +1,32 @@
 from pathlib import Path
 import os
-
 import pytest
-from fedsim.VagrantManager import VagrantManager
 
 
 
-@pytest.fixture
-def vagrant_manager():    
-    vm = VagrantManager(num_nodes=1)
-    return vm
-    
-    
+@pytest.mark.integration
 def test_vm_launch(vagrant_manager):
     vm = vagrant_manager
+    Path("Vagrantfile").unlink(missing_ok=True)
+    assert not Path("Vagrantfile").is_file()
     vm.stop()
     assert not vm._is_up()
     vm.launch()
+    assert vm._is_up()
     assert Path("Vagrantfile").is_file()
     assert os.path.getsize("Vagrantfile") > 0
-    assert vm._is_up()
 
 
+
+@pytest.mark.integration
 def test_serialgroup(vagrant_manager):
     vm = vagrant_manager
     vm.launch()
     _ = vm.construct_serialgroup()
-
-    expected_hosts = {
-                "host": "nods-0",
-                "hostname": "someip",
-                "user": "vagrant",
-                "port": 22,
-                "identityfile": "path/to/private/key",
-            }
-
-    assert vm.hosts == expected_hosts
-    assert vm.client_strings == ["vagrant@someip:22"]
-    assert len(vm.serialg) == 1
-    assert vm.serialg[0].host == "someip"
+    assert len(vm.hosts) == 3
+    assert 'node-0' in list(vm.hosts.keys())
+    assert vm.hosts['node-0']['user'] == 'vagrant'
+    assert Path(vm.hosts['node-0']['identityfile']).is_file()
+    assert len(vm.serialg) == 3
+    assert vm.serialg[0].user == "vagrant"
 

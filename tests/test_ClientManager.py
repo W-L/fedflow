@@ -1,10 +1,11 @@
 import pytest
 
+from fedsim.ClientManager import ClientManager
+
 
 
 @pytest.fixture
-def fake_client_manager(config_mean_trio_nosim):
-    from fedsim.ClientManager import ClientManager
+def client_manager_nosim(config_mean_trio_nosim):
     conf = config_mean_trio_nosim
     conf.construct_serialgroup()
 
@@ -12,13 +13,13 @@ def fake_client_manager(config_mean_trio_nosim):
         serialgroup=conf.serialg,
         clients=conf.config['clients'],
     )
-
     return manager
 
 
 
-def test_client_manager_initialization(fake_client_manager):
-    cm = fake_client_manager
+
+def test_client_manager_initialization(client_manager_nosim):
+    cm = client_manager_nosim
     assert cm is not None
     assert len(cm.all) == 3
     assert cm.coordinator[0]['fc_username'] == "USER0"
