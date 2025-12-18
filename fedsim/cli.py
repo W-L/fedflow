@@ -38,7 +38,8 @@ def get_client_connections(conf: Config):
         log('Setting up Vagrant VMs...')
         nnodes = len(conf.config['clients'])
         # nnodes = 2  # TODO debug
-        vms = VagrantManager(num_nodes=nnodes)
+        provision_script = conf.config['general'].get('provision_script', 'scripts/provision.sh')
+        vms = VagrantManager(num_nodes=nnodes, provision_script=provision_script)
         vms.launch()
         serialgroup = vms.construct_serialgroup()
     # use serialgroup to set up fabric clients
