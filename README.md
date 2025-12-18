@@ -182,7 +182,7 @@ The provisioning script can also be used on other ubuntu-based machines. This ca
 There's also a shorter script specifically for biosphere VMs (which already have python and docker installed).
 
 
-# Terms of accceptable use and responsible automation
+## Terms of accceptable use and responsible automation
 
 This library provides programmatic access to functionality of featurecloud.ai that is normally available through manual interaction with the website. It does not bypass authentication mechanisms or access controls.
 To promote responsible use, the library enforces request limits and identifies itself explicitly via a User-Agent header at each request. These measures are intended to reduce the risk of excessive load or unintended disruption to the website.
@@ -191,21 +191,25 @@ If the website signals rate limiting or access restrictions (e.g. HTTP 429 or 40
 
 
 
+## pytests
+
+
+Run the pytest suite with `pytest -s --cov` or `pytest -s --cov -m 'not integration'` to skip slow tests. 
+There are not many tests not marked as integration though, since most of the code in this project interacts with VMs.
+Some tests require featurecloud credentials in the environment, which are not provided in this repo.
+
+
 
 ## TODO
 
 2 operations on the VMs are currently using elevated permisions
 - is this because featurecloud/docker writes output as root?
 
-
-
 write some convenience scripts that check the log files of all machines
 - including the logs of the fc controllers and the fc apps
 
-
 in the provisioning script, the docker version is currently fixed due to FC restrictions
 
-
-write pytests for everything
+increase pytest coverage of API
 
 
