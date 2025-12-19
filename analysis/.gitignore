@@ -6,6 +6,7 @@ dist/
 *_fedsim.log
 destination_remote.tar.gz
 Vagrantfile
+.env
 
 
 
