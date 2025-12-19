@@ -1,0 +1,19 @@
+downsample_features: 0.05
+metadata: 'metadata_2340_CRC_cohort_20240704'
+species_signal: 'species_signal_2340_CRC_cohort_20240617_combat_prev0'
+accessions: [
+  "PRJEB10878",
+  "PRJEB6070",
+  "PRJEB7774",
+  "PRJNA429097",
+  "PRJNA731589",
+]
+fc_users: [
+  'federated.client+00@gmail.com',
+  'federated.client+01@gmail.com',
+  'federated.client+02@gmail.com',
+  'federated.client+03@gmail.com',
+  'federated.client+04@gmail.com',
+]
+
+

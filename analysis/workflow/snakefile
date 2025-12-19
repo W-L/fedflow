@@ -1,0 +1,46 @@
+
+
+configfile: "workflow/config/config.yaml"
+
+
+ds_features = config['downsample_features']
+metadata = config['metadata']
+species_signal = config['species_signal']
+accessions = config['accessions']
+fc_users = config['fc_users']
+
+
+rule all:
+    input:
+        f"data/public_cohorts/{metadata}.csv",
+        expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accessions),
+        expand("results/svd5/{fc_user}/data/workflows/XX.zip", fc_user=fc_users),
+
+
+
+rule prep_data:
+    output:
+        f"data/public_cohorts/{metadata}.csv",
+        f"data/public_cohorts/{species_signal}.csv",
+        f"data/public_cohorts/{species_signal}.filt.csv",
+        expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accessions),
+    params:
+        ds_features=ds_features,
+    shell:
+        f"python workflow/scripts/prep_public_cohorts.py "
+        f" --outdir data/public_cohorts/ --downsample-features {params.ds_features}" # --skip-download"
+
+
+rule fedsim_svd5:
+    input:
+        data=expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accessions),
+        conf="resources/config_svd_public.toml",
+    output:
+        expand("results/svd5/{fc_user}/data/workflows/XX.zip", fc_user=fc_users),
+    shell:
+        f"fedsim -c {input.conf} -v "
+
+
+#  fedsim -c resources/config_svd_public.toml -v
+
+
