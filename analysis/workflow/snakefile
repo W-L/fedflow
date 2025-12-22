@@ -7,14 +7,42 @@ ds_features = config['downsample_features']
 metadata = config['metadata']
 species_signal = config['species_signal']
 accessions = config['accessions']
-fc_users = config['fc_users']
+
+fedsim_configs = config['fedsim_conf']
+
+
+def load_fedsim_config(toml_path):
+    import rtoml
+    with open(toml_path, "r") as f:
+        config = rtoml.load(f)
+    # get fc users
+    fc_users = []
+    for cl in config['clients'].values():
+        fc_users.append(cl['fc_username'])
+    # project id
+    pid = config['general']['project_id']
+    return pid, fc_users
+
+
+# load the configs for the federated and centralized svd
+fedsim_conf_cent = fedsim_configs[0]
+fedsim_conf_fed = fedsim_configs[1]
+
+project_id_fed, fc_users_fed = load_fedsim_config(fedsim_conf_fed)
+project_id_cent, fc_users_cent = load_fedsim_config(fedsim_conf_cent)
+
+
+
 
 
 rule all:
     input:
-        f"data/public_cohorts/{metadata}.csv",
-        expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accessions),
-        expand("results/svd5/{fc_user}/data/workflows/XX.zip", fc_user=fc_users),
+        # f"data/public_cohorts/{metadata}.csv",
+        # expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accessions),
+        # expand("results/fedsim/{fc_user}/data/workflows/Project_{project_id}/Run_1/results_pr{project_id}_run1_step1.zip", fc_user=fc_users, project_id=project_id),
+        # expand("results/fedsim_svd/{fc_user}/pca/eigenvalues.tsv", fc_user=fc_users),
+        expand("results/fedsim_fed/{fc_user}/{project_id}/pca/eigenvalues.tsv", fc_user=fc_users_fed, project_id=project_id_fed),
+        expand("results/fedsim_cent/{fc_user}/{project_id}/pca/eigenvalues.tsv", fc_user=fc_users_cent, project_id=project_id_cent),
 
 
 
@@ -24,6 +52,7 @@ rule prep_data:
         f"data/public_cohorts/{species_signal}.csv",
         f"data/public_cohorts/{species_signal}.filt.csv",
         expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accessions),
+        "data/public_cohorts/species_header_index_nostatus.csv",
     params:
         ds_features=ds_features,
     shell:
@@ -31,16 +60,39 @@ rule prep_data:
         f" --outdir data/public_cohorts/ --downsample-features {params.ds_features}" # --skip-download"
 
 
-rule fedsim_svd5:
+rule fedsim_svd_fed:
     input:
         data=expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accessions),
-        conf="resources/config_svd_public.toml",
     output:
-        expand("results/svd5/{fc_user}/data/workflows/XX.zip", fc_user=fc_users),
+        expand("results/fedsim_fed/{fc_user}/data/workflows/Project_{project_id}/Run_1/results_pr{project_id}_run1_step1.zip", fc_user=fc_users_fed, project_id=project_id_fed),
+    params:
+        conf=fedsim_conf_fed,
+    resources:
+        serial=1,
     shell:
-        f"fedsim -c {input.conf} -v "
+        f"fedsim -c {params.conf} -v "
 
 
-#  fedsim -c resources/config_svd_public.toml -v
+
+rule fedsim_svd_cent:
+    input:
+        data="data/public_cohorts/species_header_index_nostatus.csv",
+    output:
+        expand("results/fedsim_cent/{fc_user}/data/workflows/Project_{project_id}/Run_1/results_pr{project_id}_run1_step1.zip", fc_user=fc_users_cent, project_id=project_id_cent),
+    params:
+        conf=fedsim_conf_cent,
+    resources:
+        serial=1,
+    shell:
+        f"fedsim -c {params.conf} -v "
+
+
+rule unzip_fedsim_svd:
+    input:
+        "results/fedsim_{mode}/{fc_user}/data/workflows/Project_{project_id}/Run_1/results_pr{project_id}_run1_step1.zip"
+    output:
+        "results/fedsim_{mode}/{fc_user}/{project_id}/pca/eigenvalues.tsv",
+    shell:
+        "unzip -o {input} -d results/fedsim_{wildcards.mode}/{wildcards.fc_user}/{wildcards.project_id} "
 
 
