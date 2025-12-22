@@ -138,14 +138,22 @@ def separate_species_counts_with_header_and_index(samples_dict, species_filt, ou
         species_acc = species_acc.drop(columns=['health_status'])
         Path(outdir / acc).mkdir(parents=True, exist_ok=True)
         species_acc_path = outdir / acc / "species_header_index_nostatus.csv"
-        # write to csv without the sample names as a column
+        # transpose so that samples are columns
+        species_acc = species_acc.transpose()
         species_acc.to_csv(species_acc_path, sep=',', index=True, header=True)
         out_paths.append(species_acc_path)
         # print summary
         nsamples = species_acc.shape[0]
         nfeat = species_acc.shape[1] 
         print(f"Accession: {acc}, total: {nsamples}, feat: {nfeat}")
+    # also save the combined file with header and index, without health status
+    combined_path = outdir / "species_header_index_nostatus.csv"
+    species_filt_nostatus = species_filt.drop(columns=['health_status'])
+    # transpose so that samples are columns
+    species_filt_nostatus = species_filt_nostatus.transpose()
+    species_filt_nostatus.to_csv(combined_path, sep=',', index=True, header=True)
     return out_paths
+
 
 
 def downsample(downsample_features, downsample_samples, species_filt):
