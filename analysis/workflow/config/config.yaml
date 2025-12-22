@@ -8,12 +8,4 @@ accessions: [
   "PRJNA429097",
   "PRJNA731589",
 ]
-fc_users: [
-  'federated.client+00@gmail.com',
-  'federated.client+01@gmail.com',
-  'federated.client+02@gmail.com',
-  'federated.client+03@gmail.com',
-  'federated.client+04@gmail.com',
-]
-
-
+fedsim_conf: ['resources/config_svd_public_cent.toml', 'resources/config_svd_public_fed.toml']
