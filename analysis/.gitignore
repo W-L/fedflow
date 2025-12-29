@@ -7,6 +7,9 @@ dist/
 destination_remote.tar.gz
 Vagrantfile
 .env
+.vscode/
+results/
+
 
 
 
