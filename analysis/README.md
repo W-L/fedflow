@@ -27,6 +27,10 @@ copy the wheel for fedsim
 ## Steps
 
 
+manual steps for visualisation:
+
+python workflow/scripts/combine_federated_results.py
+R viz_projections.r
 
 
 ### PCA output files
