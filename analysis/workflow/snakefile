@@ -41,8 +41,9 @@ rule all:
         # expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accessions),
         # expand("results/fedsim/{fc_user}/data/workflows/Project_{project_id}/Run_1/results_pr{project_id}_run1_step1.zip", fc_user=fc_users, project_id=project_id),
         # expand("results/fedsim_svd/{fc_user}/pca/eigenvalues.tsv", fc_user=fc_users),
-        expand("results/fedsim_fed/{fc_user}/{project_id}/pca/eigenvalues.tsv", fc_user=fc_users_fed, project_id=project_id_fed),
-        expand("results/fedsim_cent/{fc_user}/{project_id}/pca/eigenvalues.tsv", fc_user=fc_users_cent, project_id=project_id_cent),
+        expand("results/fedsim_fed/{fc_user}/{project_id}/pca/localData.csv", fc_user=fc_users_fed, project_id=project_id_fed),
+        expand("results/fedsim_cent/{fc_user}/{project_id}/pca/localData.csv", fc_user=fc_users_cent, project_id=project_id_cent),
+        "results/fedsim_fed/combined_localdata.csv",
 
 
 
@@ -91,8 +92,25 @@ rule unzip_fedsim_svd:
     input:
         "results/fedsim_{mode}/{fc_user}/data/workflows/Project_{project_id}/Run_1/results_pr{project_id}_run1_step1.zip"
     output:
-        "results/fedsim_{mode}/{fc_user}/{project_id}/pca/eigenvalues.tsv",
+        "results/fedsim_{mode}/{fc_user}/{project_id}/pca/localData.csv",
     shell:
         "unzip -o {input} -d results/fedsim_{wildcards.mode}/{wildcards.fc_user}/{wildcards.project_id} "
 
 
+rule combine_federated_results:
+    input:
+        expand("results/fedsim_fed/{fc_user}/{project_id}/pca/localData.csv", fc_user=fc_users_fed, project_id=project_id_fed),
+    output:
+        "results/fedsim_fed/combined_localdata.csv",
+    params: accessions=accessions,
+    shell:
+        "python workflow/scripts/combine_federated_results.py "
+        " --input {input} "
+        " --output {output} "
+        " --accessions {params.accessions} "
+
+
+
+# rule viz_svd:  run manually
+
+    
