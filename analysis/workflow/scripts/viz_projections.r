@@ -6,7 +6,7 @@ dir_cent = "results/fedsim_cent/federated.client+00@gmail.com/17306/pca/"
 dir_fed = "results/fedsim_fed/"
 
 proj_cent <- read_delim(paste0(dir_cent, "localData.csv"), col_names = TRUE)
-proj_fed <- read_delim(paste0(dir_fed, "combined_localData.csv"), col_names = TRUE)
+proj_fed <- read_delim(paste0(dir_fed, "combined_localdata.csv"), col_names = TRUE)
 
 colnames(proj_cent) <- make.names(colnames(proj_cent))
 colnames(proj_fed) <- make.names(colnames(proj_fed))
@@ -27,7 +27,7 @@ embedding_fed <- ggplot(data=proj_fed, mapping=aes(x=X0, y=X1, color=client)) +
 # patchwork to combine plots
 embedding <- embedding_cent / embedding_fed + plot_annotation(tag_levels = "A")
 
-ggsave("embedding_combo.png", plot = embedding, width = 7, height = 6)
+ggsave("figs/embedding_combo.png", plot = embedding, width = 8, height = 7)
 
 
 
