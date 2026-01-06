@@ -19,7 +19,7 @@ timeout = 600
 coordinator = true
 fc_username = 'federated.client+00@gmail.com'
 data = [
-    "data/public_cohorts/PRJEB6070/species_header_index_nostatus.csv",
+    "data/public_cohorts/PRJEB10878/species_header_index_nostatus.csv",
     "resources/config_svd.yaml"
 ]
 
@@ -27,7 +27,7 @@ data = [
 [clients.1]
 fc_username = 'federated.client+01@gmail.com'
 data = [
-    "data/public_cohorts/PRJEB7774/species_header_index_nostatus.csv",
+    "data/public_cohorts/PRJEB6070/species_header_index_nostatus.csv",
     "resources/config_svd.yaml"
 ]
 
@@ -35,7 +35,7 @@ data = [
 [clients.2]
 fc_username = 'federated.client+02@gmail.com'
 data = [
-    "data/public_cohorts/PRJEB10878/species_header_index_nostatus.csv",
+    "data/public_cohorts/PRJEB7774/species_header_index_nostatus.csv",
     "resources/config_svd.yaml"
 ]
 
