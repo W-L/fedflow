@@ -8,4 +8,5 @@ accessions: [
   "PRJNA429097",
   "PRJNA731589",
 ]
-fedsim_conf: ['resources/config_svd_public_cent.toml', 'resources/config_svd_public_fed.toml']
+fedsim_conf_svd: ['resources/config_svd_public_cent.toml', 'resources/config_svd_public_fed.toml']
+fedsim_conf_randfor: ['resources/config_randfor_public_cent.toml', 'resources/config_randfor_public_fed.toml']

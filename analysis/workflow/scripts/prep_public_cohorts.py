@@ -113,6 +113,7 @@ def filter_species_counts(species, samples_set, samples_status):
 
 def separate_species_counts(samples_dict, species_filt, outdir):
     out_paths = []
+    dfs_to_merge = []
     for acc, sample_ids in samples_dict.items():
         # select the samples (rows) for this accession
         species_acc = species_filt.loc[sample_ids]
@@ -121,11 +122,16 @@ def separate_species_counts(samples_dict, species_filt, outdir):
         # write to csv without the sample names as a column
         species_acc.to_csv(species_acc_path, sep=',', index=False)
         out_paths.append(species_acc_path)
+        dfs_to_merge.append(species_acc)
         # print summary
         psum = species_acc['health_status'].sum()
         nsamples = species_acc.shape[0]
         nfeat = species_acc.shape[1] 
         print(f"Accession: {acc}, total: {nsamples}, 0: {nsamples - psum}, 1: {psum}, feat: {nfeat}")
+    # also save the combined file
+    combined_path = outdir / "species.csv"
+    combined = pd.concat(dfs_to_merge, ignore_index=True)
+    combined.to_csv(combined_path, sep=',', index=False)
     return out_paths
 
 
@@ -174,7 +180,6 @@ def downsample(downsample_features, downsample_samples, species_filt):
 def get_args(): 
     parser = argparse.ArgumentParser()
     parser.add_argument("--outdir", type=str, required=True)
-    parser.add_argument("--skip-download", action='store_true', default=False)
     parser.add_argument("--downsample-samples", type=float, default=None)
     parser.add_argument("--downsample-features", type=float, default=None)
     args = parser.parse_args()
@@ -211,16 +216,15 @@ def main():
     outdir.mkdir(parents=True, exist_ok=True)
 
 
+    metadata_path = outdir / metadata_name
+    meta = metadata_path.with_suffix(".csv")
 
-    if args.skip_download:
-        print("Skipping download of public cohort data.")
-
-        metadata_path = outdir / metadata_name
-        meta = metadata_path.with_suffix(".csv")
-
-        species_csv = Path(species_name).with_suffix(".csv")
-        species = outdir / species_csv
-    else:
+    species_csv = Path(species_name).with_suffix(".csv")
+    species = outdir / species_csv
+    
+    if not meta.is_file() or not species.is_file():
+        print("Downloading public cohort data.")
+    
         # download the public cohort files
         meta = download_metadata(
             metadata_url=metadata_url,
@@ -234,6 +238,8 @@ def main():
             batch_name=batch_name,
             species_name=species_name
         )
+    else:
+        print("Using existing public cohort data.")
 
 
 
@@ -255,6 +261,8 @@ def main():
         )
 
     # separate the species counts into different files per project accession
+    # ensure the order of the samples_dict is the same as accessions_to_keep
+    samples_dict = {acc: samples_dict[acc] for acc in accessions_to_keep}
     acc_paths = separate_species_counts(samples_dict, species_filt, outdir)
     # also save with header and index, without health status
     acc_paths_hi = separate_species_counts_with_header_and_index(samples_dict, species_filt, outdir)

@@ -1,0 +1,62 @@
+[general]
+
+sim = true
+outdir = "results/fedsim_fed"
+provision_script = 'workflow/FedSim/scripts/provision.sh'
+project_id = 17308
+# tool = 'random-forest'
+
+
+[debug]
+nodeps = true
+reinstall = false
+timeout = 600
+
+
+[clients]
+
+[clients.0]
+coordinator = true
+fc_username = 'federated.client+00@gmail.com'
+data = [
+    "data/public_cohorts/PRJEB10878/species.csv",
+    "resources/config.yml"
+]
+
+
+[clients.1]
+fc_username = 'federated.client+01@gmail.com'
+data = [
+    "data/public_cohorts/PRJEB6070/species.csv",
+    "resources/config.yml"
+]
+
+
+[clients.2]
+fc_username = 'federated.client+02@gmail.com'
+data = [
+    "data/public_cohorts/PRJEB7774/species.csv",
+    "resources/config.yml"
+]
+
+
+[clients.3]
+fc_username = 'federated.client+03@gmail.com'
+data = [
+    "data/public_cohorts/PRJNA429097/species.csv",
+    "resources/config.yml"
+]
+
+
+[clients.4]
+fc_username = 'federated.client+04@gmail.com'
+data = [
+    "data/public_cohorts/PRJNA731589/species.csv",
+    "resources/config.yml"
+]
+
+
+
+
+
+
