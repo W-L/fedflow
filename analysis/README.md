@@ -30,6 +30,8 @@ all configurable parameters of the workflow are in
 
 ## Run workflow
 
+`conda activate comp`
+
 `snakemake --resources serial=1 --sdm conda -p -cN`
 
 `--resources serial=1` makes sure that multiple runs of fedsim are performed in series to avoid that individual fedsim runs use the same VMs concurrently.
@@ -85,9 +87,29 @@ https://github.com/AnneHartebrodt/fc-federated-svd/issues/2
 
 ## Results
 
+
+<img src="figs/embedding_combo.png" alt="embedding" width="600"/>
+
 Embedding of downsampled species signal features for a centralised analysis (A), and a federated run with 5 clients (B). The embeddings are identical for both executions. The input features were randomly downsampled to 5%, i.e. ~130 columns, to save on execution time.
 
-<img src="figs/embedding_combo.png" alt="embedding" width="500"/>
+
+
+<br>
+
+---
+
+<br>
+
+
+<img src="figs/randfor.png" alt="randfor" width="800"/>
+
+Results of random forest classification for a centralised versus federated analysis. 
+The input data was downsampled to 5% of the total features, and the training and test data are equivalent. 
+So these results have no meaning except for comparison of the analyses.
+(A) Scatter plot of probabilities for class 1 for the centralised (x-axis) and federated analyses (y-axis).
+(B) ROC curves and deltaAUC of the global versus local classifiers.
+(C) Densities of probalities for class 1 separated by true class label (vertical) and by classifier (horizontal)
+
 
 
 
