@@ -40,9 +40,9 @@ rule all:
     input:
         # f"data/public_cohorts/species.csv",
         ############# SVD ###############
-        # expand("results/fedsim_fed/{u}/{pid}/pca/localData.csv", u=fc_users_fed, pid=pid_svd_fed),
-        # expand("results/fedsim_cent/{u}/{pid}/pca/localData.csv", u=fc_users_cent, pid=pid_svd_cent),
-        # "results/fedsim_fed/combined_localdata.csv",
+        expand("results/fedsim_fed/{u}/{pid}/pca/localData.csv", u=fc_users_fed, pid=pid_svd_fed),
+        expand("results/fedsim_cent/{u}/{pid}/pca/localData.csv", u=fc_users_cent, pid=pid_svd_cent),
+        "results/fedsim_fed/combined_localdata.csv",
         ############# Random Forest ###############
         expand("results/fedsim_fed/{u}/{pid}/pred.csv", u=fc_users_fed, pid=pid_randfor_fed),
         expand("results/fedsim_cent/{u}/{pid}/pred.csv", u=fc_users_cent, pid=pid_randfor_cent),

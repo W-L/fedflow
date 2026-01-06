@@ -27,7 +27,7 @@ embedding_fed <- ggplot(data=proj_fed, mapping=aes(x=X0, y=X1, color=client)) +
 # patchwork to combine plots
 embedding <- embedding_cent / embedding_fed + plot_annotation(tag_levels = "A")
 
-ggsave("figs/embedding_combo.png", plot = embedding, width = 8, height = 7)
+ggsave("embedding_combo.png", plot = embedding, width = 8, height = 7)
 
 
 

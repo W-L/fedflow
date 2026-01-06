@@ -98,4 +98,4 @@ roc_plot <- ggroc(list(cent = roc_cent, fed = roc_fed)) +
 
 
 randfor_fig <- ((ppscatter | roc_plot) / dist_plot) + plot_annotation(tag_levels = "A")
-ggsave("figs/randfor.png", plot = randfor_fig, width = 10, height = 8)
+ggsave("randfor.png", plot = randfor_fig, width = 10, height = 8)
