@@ -5,6 +5,7 @@ This repository contains a reproducible snakemake workflow that compares the exe
 At the moment the workflow compares these federated tools:
 
 - federated-svd
+- random-forest
 
 
 ## Setup & configuration
@@ -32,7 +33,7 @@ all configurable parameters of the workflow are in
 
 `conda activate comp`
 
-`snakemake --resources serial=1 --sdm conda -p -cN`
+`snakemake --resources serial=1 -p -cN`
 
 `--resources serial=1` makes sure that multiple runs of fedsim are performed in series to avoid that individual fedsim runs use the same VMs concurrently.
 
@@ -42,30 +43,32 @@ all configurable parameters of the workflow are in
 
 `snakemake --rulegraph | dot -Tpng > figs/rulegraph.png`
 
-<img src="figs/rulegraph.png" alt="rulegraph" width="300"/>
+<img src="figs/rulegraph.png" alt="rulegraph" width="600"/>
 
 - prep_data
     - download public cohort data
     - filter to project accessions (listed in workflow config.yaml)
-    - write data files for each federated client
+    - write data files for each federated client and for centralised analysis
 
-- fedsim_svd
+- fedsim_svd & fedsim_randfor
     - runs twice (forced serially), once with a single client and all data, and once with 5 clients and separated data
     - config files for the fedsim runs are in resources/
 
 - unzip_fedsim
-    - extract the SVD/PCA results for all clients in both runs
+    - extract fedsim results for all clients 
 
-- combine_federated_results
-    - concatenate the federated pca output data 
-    - adds a column to identify the client and project accession for visualisation
+- combine_federated_*
+    - concatenate the federated output data 
+    - adds a column to identify the client/project accession for visualisation
 
-- visualise_projections
-    - this is run manually 
-    - creates figure to compare centralised and federated SVD
+- viz_*
+    - these scripts are run manually for now
+    - create figures to compare centralised and federated runs
 
 
-## Details on SVD output files
+## Notes
+
+### Details on SVD output files
 
 These are my interpretations of the output files:
 
@@ -77,9 +80,9 @@ These are my interpretations of the output files:
 - scaled_data.tsv: Globally centered and scaled data used for PCA.
 
 
-## Note about input format issue
+### Note about input format issue for federated-svd
 
-There's an issue with the input format for "federated-svd": The instructions say that rows should be samples, and columns should be features. However, it only works when the input is transposed:
+The instructions say that rows should be samples, and columns should be features. However, it only works when the input is transposed:
 
 https://github.com/AnneHartebrodt/fc-federated-svd/issues/2
 
@@ -110,6 +113,13 @@ So these results have no meaning except for comparison of the analyses.
 (B) ROC curves and deltaAUC of the global versus local classifiers.
 (C) Densities of probalities for class 1 separated by true class label (vertical) and by classifier (horizontal)
 
+
+
+<br>
+
+---
+
+<br>
 
 
 
