@@ -6,6 +6,10 @@ At the moment the workflow compares these federated tools:
 
 - federated-svd
 - random-forest
+- ada-boost
+
+
+
 
 
 ## Setup & configuration
@@ -80,12 +84,25 @@ These are my interpretations of the output files:
 - scaled_data.tsv: Globally centered and scaled data used for PCA.
 
 
-### Note about input format issue for federated-svd
+### input format issue for federated-svd
 
 The instructions say that rows should be samples, and columns should be features. However, it only works when the input is transposed:
 
 https://github.com/AnneHartebrodt/fc-federated-svd/issues/2
 
+
+
+### config file name
+
+for some featurecloud tools the config file name is hard coded
+
+- random-forest: config.yml
+- ada-boost: config.yml
+
+
+### Ada-boost
+
+This tool does not provide predictions or probabilities as output, only the pickled model and scores on local test data
 
 
 ## Results
@@ -125,12 +142,35 @@ So these results have no meaning except for comparison of the analyses.
 
 ## Todo
 
+adjust code to new config subdirs
+
 check what other federated tools we want to compare
+
 
 follow up on the github issue
 - there's a system to check code security of featurecloud apps
 - but is there also a system to check code functionality/correctness?
 - for the svd app there is some testing code, but with hard-coded paths to scripts that are not part of the repo
 
+
+### adding new tool
+
+add config files in resources/ (tool and fedsim config)
+
+add tool name in workflow config
+
+add input data (adjust preparation script)
+
+run the tools via fedsim once outside the snakemake to generate the project IDs
+
+add snakemake rules (overloaded fedsim and unzipping)
+
+add combination script
+
+add visualisation script 
+
+add figures to readme
+
+update rulegraph
 
 

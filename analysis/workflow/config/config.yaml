@@ -8,5 +8,8 @@ accessions: [
   "PRJNA429097",
   "PRJNA731589",
 ]
-fedsim_conf_svd: ['resources/config_svd_public_cent.toml', 'resources/config_svd_public_fed.toml']
-fedsim_conf_randfor: ['resources/config_randfor_public_cent.toml', 'resources/config_randfor_public_fed.toml']
+# Names of tools to be run in the workflow
+# for each, config files need to be present as:
+#      resources/<tool>/config_fedsim_cent.toml
+#      resources/<tool>/config_fedsim_fed.toml
+tools: ["federated-svd", "random-forest"] #, "ada-boost"]

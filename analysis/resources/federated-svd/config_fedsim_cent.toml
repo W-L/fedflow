@@ -21,7 +21,7 @@ coordinator = true
 fc_username = 'federated.client+00@gmail.com'
 data = [
     "data/public_cohorts/species_header_index_nostatus.csv",
-    "resources/config_svd.yaml"
+    "resources/federated-svd/config.yaml"
 ]
 
 

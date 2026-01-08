@@ -9,6 +9,8 @@ Vagrantfile
 .env
 .vscode/
 results/
+dump/
+
 
 
 

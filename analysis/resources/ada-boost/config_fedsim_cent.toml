@@ -3,14 +3,14 @@
 sim = true
 outdir = "results/fedsim_cent"
 provision_script = 'workflow/FedSim/scripts/provision.sh'
-project_id = 17307
-# tool = 'random-forest'
+project_id = 17318
+# tool = 'ada-boost'
 
 
 [debug]
 nodeps = true
 reinstall = false
-timeout = 1200
+timeout = 600
 
 
 [clients]
@@ -20,7 +20,7 @@ coordinator = true
 fc_username = 'federated.client+00@gmail.com'
 data = [
     "data/public_cohorts/species.csv",
-    "resources/config.yml"
+    "resources/ada-boost/config.yml"
 ]
 
 
