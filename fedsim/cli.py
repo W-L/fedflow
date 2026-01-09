@@ -98,7 +98,7 @@ def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: s
     clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id, timeout=timeout)
     sleep(10)
     # download outcome from all clients
-    clients.fetch_results(outdir=outdir)
+    clients.fetch_results(outdir=outdir, pid=project_id)
 
 
 

@@ -265,11 +265,12 @@ class ClientManager:
             log(f'[{cxn.host}] STDERR: \n{result.stderr}\n')
         
 
-    def fetch_results(self, outdir, nodes=None):
+    def fetch_results(self, outdir, pid, nodes=None):
         """
         Fetch results from nodes
 
         :param outdir: local directory to save results to
+        :param pid: ID of the Featurecloud project
         :param nodes: list of fabric Connections to fetch results from
         """
         for cxn in self._nodes_or_all(nodes):
@@ -278,4 +279,11 @@ class ClientManager:
                 remote_dir="data_fc/",
                 local_dir=outdir
             )
+            # move the zip file to a more convenient path
+            user = cxn['fc_username']
+            raw_zip = Path(outdir) / user / f"data_fc/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip"
+            new_zip = Path(outdir) / f"results_{user}.zip"
+            raw_zip.rename(new_zip)
+
+            
 
