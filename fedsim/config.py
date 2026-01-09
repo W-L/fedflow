@@ -25,6 +25,16 @@ class Config:
         self.fc_users = self._get_fc_users()
         self.fc_creds = self._load_fc_credentials()
         self.data_paths = self._get_data_paths()
+        # set general options
+        self.is_simulated = self.config['general'].get('sim', False)
+        self.outdir = self.config['general'].get('outdir', 'results/')
+        self.provision_script = self.config['general'].get('provision_script', 'scripts/provision.sh')
+        # set debug options
+        self.debug = self.config.get('debug', {})
+        self.debug.reinstall = self.debug.get('reinstall', True)
+        self.debug.nodeps = self.debug.get('nodeps', False)
+        self.debug.timeout = self.debug.get('timeout', 60)
+        self.debug.vmonly = self.debug.get('vmonly', False)
 
         
 

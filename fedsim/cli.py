@@ -29,7 +29,7 @@ def setup_run(config: str, log_mode: str) -> Config:
 
 
 def get_client_connections(conf: Config):
-    if not conf.config['general']['sim']:
+    if not conf.is_simulated:
         # construct serialgroup from config
         log('Connecting to remote clients defined in config...')
         serialgroup = conf.construct_serialgroup()
@@ -37,9 +37,7 @@ def get_client_connections(conf: Config):
         # construct serialgroup from vagrant
         log('Setting up Vagrant VMs...')
         nnodes = len(conf.config['clients'])
-        # nnodes = 2  # TODO debug
-        provision_script = conf.config['general'].get('provision_script', 'scripts/provision.sh')
-        vms = VagrantManager(num_nodes=nnodes, provision_script=provision_script)
+        vms = VagrantManager(num_nodes=nnodes, provision_script=conf.provision_script)
         vms.launch()
         serialgroup = vms.construct_serialgroup()
     # use serialgroup to set up fabric clients
@@ -49,7 +47,11 @@ def get_client_connections(conf: Config):
     return clients
 
 
-def prep_clients(clients: ClientManager, conf: Config, reinstall: bool = False, nodeps: bool = False):
+def prep_clients(clients: ClientManager, conf: Config, project_id: str):
+    # provision non-vagrant clients
+    if not conf.is_simulated:
+        log("Provisioning non-Vagrant clients...")
+        clients.run_bash_script(script_path=conf.provision_script)
     log("Resetting clients...")
     clients.reset_clients()
     log("Distributing credentials to clients...")
@@ -57,7 +59,7 @@ def prep_clients(clients: ClientManager, conf: Config, reinstall: bool = False, 
     log("Distributing data to clients...")
     clients.distribute_data()
     log("Installing fedsim package on clients...")
-    clients.install_package(reinstall=reinstall, nodeps=nodeps)
+    clients.install_package(reinstall=conf.debug.reinstall, nodeps=conf.debug.nodeps)
     log("Starting FeatureCloud controllers on clients...")
     clients.start_featurecloud_controllers()
     # clients.test_featurecloud_controllers()
@@ -65,7 +67,7 @@ def prep_clients(clients: ClientManager, conf: Config, reinstall: bool = False, 
 
 
 
-def prep_project(clients: ClientManager, conf: Config):
+def prep_project(clients: ClientManager, conf: Config) -> str:
     # attach featurecloud project
     if 'project_id' in conf.config['general']:
         # attach to existing project
@@ -105,24 +107,28 @@ def cleanup(clients: ClientManager, conf: Config):
 
 
 def main(argv=None):
+    # parse arguments
     args = get_args(argv=argv)
     log_mode = "debug" if args.verbose else "quiet"
+    # initialise logging and parse config file
     conf = setup_run(config=args.config, log_mode=log_mode)
-    outdir = conf.config['general'].get('outdir', 'results/')
-
-    debug = conf.config.get('debug', {})
-    reinstall = debug.get('reinstall', True)
-    nodeps = debug.get('nodeps', False)
-    timeout = debug.get('timeout', 60)
-    vmonly = debug.get('vmonly', False)
-
+    # set up fabric connections to all clients
     clients = get_client_connections(conf=conf)
-    if vmonly:
+    if conf.debug.vmonly:
         log("Vagrant VMs launched. Exiting.")
         return
-    prep_clients(clients=clients, conf=conf, reinstall=reinstall, nodeps=nodeps)
+    # get or create featurecloud project
     project_id = prep_project(clients=clients, conf=conf)
-    run_project(clients=clients, project_id=project_id, timeout=timeout, outdir=outdir)
+    # provision (if not vagrant), reset, distribute creds and data, install fedsim, start fc controllers
+    prep_clients(clients=clients, conf=conf, project_id=project_id)
+    # contribute data, monitor run, download results
+    run_project(
+        clients=clients,
+        project_id=project_id,
+        timeout=conf.debug.timeout,
+        outdir=conf.outdir
+    )
+    # stop fc controllers, halt vagrant vms
     cleanup(clients=clients, conf=conf)
 
 
