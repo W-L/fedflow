@@ -44,18 +44,19 @@ def execute(command: str):
     
 
 
-def execute_fabric(command: str, cxn, silent: bool = False):
+def execute_fabric(command: str, cxn, silent: bool = False, warn: bool = False):
     """
     Execute a command on a remote host using Fabric.
 
     :param command: Command to execute on remote
     :param cxn: fabric Connection instance to connect to
     :param silent: do not show any details of command or outputs
+    :param warn: whether to warn on failure or exit
     :return: tuple stdout and stderr, or None
     """
     if not silent:
         log(f'[{cxn.host}] CMD {command}', level=logging.DEBUG)
-    result = cxn.run(command, hide=True)
+    result = cxn.run(command, hide=True, warn=warn)
     if not silent:
         log(f'[{cxn.host}] STDOUT: {result.stdout}')
         if result.stderr.strip() != "":
