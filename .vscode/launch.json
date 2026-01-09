@@ -11,7 +11,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["-c", "${workspaceFolder}/configs/config_mean_solo.toml", "-v"],
+            "args": ["-c", "${workspaceFolder}/conf/config_mean_solo.toml", "-v"],
              "preLaunchTask": "hatch-build",
         },
 
