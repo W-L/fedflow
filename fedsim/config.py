@@ -1,4 +1,5 @@
 import os
+from types import SimpleNamespace
 
 import rtoml
 from fabric import SerialGroup
@@ -30,11 +31,12 @@ class Config:
         self.outdir = self.config['general'].get('outdir', 'results/')
         self.provision_script = self.config['general'].get('provision_script', 'scripts/provision.sh')
         # set debug options
-        self.debug = self.config.get('debug', {})
-        self.debug.reinstall = self.debug.get('reinstall', True)
-        self.debug.nodeps = self.debug.get('nodeps', False)
-        self.debug.timeout = self.debug.get('timeout', 60)
-        self.debug.vmonly = self.debug.get('vmonly', False)
+        debug = self.config.get('debug', {})
+        self.debug = SimpleNamespace()
+        self.debug.reinstall = debug.get('reinstall', True)
+        self.debug.nodeps = debug.get('nodeps', False)
+        self.debug.timeout = debug.get('timeout', 60)
+        self.debug.vmonly = debug.get('vmonly', False)
 
         
 
