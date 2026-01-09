@@ -12,6 +12,7 @@ test_data/public_cohorts/
 Vagrantfile
 *.excalidraw
 conf/
+provision.sh
 
 .vscode/*.code-workspace
 .vscode/settings.json
