@@ -3,6 +3,7 @@ from fabric import SerialGroup
 
 from fedsim.logger import log
 from fedsim.utils import execute
+from fedsim.provision import write_provision_script
 
 
 
@@ -10,20 +11,25 @@ from fedsim.utils import execute
 class VagrantManager:
 
 
-    def __init__(self, num_nodes: int, box: str = 'bento/ubuntu-24.04', provision_script: str = 'scripts/provision.sh'):
+    def __init__(self, num_nodes: int, box: str = 'bento/ubuntu-24.04', provision: str | None = None):
         """
         A class to manage Vagrant virtual machines for fedsim simulations.
 
         :param num_nodes: The number of nodes to use
         :param box: The Vagrant box to use
-        :param provision_script: The path to the Vagrant provision script
+        :param provision: Optional path to a non-default provision script
         """
         # check dependencies
         assert self._vagrant_available()
         assert self._libvirt_available()
         self.num_nodes = num_nodes
         self.box = box
-        self.provision_script = provision_script
+        # if not passed through, use default
+        if not provision:
+            self.provision = "provision.sh"
+            write_provision_script(machine="vagrant")
+        else:
+            self.provision = provision
         # initialized later
         self.client_strings = []
         self.serialg = []
@@ -76,7 +82,7 @@ class VagrantManager:
             config.vm.define "node-#{{i}}" do |node|
                 node.vm.hostname = "node-#{{i}}"
                 # node.vm.synced_folder "./node-#{{i}}/", "/home/vagrant/node", create: true
-                node.vm.provision "shell", name: "common", path: "{self.provision_script}"
+                node.vm.provision "shell", name: "common", path: "{self.provision}"
             end
         end
     end

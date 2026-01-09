@@ -29,7 +29,7 @@ class Config:
         # set general options
         self.is_simulated = self.config['general'].get('sim', False)
         self.outdir = self.config['general'].get('outdir', 'results/')
-        self.provision_script = self.config['general'].get('provision_script', 'scripts/provision.sh')
+        self.provision = self.config['general'].get('provision', None)
         # set debug options
         debug = self.config.get('debug', {})
         self.debug = SimpleNamespace()

@@ -6,6 +6,7 @@ from fedsim.logger import setup_logging, log
 from fedsim.config import Config
 from fedsim.VagrantManager import VagrantManager
 from fedsim.ClientManager import ClientManager
+from fedsim.provision import write_provision_script
 
 
 
@@ -37,7 +38,7 @@ def get_client_connections(conf: Config):
         # construct serialgroup from vagrant
         log('Setting up Vagrant VMs...')
         nnodes = len(conf.config['clients'])
-        vms = VagrantManager(num_nodes=nnodes, provision_script=conf.provision_script)
+        vms = VagrantManager(num_nodes=nnodes, provision=conf.provision)
         vms.launch()
         serialgroup = vms.construct_serialgroup()
     # use serialgroup to set up fabric clients
@@ -51,7 +52,11 @@ def prep_clients(clients: ClientManager, conf: Config):
     # provision non-vagrant clients
     if not conf.is_simulated:
         log("Provisioning...")
-        clients.run_bash_script(script_path=conf.provision_script)
+        # special case for biosphere
+        if conf.provision == 'biosphere':
+            write_provision_script(machine="biosphere")
+            conf.provision = "provision.sh"
+        clients.run_bash_script(script_path=conf.provision)
     log("Resetting clients...")
     clients.reset_clients()
     log("Distributing credentials to clients...")
