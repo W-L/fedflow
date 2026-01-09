@@ -58,6 +58,22 @@ class ClientManager:
             except Exception as e:
                 log(f"Error during ping of {cxn.get('host', '')}: {e}")
         return
+
+
+
+    def run_bash_script(self, script_path: str, nodes = None) -> None:
+        """
+        Run a bash script on remotes. This is used to provision non-vagrant clients.
+
+        :param script_path: path to the bash script to run
+        :param nodes: list of fabric Connections to run the script on
+        """
+        for cxn in self._nodes_or_all(nodes):
+            assert Path(script_path).is_file(), f"Script path {script_path} is not a file."
+            cxn.put(script_path, Path(script_path).name)
+            cmd = f"bash {Path(script_path).name}"
+            stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
+        return
     
 
 
@@ -253,12 +269,13 @@ class ClientManager:
         """
         Fetch results from nodes
 
+        :param outdir: local directory to save results to
         :param nodes: list of fabric Connections to fetch results from
         """
         for cxn in self._nodes_or_all(nodes):
             utils_fabric.fetch_remote_dir(
                 conn=cxn,
-                remote_dir="data/",
+                remote_dir="data_fc/",
                 local_dir=outdir
             )
 

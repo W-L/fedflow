@@ -152,7 +152,7 @@ def launch_featurecloud(conn: Connection) -> None:
     # ensure stopped before starting
     # this will also ensure that we have a fresh log file
     stop_featurecloud(conn=conn)  
-    cmd = "source .venv/bin/activate && featurecloud controller start"
+    cmd = f"source .venv/bin/activate && featurecloud controller start --data-dir data_fc"
     stdout, stderr = execute_fabric(command=cmd, cxn=conn)
     assert is_controller_running(conn=conn), "Failed to start FeatureCloud controller"
 
@@ -195,8 +195,10 @@ def reset_node(conn: Connection) -> None:
     log(f"Resetting node {conn.host}...")
     # stop docker containers
     execute_fabric("docker ps -q | xargs -r docker stop", cxn=conn)
-    # remove data directory
-    execute_fabric("sudo rm -rf data/", cxn=conn)
+    # remove data directory if it exists
+    # test that it's a directory and not a symlink before removing
+    # this needs sudo because docker creates the directory as root?
+    execute_fabric("[ -d data_fc ] && [ ! -L data_fc ] && sudo rm -rf data_fc", cxn=conn, warn=True)
     
 
 

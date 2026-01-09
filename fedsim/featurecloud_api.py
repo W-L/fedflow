@@ -399,8 +399,8 @@ class User:
         r.raise_for_status()
         site_info = r.json()
         # write to file for the local controller
-        Path("data").mkdir(parents=True, exist_ok=True)
-        with open("data/site_info.json", "w") as f:
+        Path("data_fc").mkdir(parents=True, exist_ok=True)
+        with open("data_fc/site_info.json", "w") as f:
             f.write(r.text)
         return site_info
     

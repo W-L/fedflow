@@ -47,10 +47,10 @@ def get_client_connections(conf: Config):
     return clients
 
 
-def prep_clients(clients: ClientManager, conf: Config, project_id: str):
+def prep_clients(clients: ClientManager, conf: Config):
     # provision non-vagrant clients
     if not conf.is_simulated:
-        log("Provisioning non-Vagrant clients...")
+        log("Provisioning...")
         clients.run_bash_script(script_path=conf.provision_script)
     log("Resetting clients...")
     clients.reset_clients()
@@ -100,7 +100,7 @@ def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: s
 def cleanup(clients: ClientManager, conf: Config):
     # stop fc controller and vms
     clients.stop_featurecloud_controllers(nodes=clients.all)
-    if conf.config['general']['sim']:
+    if conf.is_simulated:
         log("Halting Vagrant VMs...")
         # VagrantManager.stop()
     pass
@@ -120,7 +120,7 @@ def main(argv=None):
     # get or create featurecloud project
     project_id = prep_project(clients=clients, conf=conf)
     # provision (if not vagrant), reset, distribute creds and data, install fedsim, start fc controllers
-    prep_clients(clients=clients, conf=conf, project_id=project_id)
+    prep_clients(clients=clients, conf=conf)
     # contribute data, monitor run, download results
     run_project(
         clients=clients,
