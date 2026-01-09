@@ -14,6 +14,17 @@
             "args": ["-c", "${workspaceFolder}/configs/config_mean_solo.toml", "-v"],
              "preLaunchTask": "hatch-build",
         },
+
+        {
+            "name": "cli_biosphere",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["-c", "${workspaceFolder}/conf/config_svd_biosphere.toml", "-v"],
+             "preLaunchTask": "hatch-build",
+        },
+
         
         {
             "name": "provision",
