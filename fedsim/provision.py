@@ -23,10 +23,19 @@ usermod -aG docker $USER
 
 # the ubuntu box on biosphere already has docker (28.0.1) installed
 # if the biosphere box updates docker it might stop working
+# we check whether packages are already installed 
+# because biosphere VMs runs updates in the background which is inconvenient
+# E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2635 (unattended-upgr)
 biosphere_provision = f"""
 #!/bin/bash
 set -e
-sudo apt-get update && sudo apt-get install -y python3.12-venv
+
+if dpkg -s python3.12-venv >/dev/null 2>&1; then
+    echo "python3.12-venv is installed"
+else
+    sudo apt-get update && sudo apt-get install -y python3.12-venv
+fi
+
 """
 
 
