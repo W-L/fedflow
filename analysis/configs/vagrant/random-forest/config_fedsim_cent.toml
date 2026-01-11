@@ -1,0 +1,21 @@
+[general]
+sim = true
+outdir = "results/vagrant/random-forest/cent/"
+project_id = 17307
+
+[debug]
+nodeps = true
+reinstall = true
+timeout = 1200
+
+
+[clients.0]
+coordinator = true
+fc_username = 'federated.client+00@gmail.com'
+data = [
+    "data/random-forest/cent/input.csv",
+    "configs/vagrant/random-forest/config.yml"
+]
+
+
+

@@ -2,8 +2,8 @@
 # Needs to be named config.yml (hardcoded in the app)
 fc_random_forest:
   input:
-    train: "species.csv"
-    test: "species.csv"
+    train: "input.csv"
+    test: "input.csv"
   output:
     pred: "pred.csv"
     proba: "proba.csv"

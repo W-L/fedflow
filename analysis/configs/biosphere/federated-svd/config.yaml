@@ -3,7 +3,7 @@ fc_pca:
     pcs: 10   # retrieve 10 Eigenvectors
   input:
     dir: '' # In which directory is the data located
-    data: species_header_index_nostatus.csv   # name of the input file (required)
+    data: input.csv   # name of the input file (required)
     delimiter: ","  # field separator in the input file 
   output:
     dir: pca # output will be saved in a directory called 'pca'

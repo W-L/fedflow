@@ -1,0 +1,16 @@
+[general]
+outdir = "results/biosphere/federated-svd/cent/"
+project_id = 17306
+
+[debug]
+nodeps = false
+reinstall = true
+timeout = 600
+
+[clients.0]
+coordinator = true
+fc_username = "federated.client+00@gmail.com"
+hostname = "134.158.249.92"
+username = "ubuntu"
+sshkey = "/home/lweilguny/.ssh/biosphere"
+data = ["data/federated-svd/cent/input.csv", "configs/biosphere/federated-svd/config.yaml"]
