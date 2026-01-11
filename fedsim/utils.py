@@ -37,30 +37,9 @@ def execute(command: str):
     )
     # wait for process to finish and log
     stdout, stderr = running.communicate()
-    log(f"STDOUT: \n{stdout}\n", level=logging.DEBUG)
+    log(f"STDOUT: \n{stdout}", level=logging.DEBUG)
     if stderr.strip() != "":
-        log(f"STDERR: \n{stderr}\n")
+        log(f"STDERR: \n{stderr}")
     return stdout, stderr
     
 
-
-def execute_fabric(command: str, cxn, silent: bool = False, warn: bool = False):
-    """
-    Execute a command on a remote host using Fabric.
-
-    :param command: Command to execute on remote
-    :param cxn: fabric Connection instance to connect to
-    :param silent: do not show any details of command or outputs
-    :param warn: whether to warn on failure or exit
-    :return: tuple stdout and stderr, or None
-    """
-    if not silent:
-        log(f'[{cxn.host}] CMD {command}', level=logging.DEBUG)
-    result = cxn.run(command, hide=True, warn=warn)
-    if not silent:
-        log(f'[{cxn.host}] STDOUT: {result.stdout}')
-        if result.stderr.strip() != "":
-            log(f'[{cxn.host}] STDERR: \n{result.stderr}\n')
-        return result.stdout, result.stderr
-    return None, None
-    
