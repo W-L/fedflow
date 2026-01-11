@@ -2,15 +2,11 @@
 configfile: "workflow/config/config.yaml"
 
 ds_features = config['downsample_features']
-metadata = config['metadata']
-species_signal = config['species_signal']
 accs = config['accessions']
+providers = config['providers']
 tools = config['tools']
+hostnames = config['biosphere_hostnames']
 
-
-
-def get_fedsim_config(tool, mode):
-    return f"resources/{tool}/config_fedsim_{mode}.toml"
 
 
 def load_fedsim_config(toml_path):
@@ -26,218 +22,131 @@ def load_fedsim_config(toml_path):
     return pid, fc_users
 
 
+_, users_fed = load_fedsim_config('configs/vagrant/federated-svd/config_fedsim_fed.toml')
+_, users_cent = load_fedsim_config('configs/vagrant/federated-svd/config_fedsim_cent.toml')
 
-# load project ids and fc users
-pid_svd_fed, users_fed = load_fedsim_config(get_fedsim_config("federated-svd", "fed"))
-pid_svd_cent, users_cent = load_fedsim_config(get_fedsim_config("federated-svd", "cent"))
-pid_randfor_fed, _ = load_fedsim_config(get_fedsim_config("random-forest", "fed"))
-pid_randfor_cent, _ = load_fedsim_config(get_fedsim_config("random-forest", "cent"))
-# pid_ada_fed, _ = load_fedsim_config(get_fedsim_config("ada-boost", "fed"))
-# pid_ada_cent, _ = load_fedsim_config(get_fedsim_config("ada-boost", "cent"))
 
 
 
 rule all:
     input:
-        # f"data/public_cohorts/species.csv",
-        ############# SVD ###############
-        expand("results/fedsim_fed/{u}/{pid}/pca/localData.csv", u=users_fed, pid=pid_svd_fed),
-        expand("results/fedsim_cent/{u}/{pid}/pca/localData.csv", u=users_cent, pid=pid_svd_cent),
-        "results/fedsim_fed/combined_localdata.csv",
-        ############# Random Forest ###############
-        expand("results/fedsim_fed/{u}/{pid}/pred.csv", u=users_fed, pid=pid_randfor_fed),
-        expand("results/fedsim_cent/{u}/{pid}/pred.csv", u=users_cent, pid=pid_randfor_cent),
-        "results/fedsim_fed/combined_randfor.csv",
-        ############# Ada Boost ###############
-        # expand("results/fedsim_fed/{u}/{pid}/ada.csv", u=users_fed, pid=pid_ada_fed),
-        # expand("results/fedsim_cent/{u}/{pid}/ada.csv", u=users_cent, pid=pid_ada_cent),
-        # "results/fedsim_fed/combined_ada.csv",
+        'results/biosphere_hostnames_distributed',
+        ############# DATA PREP ###############
+        expand("data/{tool}/{acc}/input.csv", tool=tools, acc=accs),
+        expand("data/{tool}/cent/input.csv", tool=tools),
+        ############# FEDSIM ###############
+        expand("results/{provider}/{tool}/cent/results_{u}.zip", provider=providers, tool=tools, u=users_cent),
+        expand("results/{provider}/{tool}/fed/results_{u}.zip", provider=providers, tool=tools, u=users_fed),
+        # ############# SVD ###############
+        expand("results/{p}/federated-svd/fed/{u}/pca/localData.csv", p=providers, u=users_fed),
+        expand("results/{p}/federated-svd/cent/{u}/pca/localData.csv", p=providers, u=users_cent),
+        expand("results/{p}/federated-svd/fed/combined_svd.csv", p=providers),
+        # ############# Random Forest ###############
+        expand("results/{p}/random-forest/fed/{u}/proba.csv", p=providers, u=users_fed),
+        expand("results/{p}/random-forest/cent/{u}/proba.csv", p=providers, u=users_cent),
+        expand("results/{p}/random-forest/fed/combined_randfor.csv", p=providers),
         
 
 
 
-rule prep_data:
+rule prep_data_federated:
     output:
-        expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accs),   # SVD
-        expand("data/public_cohorts/{acc}/species.csv", acc=accs),                         # randfor    
-        "data/public_cohorts/species_header_index_nostatus.csv",                           # SVD 
-        "data/public_cohorts/species.csv",                                                 # randfor      
+        "data/{tool}/{acc}/input.csv"
+    wildcard_constraints:
+        acc="P[^/]*"   # accession pattern starting with 'P'
     params:
         ds_features=ds_features,
     shell:
-        f"python workflow/scripts/prep_public_cohorts.py "
-        f" --outdir data/public_cohorts/ --downsample-features {params.ds_features}"
+        "python workflow/scripts/prep_data_federated.py "
+        " --acc {wildcards.acc} "
+        " --tool {wildcards.tool} "
+        " --downsample-features {params.ds_features} "
 
 
 
-rule fedsim:   # generic fedsim rule with dummy IO
+rule prep_data_centralized:
     input:
-        expand("data/{acc}/input.csv", acc=accs),
+        expand("data/{{tool}}/{acc}/input.csv", acc=accs),
     output:
-        expand("results/{u}/some/Project_{pid}/output.zip", u=users_fed, pid=pid_svd_fed),
+        "data/{tool}/cent/input.csv"
     params:
-        conf=get_fedsim_config("federated-svd", "fed"),
+        accession_list=' '.join(accs),
+    shell:
+        "python workflow/scripts/prep_data_centralised.py "
+        " --tool {wildcards.tool} "
+        " --accs {params.accession_list} "
+
+
+
+rule distribute_biosphere_hostnames:
+    input:
+        expand("configs/biosphere/{tool}/config_fedsim_{mode}.toml", tool=tools, mode=['fed', 'cent']),
+    output:
+        'results/biosphere_hostnames_distributed'
+    params:
+        hostnames=hostnames,
+    shell:
+        "python workflow/scripts/distribute_biosphere_hostnames.py "
+        " --hostnames {params.hostnames} "
+        " --out {output} "
+
+
+
+rule fedsim_fed:  
+    input:
+        expand("data/{{tool}}/{acc}/input.csv", acc=accs),
+        'results/biosphere_hostnames_distributed'
+    output:
+        expand("results/{{provider}}/{{tool}}/fed/results_{u}.zip", u=users_fed),
     resources:
         serial=1,
     shell:
-        f"fedsim -c {params.conf} -v "
+        "fedsim -c configs/{wildcards.provider}/{wildcards.tool}/config_fedsim_fed.toml"
+        
 
 
-
-
-use rule fedsim as fedsim_svd_fed with: 
+rule fedsim_cent:  
     input:
-        expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accs),
+        "data/{tool}/cent/input.csv",
+        'results/biosphere_hostnames_distributed'
     output:
-        expand("results/fedsim_fed/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip", u=users_fed, pid=pid_svd_fed),
-    params:
-        conf=get_fedsim_config("federated-svd", "fed"),
-
-
-
-use rule fedsim as fedsim_svd_cent with:
-    input:
-        "data/public_cohorts/species_header_index_nostatus.csv",
-    output:
-        expand("results/fedsim_cent/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip", u=users_cent, pid=pid_svd_cent),
-    params:
-        conf=get_fedsim_config("federated-svd", "cent"),
-
-
-
-use rule fedsim as fedsim_randfor_fed with:
-    input:
-        expand("data/public_cohorts/{acc}/species.csv", acc=accs),
-    output:
-        expand("results/fedsim_fed/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip", u=users_fed, pid=pid_randfor_fed),
-    params:
-        conf=get_fedsim_config("random-forest", "fed"),
-
-
-use rule fedsim as fedsim_randfor_cent with:
-    input:
-        "data/public_cohorts/species.csv",
-    output:
-        expand("results/fedsim_cent/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip", u=users_cent, pid=pid_randfor_cent),
-    params:
-        conf=get_fedsim_config("random-forest", "cent"),
-
-
-
-# use rule fedsim as fedsim_ada_fed with:
-#     input:
-#         expand("data/public_cohorts/{acc}/species.csv", acc=accs),
-#     output:
-#         expand("results/fedsim_fed/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip", u=users_fed, pid=pid_ada_fed),
-#     params:
-#         conf=get_fedsim_config("ada-boost", "fed"),
-
-
-# use rule fedsim as fedsim_ada_cent with:
-#     input:
-#         "data/public_cohorts/species.csv",
-#     output:
-#         expand("results/fedsim_cent/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip", u=users_cent, pid=pid_ada_cent),
-#     params:
-#         conf=get_fedsim_config("ada-boost", "cent"),
-
-
-
-
-
-
-# rule fedsim_svd_fed:
-#     input:
-#         data=expand("data/public_cohorts/{acc}/species_header_index_nostatus.csv", acc=accessions),
-#     output:
-#         expand("results/fedsim_fed/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip", u=fc_users_fed, pid=pid_svd_fed),
-#     params:
-#         conf=fedsim_conf_svd_fed,
-#     resources:
-#         serial=1,
-#     shell:
-#         f"fedsim -c {params.conf} -v "
-
-
-
-# rule fedsim_svd_cent:
-#     input:
-#         data="data/public_cohorts/species_header_index_nostatus.csv",
-#     output:
-#         expand("results/fedsim_cent/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip", u=fc_users_cent, pid=pid_svd_cent),
-#     params:
-#         conf=fedsim_conf_svd_cent,
-#     resources:
-#         serial=1,
-#     shell:
-#         f"fedsim -c {params.conf} -v "
-
-
-
-# rule fedsim_randfor_fed:
-#     input:
-#         data=expand("data/public_cohorts/{acc}/species.csv", acc=accessions),
-#     output:
-#         expand("results/fedsim_fed/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip", u=fc_users_fed, pid=pid_randfor_fed),
-#     params:
-#         conf=fedsim_conf_randfor_fed,
-#     resources:
-#         serial=1,
-#     shell:
-#         f"fedsim -c {params.conf} -v "
-
-
-
-# rule fedsim_randfor_cent:
-#     input:
-#         data="data/public_cohorts/species.csv",
-#     output:
-#         expand("results/fedsim_cent/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip", u=fc_users_cent, pid=pid_randfor_cent),
-#     params:
-#         conf=fedsim_conf_randfor_cent,
-#     resources:
-#         serial=1,
-#     shell:
-#         f"fedsim -c {params.conf} -v "
+        expand("results/{{provider}}/{{tool}}/cent/results_{u}.zip", u=users_cent),
+    resources:
+        serial=1,
+    shell:
+        "fedsim -c configs/{wildcards.provider}/{wildcards.tool}/config_fedsim_cent.toml"
 
 
 
 rule unzip_fedsim:
     input:
-        "results/fedsim_{mode}/{u}/data/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip"
+        "results/{p}/{t}/{m}/results_{u}.zip",
     output:
-        "results/fedsim_{mode}/{u}/{pid}/some/output.csv",
+        "results/{p}/{t}/{m}/{u}/some/output.csv",
     shell:
-        "unzip -o {input} -d results/fedsim_{wildcards.mode}/{wildcards.u}/{wildcards.pid} "
+        "unzip -o {input} -d results/{wildcards.p}/{wildcards.t}/{wildcards.m}/{wildcards.u}/"
 
 
 
 use rule unzip_fedsim as unzip_fedsim_svd with:
     output:
-        "results/fedsim_{mode}/{u}/{pid}/pca/localData.csv",
+        "results/{p}/{t}/{m}/{u}/pca/localData.csv",
+
 
 
 use rule unzip_fedsim as unzip_fedsim_randfor with:
     output:
-        "results/fedsim_{mode}/{u}/{pid}/pred.csv",
-        "results/fedsim_{mode}/{u}/{pid}/proba.csv",
-        "results/fedsim_{mode}/{u}/{pid}/test.csv",
-
-
-# use rule unzip_fedsim as unzip_fedsim_ada with:
-#     output:
-#         "results/fedsim_{mode}/{u}/{pid}/ada.csv",
-
-
-
+        "results/{p}/{t}/{m}/{u}/pred.csv",
+        "results/{p}/{t}/{m}/{u}/proba.csv",
+        "results/{p}/{t}/{m}/{u}/test.csv",
 
 
 
 rule combine_federated_svd:
     input:
-        expand("results/fedsim_fed/{u}/{pid}/pca/localData.csv", u=users_fed, pid=pid_svd_fed),
+        expand("results/{{p}}/federated-svd/fed/{u}/pca/localData.csv", u=users_fed),
     output:
-        "results/fedsim_fed/combined_localdata.csv",
+        "results/{p}/federated-svd/fed/combined_svd.csv",
     params: accessions=accs,
     shell:
         "python workflow/scripts/combine_federated_svd.py "
@@ -249,11 +158,11 @@ rule combine_federated_svd:
 
 rule combine_federated_randfor:
     input:
-        pred=expand("results/fedsim_fed/{u}/{pid}/pred.csv", u=users_fed, pid=pid_randfor_fed),
-        prob=expand("results/fedsim_fed/{u}/{pid}/proba.csv", u=users_fed, pid=pid_randfor_fed),
-        true=expand("results/fedsim_fed/{u}/{pid}/test.csv", u=users_fed, pid=pid_randfor_fed),
+        pred=expand("results/{{p}}/random-forest/fed/{u}/pred.csv", u=users_fed),
+        prob=expand("results/{{p}}/random-forest/fed/{u}/proba.csv", u=users_fed),
+        true=expand("results/{{p}}/random-forest/fed/{u}/test.csv", u=users_fed),
     output:
-        "results/fedsim_fed/combined_randfor.csv",
+        "results/{p}/random-forest/fed/combined_randfor.csv",
     params: accessions=accs,
     shell:
         "python workflow/scripts/combine_federated_randfor.py "
@@ -262,19 +171,6 @@ rule combine_federated_randfor:
         " --input_true {input.true} "
         " --output {output} "
         " --accessions {params.accessions} "
-
-
-# rule combine_federated_ada:
-#     input:
-#         expand("results/fedsim_fed/{u}/{pid}/ada.csv", u=users_fed, pid=pid_ada_fed),
-#     output:
-#         "results/fedsim_fed/combined_ada.csv",
-#     params: accessions=accs,
-#     shell:
-#         "python workflow/scripts/combine_federated_ada.py "
-#         " --input {input} "
-#         " --output {output} "
-#         " --accessions {params.accessions} "
 
 
 
