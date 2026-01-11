@@ -35,7 +35,11 @@ fi
 """
 
 
-def write_provision_script():
+def write_provision_script() -> str:
+    """
+    Write the provision script to a file.
+    :return: path to the provision script
+    """
     script_name = "provision.sh"
     with open(script_name, "w") as prov:
         prov.write(bash_provision_ubuntu)
