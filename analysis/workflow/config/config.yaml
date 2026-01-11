@@ -1,6 +1,4 @@
-downsample_features: 0.05
-metadata: 'metadata_2340_CRC_cohort_20240704'
-species_signal: 'species_signal_2340_CRC_cohort_20240617_combat_prev0'
+# project accessions to be used in the workflow
 accessions: [
   "PRJEB10878",
   "PRJEB6070",
@@ -8,8 +6,24 @@ accessions: [
   "PRJNA429097",
   "PRJNA731589",
 ]
+# fraction of features to be used
+downsample_features: 0.01
+# provider of machines
+# can contain vagrant, biosphere
+providers: ["biosphere"] #, "biosphere"]
 # Names of tools to be run in the workflow
 # for each, config files need to be present as:
-#      resources/<tool>/config_fedsim_cent.toml
-#      resources/<tool>/config_fedsim_fed.toml
-tools: ["federated-svd", "random-forest"] #, "ada-boost"]
+#      configs/<providers>/<tool>/config_fedsim_cent.toml
+#      configs/<providers>/<tool>/config_fedsim_fed.toml
+tools: ["federated-svd"] #, "random-forest"] #, "ada-boost"]
+# biosphere hostnames to be written into the config files
+# these change according to the current allocation
+biosphere_hostnames: [
+  "134.158.249.201",
+  "134.158.249.180",
+  "134.158.249.153",
+  "134.158.248.37",
+  "134.158.249.68"
+]
+
+
