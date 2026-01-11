@@ -2,7 +2,7 @@ import os
 from types import SimpleNamespace
 
 import rtoml
-from fabric import SerialGroup
+from fabric import SerialGroup, ThreadingGroup
 from dotenv import load_dotenv
 
 from fedsim.logger import log
@@ -29,7 +29,6 @@ class Config:
         # set general options
         self.is_simulated = self.config['general'].get('sim', False)
         self.outdir = self.config['general'].get('outdir', 'results/')
-        self.provision = self.config['general'].get('provision', None)
         # set debug options
         debug = self.config.get('debug', {})
         self.debug = SimpleNamespace()
@@ -121,7 +120,7 @@ class Config:
     
 
     
-    def construct_serialgroup(self) -> SerialGroup:
+    def construct_connection_group(self) -> tuple[SerialGroup, ThreadingGroup]:
         """
         Generate a group of fabric Connections from the info in the config file.
         This is used when the target remotes are actual machines instead of vagrant VMs.
@@ -133,8 +132,9 @@ class Config:
         # grab ssh keys for connect_kwargs
         sshkeys = self._get_sshkeys()
         self.serialg = SerialGroup(*client_strings, connect_kwargs={"key_filename": sshkeys})
+        self.threadg = ThreadingGroup(*client_strings, connect_kwargs={"key_filename": sshkeys})
         log(f"serial group: {self.serialg}")
-        return self.serialg
+        return self.serialg, self.threadg
 
 
     
