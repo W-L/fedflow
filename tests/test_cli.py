@@ -4,7 +4,7 @@ from tests.constants import TOML_MEAN_TRIO, TOML_MEAN_TRIO_INT
 
 
 def test_setup_run():
-    conf = fedsim.cli.setup_run(config=TOML_MEAN_TRIO, log_mode="debug")
+    conf = fedsim.cli.setup_run(config=TOML_MEAN_TRIO)
     assert conf is not None
     assert conf.config['general']['sim'] is True
     assert conf.config['general']['tool'] == "mean-app"
@@ -14,7 +14,7 @@ def test_setup_run():
 
 @pytest.mark.integration
 def test_main():
-    args = ["--config", TOML_MEAN_TRIO_INT, "--verbose"]
+    args = ["--config", TOML_MEAN_TRIO_INT]
     fedsim.cli.main(argv=args)
 
 

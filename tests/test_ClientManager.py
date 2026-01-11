@@ -10,7 +10,8 @@ def client_manager_nosim(config_mean_trio_nosim):
     conf.construct_serialgroup()
 
     manager = ClientManager(
-        serialgroup=conf.serialg,
+        serialg=conf.serialg,
+        threadg=conf.threadg,
         clients=conf.config['clients'],
     )
     return manager
