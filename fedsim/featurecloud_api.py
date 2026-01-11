@@ -382,7 +382,7 @@ class User:
             self.limiter.wait()
             r = self.client.get("/api/user/info/")
             ok = r.status_code == 200
-            log(f"User {self.username} logged in: {ok}", level=logging.DEBUG)
+            log(f"User {self.username} logged in: {ok}")
             return ok
         except httpx.HTTPError:
             return False
@@ -443,7 +443,7 @@ class User:
         :return: bool success
         """
         if self.owns_app(slug):
-            log(f"User {self.username} already has app {slug}.", level=logging.DEBUG)
+            log(f"User {self.username} already has app {slug}.")
             return True
         # add app to purchased apps
         app_id = self.apps.get(slug)
@@ -465,7 +465,7 @@ class User:
         if app_id is None:
             raise ValueError(f"App {slug} invalid")
         if not self.owns_app(slug):
-            log(f"User {self.username} does not have app {slug}.", level=logging.DEBUG)
+            log(f"User {self.username} does not have app {slug}.")
             return True
         # remove app from purchased apps
         self.limiter.wait()
