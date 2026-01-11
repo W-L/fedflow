@@ -3,20 +3,18 @@ from importlib.metadata import version
 
 
 
-def setup_logging(logfile: str = "output.log", mode: str = "debug") -> logging.Logger:
+def setup_logging(logfile: str = "output.log") -> logging.Logger:
     """
     Create generic logger for this project
 
     :param logfile: file to write the logs to, defaults to "output.log"
-    :param mode: logging mode, either "debug" or "quiet", defaults to "debug"
-    :raises ValueError: if non-existent mode is chosen
     :return: logging.Logger instance
     """
     # make sure the file exists and is empty
     with open(logfile, 'w'):
         pass
     logger = logging.getLogger("fedsim")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     fmt = '%(asctime)s %(message)s'
     logger.handlers.clear()
     
@@ -27,14 +25,8 @@ def setup_logging(logfile: str = "output.log", mode: str = "debug") -> logging.L
     fh = logging.FileHandler(logfile, mode="w")
     fh.setFormatter(logging.Formatter(fmt))
     # selection of logging mode
-    if mode == "debug":
-        sh.setLevel(logging.DEBUG)
-        fh.setLevel(logging.DEBUG)
-    elif mode == "quiet":
-        sh.setLevel(logging.INFO)
-        fh.setLevel(logging.INFO)
-    else:
-        raise ValueError("mode must be 'debug' or 'quiet'")
+    sh.setLevel(logging.INFO)
+    fh.setLevel(logging.INFO)
     # attach the handlers to the logger
     logger.addHandler(sh)
     logger.addHandler(fh)
