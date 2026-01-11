@@ -106,7 +106,6 @@ options:
   -h, --help            show this help message and exit
   -c CONFIG, --config CONFIG
                         Path to the config file
-  -v, --verbose         Enable verbose logging
 ```
 
 
@@ -127,7 +126,6 @@ The second file is a toml configuration of simulations/real runs of featurecloud
 sim = true                              # whether vagrant VMs or real machine are used
 project_id = PROJECT_ID                 # numeric ID of a featurecloud project (in it's URL)
 tool = TOOL_NAME                        # alternatively to a project_id, then a project is created automatically
-provision = 'provision.sh'              # optional path to a provisioning scripts that will be run on all clients
 
 
 [clients]                               # a list of the participating clients
@@ -156,9 +154,8 @@ sshkey = ''
 ```
 
 
-The parameter `provision` is only needed if the clients are real machines. 
 If `sim = true` is set, `hostname, username, port, sshkey` are ignored and vagrant vms are used instead. When real machines should be used, their connection details need to be provided.
-The field sshkey is the path to the public key used to authenticate the user on the host. Exchange of connection credentials is only automated in the simulation with vagrant.
+The field sshkey is the path to the ssh key used to authenticate the user on the remote. Exchange of connection credentials is only automated in the simulation with vagrant.
 
 
 ## Example usage
@@ -171,15 +168,10 @@ A config is provided to run the 'mean' test app across 3 clients (with the same 
 
 ## Provisioning of client VMs/participating machines
 
-For simulations, the VMs are provisioned automatically using a shell script shipped in `fedsim/provision.py`.
+System dependencies on remotes are installed automatically using a shell script shipped in `fedsim/provision.py`.
  
-It installs these dependencies:
-
 - python and a venv to run the programs
 - docker (used by featurecloud)
-
-For biosphere machines `provision=biosphere` uses a different script shipped in the same python file. 
-For any other dependencies `provision=` can point to a shell script that will be run on all clients.
 
 
 ## Terms of accceptable use and responsible automation
