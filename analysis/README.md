@@ -22,8 +22,12 @@ The workflow also needs fedsim to be installed.
 Since it is not on pypi yet, it needs to be pulled from the repo and then installed via pip. 
 Once it is on pypi I'll add it to the conda dependencies.
 
-`cd workflow && git clone https://github.com/W-L/FedSim.git`
+`git clone https://github.com/W-L/FedSim.git`
 `cd FedSim && hatch build && pip install .`
+
+or to avoid another local repo, just copy the wheel and install that
+
+`cp ../FedSim/dist/fedsim-0.0.1-py3-none-any.whl dist/`
 
 
 all configurable parameters of the workflow are in 
@@ -102,7 +106,9 @@ for some featurecloud tools the config file name is hard coded
 
 ### Ada-boost
 
-This tool does not provide predictions or probabilities as output, only the pickled model and scores on local test data
+This tool does not provide predictions or probabilities as output, only the pickled model and scores on local test data. 
+I'm not able to unpickle the model, maybe because I don't have the exact versions of some of the libraries. 
+The requirements are not fully pinned though, so there's no easy way to reproduce the environment fully.
 
 
 ## Results
@@ -140,37 +146,16 @@ So these results have no meaning except for comparison of the analyses.
 
 
 
-## Todo
-
-adjust code to new config subdirs
-
-check what other federated tools we want to compare
-
-
-follow up on the github issue
-- there's a system to check code security of featurecloud apps
-- but is there also a system to check code functionality/correctness?
-- for the svd app there is some testing code, but with hard-coded paths to scripts that are not part of the repo
-
-
 ### adding new tool
 
-add config files in resources/ (tool and fedsim config)
-
-add tool name in workflow config
-
-add input data (adjust preparation script)
-
-run the tools via fedsim once outside the snakemake to generate the project IDs
-
-add snakemake rules (overloaded fedsim and unzipping)
-
-add combination script
-
-add visualisation script 
-
-add figures to readme
-
-update rulegraph
+- add config files in configs/ (tool and fedsim config)
+- add tool name in workflow config
+- add input data (adjust preparation script)
+- run the tools via fedsim once outside the snakemake to generate the project IDs
+- add snakemake rules (overloaded fedsim and unzipping)
+- add combination script
+- add visualisation script 
+- add figures to readme
+- update rulegraph
 
 
