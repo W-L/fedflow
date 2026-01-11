@@ -13,16 +13,14 @@ from fedsim.provision import write_provision_script
 def get_args(argv=None) -> argparse.Namespace:
      parser = argparse.ArgumentParser(description="Simulated federated analyses with VMs")
      parser.add_argument("-c", "--config", help="Path to the config file", required=True)
-     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
      args = parser.parse_args(argv)
      return args
 
 
-
-def setup_run(config: str, log_mode: str) -> Config:
+def setup_run(config: str) -> Config:
     # set up logging
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    setup_logging(f'{stamp}_fedsim.log', mode=log_mode)
+    setup_logging(f'{stamp}_fedsim.log')
     # load config
     log(f'Loading configuration from {config}...')
     conf = Config(toml_path=config)
@@ -31,32 +29,26 @@ def setup_run(config: str, log_mode: str) -> Config:
 
 def get_client_connections(conf: Config):
     if not conf.is_simulated:
-        # construct serialgroup from config
+        # construct connection group from config
         log('Connecting to remote clients defined in config...')
-        serialgroup = conf.construct_serialgroup()
+        serialg, threadg = conf.construct_connection_group()
     else:
-        # construct serialgroup from vagrant
+        # construct connection group from vagrant
         log('Setting up Vagrant VMs...')
         nnodes = len(conf.config['clients'])
-        vms = VagrantManager(num_nodes=nnodes, provision=conf.provision)
+        vms = VagrantManager(num_nodes=nnodes)
         vms.launch()
-        serialgroup = vms.construct_serialgroup()
-    # use serialgroup to set up fabric clients
+        serialg, threadg = vms.construct_connection_group()
+    # set up wrapper for group of clients
     log("Setting up Fabric clients...")
-    clients = ClientManager(serialgroup=serialgroup, clients=conf.config['clients'])
-    clients.ping(nodes=clients.all)
+    clients = ClientManager(serialg=serialg, threadg=threadg, clients=conf.config['clients'])
+    clients.ping()
     return clients
 
 
 def prep_clients(clients: ClientManager, conf: Config):
-    # provision non-vagrant clients
-    if not conf.is_simulated:
-        log("Provisioning...")
-        # special case for biosphere
-        if conf.provision == 'biosphere':
-            write_provision_script(machine="biosphere")
-            conf.provision = "provision.sh"
-        clients.run_bash_script(script_path=conf.provision)
+    log("Provisioning...")
+    clients.run_bash_script(script_path=write_provision_script())
     log("Resetting clients...")
     clients.reset_clients()
     log("Distributing credentials to clients...")
@@ -67,9 +59,6 @@ def prep_clients(clients: ClientManager, conf: Config):
     clients.install_package(reinstall=conf.debug.reinstall, nodeps=conf.debug.nodeps)
     log("Starting FeatureCloud controllers on clients...")
     clients.start_featurecloud_controllers()
-    # clients.test_featurecloud_controllers()
-    # clients.stop_featurecloud_controllers()
-
 
 
 def prep_project(clients: ClientManager, conf: Config) -> str:
@@ -78,13 +67,9 @@ def prep_project(clients: ClientManager, conf: Config) -> str:
         # attach to existing project
         project_id = conf.config['general']['project_id']
     else:
-        # create and join new project
+        # create and join new project - serially
         log("Creating and joining FeatureCloud project...")
-        project_id = clients.create_and_join_project(
-            coordinator=clients.coordinator,
-            participants=clients.participants,
-            tool=conf.config['general']['tool'],
-        )
+        project_id = clients.create_and_join_project(tool=conf.config['general']['tool'])
     return project_id
 
 
@@ -92,7 +77,7 @@ def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: s
     # contribute data to project
     # once all participants have contributed, the project is started
     log("Contributing data to FeatureCloud project...")
-    clients.contribute_data_to_project(nodes=clients.all, project_id=project_id)
+    clients.contribute_data_to_project(project_id=project_id)
     # monitor run, then download logs and results
     log("Monitoring FeatureCloud project run...")
     clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id, timeout=timeout)
@@ -101,22 +86,19 @@ def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: s
     clients.fetch_results(outdir=outdir, pid=project_id)
 
 
-
 def cleanup(clients: ClientManager, conf: Config):
     # stop fc controller and vms
-    clients.stop_featurecloud_controllers(nodes=clients.all)
+    clients.stop_featurecloud_controllers()
     if conf.is_simulated:
         log("Halting Vagrant VMs...")
         # VagrantManager.stop()
-    pass
 
 
 def main(argv=None):
     # parse arguments
     args = get_args(argv=argv)
-    log_mode = "debug" if args.verbose else "quiet"
     # initialise logging and parse config file
-    conf = setup_run(config=args.config, log_mode=log_mode)
+    conf = setup_run(config=args.config)
     # set up fabric connections to all clients
     clients = get_client_connections(conf=conf)
     if conf.debug.vmonly:
@@ -124,7 +106,7 @@ def main(argv=None):
         return
     # get or create featurecloud project
     project_id = prep_project(clients=clients, conf=conf)
-    # provision (if not vagrant), reset, distribute creds and data, install fedsim, start fc controllers
+    # provision, reset, distribute creds and data, install fedsim, start fc controllers
     prep_clients(clients=clients, conf=conf)
     # contribute data, monitor run, download results
     run_project(

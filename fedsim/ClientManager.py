@@ -1,9 +1,9 @@
 from glob import glob
 from pathlib import Path
+import shutil
+import shlex
+import tarfile
 
-import fedsim.utils_fabric as utils_fabric
-from fedsim.utils import execute_fabric
-from fedsim.logger import log
 
 
 
@@ -13,201 +13,163 @@ class ClientManager:
     Managing fabric Connections to remote hosts.
     """
 
-    def __init__(self, serialgroup, clients: dict):
+    def __init__(self, serialg, threadg, clients: dict):
         """
         Initialize the ClientManager.
 
-        :param serialgroup: a group of fabric Connections
+        :param serialg: a group of fabric Connections
+        :param threadg: a group of fabric Connections
         :param clients: a dictionary of client information from the config file
         """
-        # remotes are separated into participants and coordinator
+        self.serialg = serialg
+        self.threadg = threadg
+        # # remotes are separated into participants and coordinator
         self.participants = []
         self.coordinator = []
         # add some info from the config file to each connection
-        for cxn, (cname, cinfo) in zip(serialgroup, clients.items()):
+        for cxn_t, cxn_s, cinfo in zip(threadg, serialg, clients.values()):
+            user = cinfo.get('fc_username', '')
+            data = cinfo.get('data', [])
             if cinfo.get('coordinator', False) is True:
-                cxn['coordinator'] = True
-                cxn['fc_username'] = cinfo.get('fc_username', '')
-                cxn['data'] = cinfo.get('data', [])
-                self.coordinator.append(cxn)
+                cxn_t['coordinator'], cxn_s['coordinator'] = True, True
+                cxn_t['fc_username'], cxn_s['fc_username'] = user, user
+                cxn_t['data'], cxn_s['data'] = data, data
+                self.coordinator.append(cxn_t)
             else:
-                cxn['coordinator'] = False
-                cxn['fc_username'] = cinfo.get('fc_username', '')
-                cxn['data'] = cinfo.get('data', [])
-                self.participants.append(cxn)
-        # list of all nodes to apply operations to
-        self.all = self.coordinator + self.participants
+                cxn_t['coordinator'], cxn_s['coordinator'] = False, False
+                cxn_t['fc_username'], cxn_s['fc_username'] = user, user
+                cxn_t['data'], cxn_s['data'] = data, data
+                self.participants.append(cxn_t)
+        
 
 
-
-    def _nodes_or_all(self, nodes = None) -> list:
-        return nodes if nodes is not None else self.all
-
-
-
-    def ping(self, nodes = None) -> None:
+    def ping(self) -> None:
         """
         Ping all nodes to check connectivity.
-
-        :param nodes: list of fabric Connections to ping
         """
-        for cxn in self._nodes_or_all(nodes):
-            try:
-               cmd = 'echo "Ping from $(hostname)"'
-               _ = execute_fabric(cmd, cxn)
-            except Exception as e:
-                log(f"Error during ping of {cxn.get('host', '')}: {e}")
-        return
+        cmd = 'echo "Ping from $(hostname)"'
+        self.threadg.run(cmd)
 
 
-
-    def run_bash_script(self, script_path: str, nodes = None) -> None:
+    def run_bash_script(self, script_path: str) -> None:
         """
-        Run a bash script on remotes. This is used to provision non-vagrant clients.
+        Run a bash script on remotes. This is used to provision clients.
 
         :param script_path: path to the bash script to run
-        :param nodes: list of fabric Connections to run the script on
         """
-        for cxn in self._nodes_or_all(nodes):
-            assert Path(script_path).is_file(), f"Script path {script_path} is not a file."
-            cxn.put(script_path, Path(script_path).name)
-            cmd = f"bash {Path(script_path).name}"
-            stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
-        return
+        assert Path(script_path).is_file(), f"{script_path} is not a file."
+        self.threadg.put(script_path, Path(script_path).name)
+        cmd = f"bash {Path(script_path).name}"
+        self.threadg.run(cmd)
     
 
-
-    def install_package(self, nodes = None, reinstall: bool = False, nodeps: bool = False) -> None:
+    def install_package(self, reinstall: bool = False, nodeps: bool = False) -> None:
         """
         Install the fedsim package on all nodes.
         TODO this is used because the package is not on PyPI, so the wheel is transferred and installed locally.
-
-        :param nodes: list of fabric Connections to install package on
+        
         :param reinstall: whether to force reinstall the package
         :param nodeps: whether to skip installing dependencies
         """
-        for cxn in self._nodes_or_all(nodes):
-            # find the wheel file for installation
-            whl = glob("dist/fedsim-*.whl")[0]
-            utils_fabric.upload_file(
-                conn=cxn,
-                local_path=whl,
-                remote_path=f"{Path(whl).name}",
-                force=True
-            )
-            cxn.run("python3 -m venv .venv")
-            install_cmd = f"source .venv/bin/activate && pip install {Path(whl).name}"
-            if reinstall:
-                install_cmd += " --force-reinstall"
-            if nodeps:
-                install_cmd += " --no-deps"
-            cxn.run(install_cmd)
-            # execute_fabric(command=install_cmd, cxn=cxn)
-        return
+        # find the wheel file for installation
+        whl = glob("dist/fedsim-*.whl")[0]
+        whl_name = Path(whl).name
+        self.threadg.put(whl, remote=whl_name)
+        self.threadg.run("python3 -m venv .venv")
+        install_cmd = f"source .venv/bin/activate && pip install {whl_name}"
+        if reinstall:
+            install_cmd += " --force-reinstall"
+        if nodeps:
+            install_cmd += " --no-deps"
+        self.threadg.run(install_cmd)
+        
 
-    
-
-    def distribute_data(self, nodes = None) -> None:
+    def distribute_data(self) -> None:
         """
         Load the data defined in the config file onto all nodes.
-
-        :param nodes: list of fabric Connections to distribute data to
         """
-        for cxn in self._nodes_or_all(nodes):
-            # data from the config file
-            utils_fabric.transfer_with_packing(conn=cxn, paths=cxn['data'])
+        for cxn in self.threadg:
+            for local_path in cxn['data']:    
+                cxn.put(local_path, remote=Path(local_path).name)
 
 
-
-    def distribute_credentials(self, fc_creds: dict, nodes = None) -> None:
+    def distribute_credentials(self, fc_creds: dict) -> None:
         """
         Transfer the credentials of the Featurecloud accounts to the remotes.
 
         :param fc_creds: dictionary of Featurecloud credentials
-        :param nodes: list of fabric Connections to distribute credentials to
         """
-        for cxn in self._nodes_or_all(nodes):
+        for cxn in self.threadg:
             fc_user = cxn['fc_username']
             fc_pass = fc_creds.get(fc_user, '')
-            utils_fabric.write_to_file_remote(
-                conn=cxn,
-                remote_path=".env",
-                content=f"{fc_user}={fc_pass}\n"
-            )
+            assert fc_user != '', "Featurecloud username is empty."
+            assert fc_pass != '', f"Featurecloud password for user {fc_user} not found."
+            cmd = f'echo {shlex.quote(fc_user)}={shlex.quote(fc_pass)} > .env'
+            cxn.run(cmd, hide=True)
 
 
-
-    def test_featurecloud_controllers(self, nodes = None) -> None:
+    def start_featurecloud_controllers(self) -> None:
         """
-        Test launching and stopping the Featurecloud controllers.
-
-        :param nodes: list of fabric Connections to test
+        Start the Featurecloud controller on all remotes.
         """
-        for cxn in self._nodes_or_all(nodes):
-            utils_fabric.launch_featurecloud(conn=cxn)
-            utils_fabric.stop_featurecloud(conn=cxn)
-        return
+        self.stop_featurecloud_controllers()
+        cmd = f"source .venv/bin/activate && featurecloud controller start --data-dir data_fc"
+        self.threadg.run(f'echo "$(hostname): starting fc controller..." && {cmd}')
+        # check status
+        cmd = "source .venv/bin/activate && featurecloud controller status"
+        results =self.threadg.run(cmd)
+        ok = True
+        failed = []
+        for cxn, result in results.items():
+            stdout = result.stdout
+            if "running" not in str(stdout).lower():
+                ok = False
+                failed.append(cxn.host)
+        assert ok, f'[{", ".join(failed)}] Failed to start FeatureCloud controller.'
+                
 
-
-
-    def start_featurecloud_controllers(self, nodes = None) -> None:
+    def stop_featurecloud_controllers(self) -> None:
         """
-        Start the Featurecloud controller on multiple remotes.
-
-        :param nodes: list of fabric Connections to start controllers on
+        Stop the Featurecloud controller on all remotes.
         """
-        for cxn in self._nodes_or_all(nodes):
-            utils_fabric.launch_featurecloud(conn=cxn)
-        return
-    
+        cmd = "source .venv/bin/activate && featurecloud controller stop"
+        self.threadg.run(f'echo "$(hostname): stopping fc controller..." && {cmd}')
+        
 
-
-    def stop_featurecloud_controllers(self, nodes = None) -> None:
+    def reset_clients(self,) -> None:
         """
-        Stop the Featurecloud controller on multiple remotes.
-
-        :param nodes: list of fabric Connections to stop controllers on
+        Reset all remotes by stopping any stray docker processes
+        and removing all featurecloud data.
         """
-        for cxn in self._nodes_or_all(nodes):
-            utils_fabric.stop_featurecloud(conn=cxn)
-        return
-    
+        self.threadg.run('echo "Resetting $(hostname)..."')
+        # stop docker containers
+        stop_docker = "docker ps -q | xargs -r docker stop"
+        self.threadg.run(stop_docker)
+        # remove data directory if it exists
+        # test that it's a directory and not a symlink before removing
+        # this needs sudo because docker creates the directory as root?
+        remove_featurecloud_remnants = "[ -d data_fc ] && [ ! -L data_fc ] && sudo rm -rf data_fc"
+        self.threadg.run(remove_featurecloud_remnants, warn=True)
 
 
-    def reset_clients(self, nodes = None) -> None:
-        """
-        Reset multiple remotes by stopping any stray docker processes
-        and removing all data.
-
-        :param nodes: list of fabric Connections to reset
-        """
-        for cxn in self._nodes_or_all(nodes):
-            utils_fabric.reset_node(conn=cxn)
-        return
-    
-
-
-    def create_and_join_project(self, coordinator: list, participants: list, tool: str) -> str:
+    def create_and_join_project(self, tool: str) -> str:
         """
         Use the featurecloud API to create a project with the coordinator node 
         and generate tokens for participants. Parse the tokens and used them on the participant nodes
         to join the project.
 
-        :param coordinator: Single-item list of fabric Connection for the coordinator node
-        :param participants: list of fabric Connections for participant nodes
         :param tool: Name of the Featurecloud tool to use
         :raises ValueError: If project creation or token retrieval fails
         :return: The ID of the created project
         """
         # create a new project with the coordinator node 
-        coord_cxn = coordinator[0]
+        coord_cxn = self.coordinator[0]
         fc_user = coord_cxn['fc_username']
-        n_participants = len(participants)
+        n_participants = len(self.participants)
         cmd = f"source .venv/bin/activate && fcauto create -u {fc_user} -t {tool} -n {n_participants}"
-        stdout, stderr = execute_fabric(command=cmd, cxn=coord_cxn)
-        
+        res = coord_cxn.run(f'echo "$(hostname): creating project with tool {tool}..." && {cmd}')
         # parse output for project ID and tokens
-        lines = str(stdout).splitlines()
+        lines = str(res.stdout).splitlines()
         project_id = None
         tokens = []
         for line in lines:
@@ -220,32 +182,29 @@ class ClientManager:
             raise ValueError("Failed to create project or retrieve tokens.")
         
         # use tokens to join project from participant nodes
-        for cxn, token in zip(participants, tokens):
+        for cxn, token in zip(self.participants, tokens):
             fc_user = cxn['fc_username']
             cmd = f"source .venv/bin/activate && fcauto join -t {token} -u {fc_user} -p {project_id}"
-            stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
+            cxn.run(f'echo "$(hostname): joining project {project_id}..." && {cmd}')
         return project_id
 
 
-
-    def contribute_data_to_project(self, project_id: str, nodes = None) -> None:
+    def contribute_data_to_project(self, project_id: str) -> None:
         """
         Contribute data to a Featurecloud project from all participants.
         Finalizing the upload from all participants will trigger project execution.
 
-        :param nodes: list of fabric Connections to contribute data from
         :param project_id: ID of the Featurecloud project
         """
-        for cxn in self._nodes_or_all(nodes):
+        for cxn in self.serialg:
             fc_user = cxn['fc_username']
             # create a list of data paths to contribute
             data_paths = cxn['data']
             data_args = ' '.join([f"{Path(path).name}" for path in data_paths])
             cmd = f"source .venv/bin/activate && fcauto contribute -u {fc_user} -p {project_id} -d {data_args}"
-            stdout, stderr = execute_fabric(command=cmd, cxn=cxn)
+            cxn.run(f'echo "$(hostname): contributing data to project {project_id}..." && {cmd}')
         return
     
-
 
     def monitor_project_run(self, coordinator: list, project_id: str, timeout: int = 60) -> None:
         """
@@ -259,31 +218,36 @@ class ClientManager:
         cxn = coordinator[0]
         fc_user = cxn['fc_username']
         cmd = f"source .venv/bin/activate && fcauto monitor -u {fc_user} -p {project_id} -t {timeout}"
-        result = cxn.run(cmd)
-        log(f'[{cxn.host}] STDOUT: {result.stdout}')
-        if result.stderr.strip() != "":
-            log(f'[{cxn.host}] STDERR: \n{result.stderr}\n')
+        cxn.run(cmd)
         
 
-    def fetch_results(self, outdir, pid, nodes=None):
+    def fetch_results(self, outdir, pid):
         """
         Fetch results from nodes
 
         :param outdir: local directory to save results to
         :param pid: ID of the Featurecloud project
-        :param nodes: list of fabric Connections to fetch results from
         """
-        for cxn in self._nodes_or_all(nodes):
-            utils_fabric.fetch_remote_dir(
-                conn=cxn,
-                remote_dir="data_fc/",
-                local_dir=outdir
-            )
-            # move the zip file to a more convenient path
-            user = cxn['fc_username']
-            raw_zip = Path(outdir) / user / f"data_fc/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip"
-            new_zip = Path(outdir) / f"results_{user}.zip"
-            raw_zip.rename(new_zip)
+        for cxn in self.threadg:
+            fcuser = cxn["fc_username"]
+            local_dir = Path(f"{outdir}/{fcuser}")
+            local_dir.mkdir(parents=True, exist_ok=True)
+            archive_name = Path('data_fc.tar.gz')
+            local_archive = local_dir / archive_name
+            # Create archive remotely
+            cxn.run(f"sudo tar -czf {archive_name} data_fc/")
+            # Transfer archive
+            cxn.get(archive_name, str(local_archive))
+            # Extract locally
+            with tarfile.open(local_archive, "r:gz") as tar:
+                tar.extractall(local_dir)
+            # cleanup
+            cxn.run(f"rm -f {archive_name}")
+            local_archive.unlink()
+            # move the zip file with the actual results to a more convenient path
+            raw_zip = Path(outdir) / fcuser / f"data_fc/workflows/Project_{pid}/Run_1/results_pr{pid}_run1_step1.zip"
+            new_zip = Path(outdir) / f"results_{fcuser}.zip"
+            if raw_zip.is_file():
+                shutil.copy2(raw_zip, new_zip)
 
-            
 
