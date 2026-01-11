@@ -1,57 +1,45 @@
 
 
-vagrant_provision = f"""
+bash_provision_ubuntu = f"""
 #!/bin/bash
 set -e 
 
-USER="vagrant"
-DOCKER_VERSION="5:28.5.2-1~ubuntu.24.04~noble"
 
-apt-get update
-apt-get install -y curl pip python3.12 python3.12-venv ca-certificates curl gnupg
+DEPS_PY="python3.12 python3-pip python3.12-venv"
 
-# Install Docker (from vagrant tutorial)
-install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-chmod a+r /etc/apt/keyrings/docker.gpg
-echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-apt-get update
-apt-get install -y docker-ce=$DOCKER_VERSION docker-ce-cli=$DOCKER_VERSION containerd.io docker-buildx-plugin docker-compose-plugin
-usermod -aG docker $USER
-"""        
-
-
-# the ubuntu box on biosphere already has docker (28.0.1) installed
-# if the biosphere box updates docker it might stop working
-# we check whether packages are already installed 
-# because biosphere VMs runs updates in the background which is inconvenient
-# E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2635 (unattended-upgr)
-biosphere_provision = f"""
-#!/bin/bash
-set -e
-
-if dpkg -s python3.12-venv >/dev/null 2>&1; then
-    echo "python3.12-venv is installed"
+if dpkg -s $DEPS_PY >/dev/null 2>&1; then
+    echo "Python dependencies are installed"
 else
-    sudo apt-get update && sudo apt-get install -y python3.12-venv
+    sudo apt-get update
+    sudo apt-get install -y $DEPS_PY
+fi
+
+
+if dpkg -s docker-ce >/dev/null 2>&1; then
+    echo "Docker is installed"
+else
+    DEPS="curl ca-certificates gnupg"
+    sudo apt-get update
+    sudo apt-get install -y $DEPS
+    DOCKER_VERSION="5:28.5.2-1~ubuntu.24.04~noble"
+    # Install Docker (from vagrant tutorial)
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    chmod a+r /etc/apt/keyrings/docker.gpg
+    echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get update
+    sudo apt-get install -y docker-ce=$DOCKER_VERSION docker-ce-cli=$DOCKER_VERSION containerd.io docker-buildx-plugin docker-compose-plugin
+    sudo usermod -aG docker $(whoami)
 fi
 
 """
 
 
-
-def write_provision_script(machine: str):
-
-    if machine == "vagrant":
-        content = vagrant_provision
-    elif machine == "biosphere":
-        content = biosphere_provision
-    else:
-        raise ValueError(f"Unknown machine: {machine}")
-
-    with open("provision.sh", "w") as prov:
-        prov.write(content)
+def write_provision_script():
+    script_name = "provision.sh"
+    with open(script_name, "w") as prov:
+        prov.write(bash_provision_ubuntu)
         prov.write("\n")
-
+    return script_name
     
     

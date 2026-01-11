@@ -1,5 +1,5 @@
 import paramiko
-from fabric import SerialGroup
+from fabric import SerialGroup, ThreadingGroup
 
 from fedsim.logger import log
 from fedsim.utils import execute
@@ -11,25 +11,19 @@ from fedsim.provision import write_provision_script
 class VagrantManager:
 
 
-    def __init__(self, num_nodes: int, box: str = 'bento/ubuntu-24.04', provision: str | None = None):
+    def __init__(self, num_nodes: int, box: str = 'bento/ubuntu-24.04'):
         """
         A class to manage Vagrant virtual machines for fedsim simulations.
 
         :param num_nodes: The number of nodes to use
         :param box: The Vagrant box to use
-        :param provision: Optional path to a non-default provision script
         """
         # check dependencies
         assert self._vagrant_available()
         assert self._libvirt_available()
         self.num_nodes = num_nodes
         self.box = box
-        # if not passed through, use default
-        if not provision:
-            self.provision = "provision.sh"
-            write_provision_script(machine="vagrant")
-        else:
-            self.provision = provision
+        write_provision_script()
         # initialized later
         self.client_strings = []
         self.serialg = []
@@ -82,7 +76,7 @@ class VagrantManager:
             config.vm.define "node-#{{i}}" do |node|
                 node.vm.hostname = "node-#{{i}}"
                 # node.vm.synced_folder "./node-#{{i}}/", "/home/vagrant/node", create: true
-                node.vm.provision "shell", name: "common", path: "{self.provision}"
+                node.vm.provision "shell", name: "common", path: "provision.sh"
             end
         end
     end
@@ -225,19 +219,19 @@ class VagrantManager:
     
 
 
-    def construct_serialgroup(self):
+    def construct_connection_group(self) -> tuple[SerialGroup, ThreadingGroup]:
         """
         Create the group of fabric Connections using the ssh info 
         and the ssh keys from vagrant
 
-        :return: A fabric SerialGroup instance
+        :return: tuple of serial and threading fabric Groups
         """
         # generate the client strings
         self._set_client_strings()
         # collect the ssh key files for each vm
         sshkeys = [info['identityfile'] for host, info in self.hosts.items()]
-        serialg = SerialGroup(*self.client_strings, connect_kwargs={"key_filename": sshkeys})
-        self.serialg = serialg
-        return serialg
+        self.serialg = SerialGroup(*self.client_strings, connect_kwargs={"key_filename": sshkeys})
+        self.threadg = ThreadingGroup(*self.client_strings, connect_kwargs={"key_filename": sshkeys})
+        return self.serialg, self.threadg
 
 
