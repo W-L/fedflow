@@ -3,42 +3,41 @@ outdir = "results/biosphere/federated-svd/fed/"
 project_id = 17305
 
 [debug]
-nodeps = false
+nodeps = true
 reinstall = true
 timeout = 600
-
 [clients.0]
 coordinator = true
 fc_username = "federated.client+00@gmail.com"
-hostname = "134.158.249.92"
+hostname = "134.158.249.201"
 username = "ubuntu"
 sshkey = "/home/lweilguny/.ssh/biosphere"
 data = ["data/federated-svd/PRJEB10878/input.csv", "configs/biosphere/federated-svd/config.yaml"]
 
 [clients.1]
 fc_username = "federated.client+01@gmail.com"
-hostname = "134.158.248.34"
+hostname = "134.158.249.180"
 username = "ubuntu"
 sshkey = "/home/lweilguny/.ssh/biosphere"
 data = ["data/federated-svd/PRJEB6070/input.csv", "configs/biosphere/federated-svd/config.yaml"]
 
 [clients.2]
 fc_username = "federated.client+02@gmail.com"
-hostname = "134.158.249.161"
+hostname = "134.158.249.153"
 username = "ubuntu"
 sshkey = "/home/lweilguny/.ssh/biosphere"
 data = ["data/federated-svd/PRJEB7774/input.csv", "configs/biosphere/federated-svd/config.yaml"]
 
 [clients.3]
 fc_username = "federated.client+03@gmail.com"
-hostname = "134.158.248.49"
+hostname = "134.158.249.37"
 username = "ubuntu"
 sshkey = "/home/lweilguny/.ssh/biosphere"
 data = ["data/federated-svd/PRJNA429097/input.csv", "configs/biosphere/federated-svd/config.yaml"]
 
 [clients.4]
 fc_username = "federated.client+04@gmail.com"
-hostname = "134.158.249.157"
+hostname = "134.158.248.68"
 username = "ubuntu"
 sshkey = "/home/lweilguny/.ssh/biosphere"
 data = ["data/federated-svd/PRJNA731589/input.csv", "configs/biosphere/federated-svd/config.yaml"]

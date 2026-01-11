@@ -49,9 +49,12 @@ all configurable parameters of the workflow are in
 
 ## Steps
 
-`snakemake --rulegraph | dot -Tpng > figs/rulegraph.png`
+`snakemake --rulegraph | dot -Tpng > rulegraph.png`
+`snakemake --dag | dot -Tpng > jobgraph.png`
 
-<img src="figs/rulegraph.png" alt="rulegraph" width="600"/>
+<img src="figs/rulegraph.png" alt="rulegraph" width="500"/>
+
+<img src="figs/jobgraph.png" alt="jobgraph" width="500"/>
 
 - prep_data
     - download public cohort data
