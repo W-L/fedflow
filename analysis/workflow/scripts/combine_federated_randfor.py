@@ -25,7 +25,7 @@ for fl_pred, fl_prob, fl_true, acc in zip(all_files_pred, all_files_prob, all_fi
     df = pd.concat([df_true, df_prob, df_pred], axis=1)
     # extract client identifier from file path and add accession
     # df['client'] = f'{fl_pred.split('/')[2]} - {acc}'  
-    df['client'] = acc 
+    df['client'] = acc  # type: ignore
     dfs.append(df)
 combined = pd.concat(dfs, ignore_index=True)
 combined.to_csv(args.output, index=False)

@@ -15,12 +15,17 @@ tol_muted <- c(
 )
 
 
-dir_cent <- "results/fedsim_cent/federated.client+00@gmail.com/17307/"
-dir_fed <- "results/fedsim_fed/"
+args <- commandArgs(trailingOnly = TRUE)
+cent_pred <- args[1]
+cent_proba <- args[2]
+cent_test <- args[3]  
+in_fed <- args[4]
+out <- args[5]
 
-prob_cent <- read_csv(paste0(dir_cent, "proba.csv"), col_names = TRUE)
-pred_cent <- read_csv(paste0(dir_cent, "pred.csv"), col_names = TRUE)
-test_cent <- read_csv(paste0(dir_cent, "test.csv"), col_names = TRUE)
+
+prob_cent <- read_csv(cent_proba, col_names = TRUE)
+pred_cent <- read_csv(cent_pred, col_names = TRUE)
+test_cent <- read_csv(cent_test, col_names = TRUE)
 # combine
 rf_cent <- test_cent |>
   bind_cols(prob_cent) |>
@@ -28,7 +33,7 @@ rf_cent <- test_cent |>
 rf_cent["client"] <- "centralized"
 
 
-rf_fed <- read_csv(paste0(dir_fed, "combined_randfor.csv"), col_names = TRUE)
+rf_fed <- read_csv(in_fed, col_names = TRUE)
 names(rf_fed) <- c("y_true_fed", "prob_0_fed", "prob_1_fed", "pred_fed", "client_fed") 
 
 rf <- rf_cent |> bind_cols(rf_fed)
@@ -60,7 +65,7 @@ ppscatter <- ggplot(data = rf, mapping = aes(x = prob_1, y = prob_1_fed, color =
 #################################### 
 
 # concatenate rf_cent and rf_fed for plotting
-rf_fed2 <- read_csv(paste0(dir_fed, "combined_randfor.csv"), col_names = TRUE)
+rf_fed2 <- read_csv(in_fed, col_names = TRUE)
 rf_combo <- bind_rows(rf_cent, rf_fed2)
 
 
@@ -98,4 +103,4 @@ roc_plot <- ggroc(list(cent = roc_cent, fed = roc_fed)) +
 
 
 randfor_fig <- ((ppscatter | roc_plot) / dist_plot) + plot_annotation(tag_levels = "A")
-ggsave("randfor.png", plot = randfor_fig, width = 10, height = 8)
+ggsave(out, plot = randfor_fig, width = 10, height = 8)

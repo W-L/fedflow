@@ -49,8 +49,7 @@ all configurable parameters of the workflow are in
 
 ## Steps
 
-`snakemake --rulegraph | dot -Tpng > rulegraph.png`
-`snakemake --dag | dot -Tpng > jobgraph.png`
+`snakemake --rulegraph | dot -Tpng > rulegraph.png && snakemake --dag | dot -Tpng > jobgraph.png`
 
 <img src="figs/rulegraph.png" alt="rulegraph" width="500"/>
 
@@ -117,7 +116,7 @@ The requirements are not fully pinned though, so there's no easy way to reproduc
 ## Results
 
 
-<img src="figs/embedding_combo.png" alt="embedding" width="600"/>
+<img src="figs/viz_vagrant_federated-svd.png" alt="embedding" width="500"/>
 
 Embedding of downsampled species signal features for a centralised analysis (A), and a federated run with 5 clients (B). The embeddings are identical for both executions. The input features were randomly downsampled to 5%, i.e. ~130 columns, to save on execution time.
 
@@ -130,7 +129,7 @@ Embedding of downsampled species signal features for a centralised analysis (A),
 <br>
 
 
-<img src="figs/randfor.png" alt="randfor" width="800"/>
+<img src="figs/viz_vagrant_randfor.png" alt="randfor" width="700"/>
 
 Results of random forest classification for a centralised versus federated analysis. 
 The input data was downsampled to 5% of the total features, and the training and test data are equivalent. 

@@ -21,7 +21,7 @@ for fl, acc in zip(all_files, accs):
     # name first column "sample"
     df = df.rename(columns={df.columns[0]: "sample"})
     # extract client identifier from file path and add accession
-    df['client'] = f'{fl.split('/')[2]} - {acc}'  
+    df['client'] = acc
     dfs.append(df)
 combined = pd.concat(dfs, ignore_index=True)
 combined.to_csv(args.output, index=False)

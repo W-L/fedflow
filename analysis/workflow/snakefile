@@ -30,21 +30,24 @@ _, users_cent = load_fedsim_config('configs/vagrant/federated-svd/config_fedsim_
 
 rule all:
     input:
-        'results/biosphere_hostnames_distributed',
+        # 'results/biosphere_hostnames_distributed',
         ############# DATA PREP ###############
-        expand("data/{tool}/{acc}/input.csv", tool=tools, acc=accs),
-        expand("data/{tool}/cent/input.csv", tool=tools),
+        # expand("data/{tool}/{acc}/input.csv", tool=tools, acc=accs),
+        # expand("data/{tool}/cent/input.csv", tool=tools),
         ############# FEDSIM ###############
-        expand("results/{provider}/{tool}/cent/results_{u}.zip", provider=providers, tool=tools, u=users_cent),
-        expand("results/{provider}/{tool}/fed/results_{u}.zip", provider=providers, tool=tools, u=users_fed),
+        # expand("results/{provider}/{tool}/cent/results_{u}.zip", provider=providers, tool=tools, u=users_cent),
+        # expand("results/{provider}/{tool}/fed/results_{u}.zip", provider=providers, tool=tools, u=users_fed),
         # ############# SVD ###############
-        expand("results/{p}/federated-svd/fed/{u}/pca/localData.csv", p=providers, u=users_fed),
-        expand("results/{p}/federated-svd/cent/{u}/pca/localData.csv", p=providers, u=users_cent),
-        expand("results/{p}/federated-svd/fed/combined_svd.csv", p=providers),
+        # expand("results/{p}/federated-svd/fed/{u}/pca/localData.csv", p=providers, u=users_fed),
+        # expand("results/{p}/federated-svd/cent/{u}/pca/localData.csv", p=providers, u=users_cent),
+        # expand("results/{p}/federated-svd/fed/combined_svd.csv", p=providers),
         # ############# Random Forest ###############
-        expand("results/{p}/random-forest/fed/{u}/proba.csv", p=providers, u=users_fed),
-        expand("results/{p}/random-forest/cent/{u}/proba.csv", p=providers, u=users_cent),
-        expand("results/{p}/random-forest/fed/combined_randfor.csv", p=providers),
+        # expand("results/{p}/random-forest/fed/{u}/proba.csv", p=providers, u=users_fed),
+        # expand("results/{p}/random-forest/cent/{u}/proba.csv", p=providers, u=users_cent),
+        # expand("results/{p}/random-forest/fed/combined_randfor.csv", p=providers),
+        # ############# Visualizations ###############
+        expand("viz_{provider}_federated-svd.png", provider=providers),
+        expand("viz_{provider}_randfor.png", provider=providers),
         
 
 
@@ -174,6 +177,26 @@ rule combine_federated_randfor:
 
 
 
-# rule viz_svd:  run manually
+rule viz_svd:
+    input:
+        cent = expand("results/{{provider}}/federated-svd/cent/{user}/pca/localData.csv", user=users_cent),
+        fed = "results/{provider}/federated-svd/fed/combined_svd.csv"
+    output:
+        "viz_{provider}_federated-svd.png",
+    shell:
+        "Rscript workflow/scripts/viz_projections.r {input.cent} {input.fed} {output} "
 
-    
+
+rule viz_randfor:
+    input:
+        cent_pred = expand("results/{{provider}}/random-forest/cent/{user}/pred.csv", user=users_cent),
+        cent_proba = expand("results/{{provider}}/random-forest/cent/{user}/proba.csv", user=users_cent),
+        cent_test = expand("results/{{provider}}/random-forest/cent/{user}/test.csv", user=users_cent),
+        fed = "results/{provider}/random-forest/fed/combined_randfor.csv"
+    output:
+        "viz_{provider}_randfor.png",
+    shell:
+        "Rscript workflow/scripts/viz_classification.r "
+        "{input.cent_pred} {input.cent_proba} {input.cent_test} {input.fed} {output} "
+
+

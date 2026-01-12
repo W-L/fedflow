@@ -2,11 +2,14 @@ library(tidyverse)
 library(patchwork)
 
 
-dir_cent = "results/fedsim_cent/federated.client+00@gmail.com/17306/pca/"
-dir_fed = "results/fedsim_fed/"
+args <- commandArgs(trailingOnly = TRUE)
+in_cent <- args[1]
+in_fed <- args[2]
+out <- args[3]
 
-proj_cent <- read_delim(paste0(dir_cent, "localData.csv"), col_names = TRUE)
-proj_fed <- read_delim(paste0(dir_fed, "combined_localdata.csv"), col_names = TRUE)
+
+proj_cent <- read_delim(in_cent, col_names = TRUE)
+proj_fed <- read_delim(in_fed, col_names = TRUE)
 
 colnames(proj_cent) <- make.names(colnames(proj_cent))
 colnames(proj_fed) <- make.names(colnames(proj_fed))
@@ -27,7 +30,7 @@ embedding_fed <- ggplot(data=proj_fed, mapping=aes(x=X0, y=X1, color=client)) +
 # patchwork to combine plots
 embedding <- embedding_cent / embedding_fed + plot_annotation(tag_levels = "A")
 
-ggsave("embedding_combo.png", plot = embedding, width = 8, height = 7)
+ggsave(out, plot = embedding, width = 6, height = 6)
 
 
 
