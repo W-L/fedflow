@@ -1,3 +1,0 @@
-fc_mean:
-    input_name: "data.csv"
-    output_name: "output.csv"
