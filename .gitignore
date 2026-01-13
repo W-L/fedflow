@@ -1,18 +1,20 @@
 .vagrant/
 .venv/ 
 .hatch/
+.snakemake/
 *Zone.Identifier*
 dump/
 data/
 apps/
 results/
-destination_remote.tar.gz
 mnist.tsv
-test_data/public_cohorts/
 Vagrantfile
 *.excalidraw
 conf/
 provision.sh
+data/
+*_fedsim.log
+.env
 
 .vscode/*.code-workspace
 .vscode/settings.json
