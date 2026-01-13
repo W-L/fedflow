@@ -1,0 +1,202 @@
+
+configfile: "workflow/config/config.yaml"
+
+ds_features = config['downsample_features']
+accs = config['accessions']
+providers = config['providers']
+tools = config['tools']
+hostnames = config['biosphere_hostnames']
+
+
+
+def load_fedsim_config(toml_path):
+    import rtoml
+    with open(toml_path, "r") as f:
+        conf = rtoml.load(f)
+    # get fc users
+    fc_users = []
+    for cl in conf['clients'].values():
+        fc_users.append(cl['fc_username'])
+    # project id
+    pid = conf['general']['project_id']
+    return pid, fc_users
+
+
+_, users_fed = load_fedsim_config('configs/vagrant/federated-svd/config_fedsim_fed.toml')
+_, users_cent = load_fedsim_config('configs/vagrant/federated-svd/config_fedsim_cent.toml')
+
+
+
+
+rule all:
+    input:
+        # 'results/biosphere_hostnames_distributed',
+        ############# DATA PREP ###############
+        # expand("data/{tool}/{acc}/input.csv", tool=tools, acc=accs),
+        # expand("data/{tool}/cent/input.csv", tool=tools),
+        ############# FEDSIM ###############
+        # expand("results/{provider}/{tool}/cent/results_{u}.zip", provider=providers, tool=tools, u=users_cent),
+        # expand("results/{provider}/{tool}/fed/results_{u}.zip", provider=providers, tool=tools, u=users_fed),
+        # ############# SVD ###############
+        # expand("results/{p}/federated-svd/fed/{u}/pca/localData.csv", p=providers, u=users_fed),
+        # expand("results/{p}/federated-svd/cent/{u}/pca/localData.csv", p=providers, u=users_cent),
+        # expand("results/{p}/federated-svd/fed/combined_svd.csv", p=providers),
+        # ############# Random Forest ###############
+        # expand("results/{p}/random-forest/fed/{u}/proba.csv", p=providers, u=users_fed),
+        # expand("results/{p}/random-forest/cent/{u}/proba.csv", p=providers, u=users_cent),
+        # expand("results/{p}/random-forest/fed/combined_randfor.csv", p=providers),
+        # ############# Visualizations ###############
+        expand("viz_{provider}_federated-svd.png", provider=providers),
+        expand("viz_{provider}_randfor.png", provider=providers),
+        
+
+
+
+rule prep_data_federated:
+    output:
+        "data/{tool}/{acc}/input.csv"
+    wildcard_constraints:
+        acc="P[^/]*"   # accession pattern starting with 'P'
+    params:
+        ds_features=ds_features,
+    shell:
+        "python workflow/scripts/prep_data_federated.py "
+        " --acc {wildcards.acc} "
+        " --tool {wildcards.tool} "
+        " --downsample-features {params.ds_features} "
+
+
+
+rule prep_data_centralized:
+    input:
+        expand("data/{{tool}}/{acc}/input.csv", acc=accs),
+    output:
+        "data/{tool}/cent/input.csv"
+    params:
+        accession_list=' '.join(accs),
+    shell:
+        "python workflow/scripts/prep_data_centralised.py "
+        " --tool {wildcards.tool} "
+        " --accs {params.accession_list} "
+
+
+
+rule distribute_biosphere_hostnames:
+    input:
+        expand("configs/biosphere/{tool}/config_fedsim_{mode}.toml", tool=tools, mode=['fed', 'cent']),
+    output:
+        'results/biosphere_hostnames_distributed'
+    params:
+        hostnames=hostnames,
+    shell:
+        "python workflow/scripts/distribute_biosphere_hostnames.py "
+        " --hostnames {params.hostnames} "
+        " --out {output} "
+
+
+
+rule fedsim_fed:  
+    input:
+        expand("data/{{tool}}/{acc}/input.csv", acc=accs),
+        'results/biosphere_hostnames_distributed'
+    output:
+        expand("results/{{provider}}/{{tool}}/fed/results_{u}.zip", u=users_fed),
+    resources:
+        serial=1,
+    shell:
+        "fedsim -c configs/{wildcards.provider}/{wildcards.tool}/config_fedsim_fed.toml"
+        
+
+
+rule fedsim_cent:  
+    input:
+        "data/{tool}/cent/input.csv",
+        'results/biosphere_hostnames_distributed'
+    output:
+        expand("results/{{provider}}/{{tool}}/cent/results_{u}.zip", u=users_cent),
+    resources:
+        serial=1,
+    shell:
+        "fedsim -c configs/{wildcards.provider}/{wildcards.tool}/config_fedsim_cent.toml"
+
+
+
+rule unzip_fedsim:
+    input:
+        "results/{p}/{t}/{m}/results_{u}.zip",
+    output:
+        "results/{p}/{t}/{m}/{u}/some/output.csv",
+    shell:
+        "unzip -o {input} -d results/{wildcards.p}/{wildcards.t}/{wildcards.m}/{wildcards.u}/"
+
+
+
+use rule unzip_fedsim as unzip_fedsim_svd with:
+    output:
+        "results/{p}/{t}/{m}/{u}/pca/localData.csv",
+
+
+
+use rule unzip_fedsim as unzip_fedsim_randfor with:
+    output:
+        "results/{p}/{t}/{m}/{u}/pred.csv",
+        "results/{p}/{t}/{m}/{u}/proba.csv",
+        "results/{p}/{t}/{m}/{u}/test.csv",
+
+
+
+rule combine_federated_svd:
+    input:
+        expand("results/{{p}}/federated-svd/fed/{u}/pca/localData.csv", u=users_fed),
+    output:
+        "results/{p}/federated-svd/fed/combined_svd.csv",
+    params: accessions=accs,
+    shell:
+        "python workflow/scripts/combine_federated_svd.py "
+        " --input {input} "
+        " --output {output} "
+        " --accessions {params.accessions} "
+
+
+
+rule combine_federated_randfor:
+    input:
+        pred=expand("results/{{p}}/random-forest/fed/{u}/pred.csv", u=users_fed),
+        prob=expand("results/{{p}}/random-forest/fed/{u}/proba.csv", u=users_fed),
+        true=expand("results/{{p}}/random-forest/fed/{u}/test.csv", u=users_fed),
+    output:
+        "results/{p}/random-forest/fed/combined_randfor.csv",
+    params: accessions=accs,
+    shell:
+        "python workflow/scripts/combine_federated_randfor.py "
+        " --input_pred {input.pred} "
+        " --input_prob {input.prob} "
+        " --input_true {input.true} "
+        " --output {output} "
+        " --accessions {params.accessions} "
+
+
+
+rule viz_svd:
+    input:
+        cent = expand("results/{{provider}}/federated-svd/cent/{user}/pca/localData.csv", user=users_cent),
+        fed = "results/{provider}/federated-svd/fed/combined_svd.csv"
+    output:
+        "viz_{provider}_federated-svd.png",
+    shell:
+        "Rscript workflow/scripts/viz_projections.r {input.cent} {input.fed} {output} "
+
+
+rule viz_randfor:
+    input:
+        cent_pred = expand("results/{{provider}}/random-forest/cent/{user}/pred.csv", user=users_cent),
+        cent_proba = expand("results/{{provider}}/random-forest/cent/{user}/proba.csv", user=users_cent),
+        cent_test = expand("results/{{provider}}/random-forest/cent/{user}/test.csv", user=users_cent),
+        fed = "results/{provider}/random-forest/fed/combined_randfor.csv"
+    output:
+        "viz_{provider}_randfor.png",
+    shell:
+        "Rscript workflow/scripts/viz_classification.r "
+        "{input.cent_pred} {input.cent_proba} {input.cent_test} {input.fed} {output} "
+
+

@@ -1,0 +1,15 @@
+[general]
+outdir = "results/biosphere/random-forest/cent/"
+project_id = 17307
+
+[debug]
+nodeps = true
+reinstall = true
+timeout = 1200
+[clients.0]
+coordinator = true
+fc_username = "federated.client+00@gmail.com"
+hostname = "134.158.249.201"
+username = "ubuntu"
+sshkey = "/home/lweilguny/.ssh/biosphere"
+data = ["data/random-forest/cent/input.csv", "configs/biosphere/random-forest/config.yml"]

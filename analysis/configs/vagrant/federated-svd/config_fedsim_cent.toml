@@ -1,0 +1,24 @@
+[general]
+sim = true
+outdir = "results/vagrant/federated-svd/cent/"
+project_id = 17306
+
+[debug]
+nodeps = true
+reinstall = true
+timeout = 600
+
+
+[clients.0]
+coordinator = true
+fc_username = 'federated.client+00@gmail.com'
+data = [
+    "data/federated-svd/cent/input.csv",
+    "configs/vagrant/federated-svd/config.yaml"
+]
+
+
+
+
+
+
