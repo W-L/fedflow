@@ -6,8 +6,8 @@ import time
 import httpx
 from dotenv import load_dotenv
 
-from fedsim.logger import log
-from fedsim.utils import randstr
+from fedflow.logger import log
+from fedflow.utils import randstr
 
 
 

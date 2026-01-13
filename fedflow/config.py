@@ -5,7 +5,7 @@ import rtoml
 from fabric import SerialGroup, ThreadingGroup
 from dotenv import load_dotenv
 
-from fedsim.logger import log
+from fedflow.logger import log
 
 
 

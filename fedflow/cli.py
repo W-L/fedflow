@@ -2,11 +2,11 @@ import argparse
 from datetime import datetime
 from time import sleep
 
-from fedsim.logger import setup_logging, log
-from fedsim.config import Config
-from fedsim.VagrantManager import VagrantManager
-from fedsim.ClientManager import ClientManager
-from fedsim.provision import write_provision_script
+from fedflow.logger import setup_logging, log
+from fedflow.config import Config
+from fedflow.VagrantManager import VagrantManager
+from fedflow.ClientManager import ClientManager
+from fedflow.provision import write_provision_script
 
 
 

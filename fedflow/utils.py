@@ -3,7 +3,7 @@ import random
 import string
 import logging
 
-from fedsim.logger import log
+from fedflow.logger import log
 
 
 

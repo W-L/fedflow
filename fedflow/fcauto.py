@@ -1,6 +1,6 @@
 import argparse
 
-import fedsim.featurecloud_api as featurecloud_api
+import fedflow.featurecloud_api as featurecloud_api
 
 
 
