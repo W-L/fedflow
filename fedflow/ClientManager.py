@@ -13,13 +13,13 @@ class ClientManager:
     Managing fabric Connections to remote hosts.
     """
 
-    def __init__(self, serialg, threadg, clients: dict):
+    def __init__(self, serialg, threadg, clients: list):
         """
         Initialize the ClientManager.
 
         :param serialg: a group of fabric Connections
         :param threadg: a group of fabric Connections
-        :param clients: a dictionary of client information from the config file
+        :param clients: a list of client information from the config file
         """
         self.serialg = serialg
         self.threadg = threadg
@@ -27,10 +27,10 @@ class ClientManager:
         self.participants = []
         self.coordinator = []
         # add some info from the config file to each connection
-        for cxn_t, cxn_s, cinfo in zip(threadg, serialg, clients.values()):
-            user = cinfo.get('fc_username', '')
-            data = cinfo.get('data', [])
-            if cinfo.get('coordinator', False) is True:
+        for cxn_t, cxn_s, cinfo in zip(threadg, serialg, clients):
+            user = cinfo.fc_username
+            data = cinfo.data
+            if cinfo.coordinator:
                 cxn_t['coordinator'], cxn_s['coordinator'] = True, True
                 cxn_t['fc_username'], cxn_s['fc_username'] = user, user
                 cxn_t['data'], cxn_s['data'] = data, data
@@ -65,14 +65,14 @@ class ClientManager:
 
     def install_package(self, reinstall: bool = False, nodeps: bool = False) -> None:
         """
-        Install the fedsim package on all nodes.
+        Install the package on all nodes.
         TODO this is used because the package is not on PyPI, so the wheel is transferred and installed locally.
         
         :param reinstall: whether to force reinstall the package
         :param nodeps: whether to skip installing dependencies
         """
         # find the wheel file for installation
-        whl = glob("dist/fedsim-*.whl")[0]
+        whl = glob("dist/fedflow-*.whl")[0]
         whl_name = Path(whl).name
         self.threadg.put(whl, remote=whl_name)
         self.threadg.run("python3 -m venv .venv")

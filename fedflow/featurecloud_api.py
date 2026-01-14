@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 import time
@@ -15,7 +14,7 @@ load_dotenv(dotenv_path='.env', override=True)
         
 
 DEFAULT_HEADERS = {
-    "User-Agent": "fedsim (https://github.com/W-L/FedSim)"
+    "User-Agent": "fedflow (https://github.com/W-L/fedflow)"
 }
 
 
@@ -331,6 +330,7 @@ class User:
         :param username: name on FeatureCloud.ai
         """
         self.client = httpx.Client(base_url="https://featurecloud.ai", headers=DEFAULT_HEADERS)
+        load_dotenv(dotenv_path='.env', override=True)
         self.username = username
         self.password = os.getenv(f"{username}")
         assert self.password is not None, f"Credentials for {username} not found."
@@ -402,6 +402,7 @@ class User:
         Path("data_fc").mkdir(parents=True, exist_ok=True)
         with open("data_fc/site_info.json", "w") as f:
             f.write(r.text)
+        assert Path("data_fc/site_info.json").exists(), "Failed to write site_info.json"
         return site_info
     
 

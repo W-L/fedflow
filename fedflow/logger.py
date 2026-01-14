@@ -13,7 +13,7 @@ def setup_logging(logfile: str = "output.log") -> logging.Logger:
     # make sure the file exists and is empty
     with open(logfile, 'w'):
         pass
-    logger = logging.getLogger("fedsim")
+    logger = logging.getLogger("fedflow")
     logger.setLevel(logging.INFO)
     fmt = '%(asctime)s %(message)s'
     logger.handlers.clear()
@@ -31,11 +31,11 @@ def setup_logging(logfile: str = "output.log") -> logging.Logger:
     logger.addHandler(sh)
     logger.addHandler(fh)
     # first entry
-    logger.info(f"fedsim {version('fedsim')}")
+    logger.info(f"fedflow {version('fedflow')}")
     return logger
 
 
-logger = logging.getLogger("fedsim")
+logger = logging.getLogger("fedflow")
 
 
 def log(msg: str, level = logging.INFO):

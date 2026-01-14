@@ -13,7 +13,7 @@ class VagrantManager:
 
     def __init__(self, num_nodes: int, box: str = 'bento/ubuntu-24.04'):
         """
-        A class to manage Vagrant virtual machines for fedsim simulations.
+        A class to manage Vagrant virtual machines
 
         :param num_nodes: The number of nodes to use
         :param box: The Vagrant box to use
@@ -61,7 +61,7 @@ class VagrantManager:
     def _write_vagrantfile(self) -> bool:
         """
         Dynamically write a vagrantfile given the configurable parts of the class's init.
-        This avoids manual editing of the Vagrantfile for each different execution of fedsim.
+        This avoids manual editing of the Vagrantfile for each different execution of fedflow.
         """
         vagrantfile_content = f"""
 

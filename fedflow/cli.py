@@ -1,6 +1,8 @@
 import argparse
 from datetime import datetime
+from pathlib import Path
 from time import sleep
+import sys
 
 from fedflow.logger import setup_logging, log
 from fedflow.config import Config
@@ -12,36 +14,28 @@ from fedflow.provision import write_provision_script
 
 def get_args(argv=None) -> argparse.Namespace:
      parser = argparse.ArgumentParser(description="Simulated federated analyses with VMs")
-     parser.add_argument("-c", "--config", help="Path to the config file", required=True)
+     parser.add_argument("-c", "--config", help="Path to the config file")
+     parser.add_argument("-t", "--template", help="Generate template config", action="store_true", default=False)
      args = parser.parse_args(argv)
      return args
 
 
-def setup_run(config: str) -> Config:
-    # set up logging
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    setup_logging(f'{stamp}_fedsim.log')
-    # load config
-    log(f'Loading configuration from {config}...')
-    conf = Config(toml_path=config)
-    return conf
-
 
 def get_client_connections(conf: Config):
-    if not conf.is_simulated:
+    if not conf.config.sim:
         # construct connection group from config
         log('Connecting to remote clients defined in config...')
         serialg, threadg = conf.construct_connection_group()
     else:
         # construct connection group from vagrant
         log('Setting up Vagrant VMs...')
-        nnodes = len(conf.config['clients'])
+        nnodes = len(conf.config.clients)
         vms = VagrantManager(num_nodes=nnodes)
         vms.launch()
         serialg, threadg = vms.construct_connection_group()
     # set up wrapper for group of clients
     log("Setting up Fabric clients...")
-    clients = ClientManager(serialg=serialg, threadg=threadg, clients=conf.config['clients'])
+    clients = ClientManager(serialg=serialg, threadg=threadg, clients=conf.config.clients)
     clients.ping()
     return clients
 
@@ -55,22 +49,26 @@ def prep_clients(clients: ClientManager, conf: Config):
     clients.distribute_credentials(fc_creds=conf.fc_creds)
     log("Distributing data to clients...")
     clients.distribute_data()
-    log("Installing fedsim package on clients...")
-    clients.install_package(reinstall=conf.debug.reinstall, nodeps=conf.debug.nodeps)
+    log("Installing fedflow package on clients...")
+    clients.install_package(reinstall=conf.reinstall, nodeps=conf.nodeps)
     log("Starting FeatureCloud controllers on clients...")
     clients.start_featurecloud_controllers()
 
 
 def prep_project(clients: ClientManager, conf: Config) -> str:
+    project_id = None
     # attach featurecloud project
-    if 'project_id' in conf.config['general']:
+    if conf.config.project_id:
         # attach to existing project
-        project_id = conf.config['general']['project_id']
-    else:
+        return str(conf.config.project_id)
+    elif conf.config.tool:
         # create and join new project - serially
         log("Creating and joining FeatureCloud project...")
-        project_id = clients.create_and_join_project(tool=conf.config['general']['tool'])
-    return project_id
+        project_id = clients.create_and_join_project(tool=conf.config.tool)
+        return str(project_id)
+    else:
+        raise ValueError("Either project_id or tool must be specified in the config.")
+    
 
 
 def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: str):
@@ -89,7 +87,7 @@ def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: s
 def cleanup(clients: ClientManager, conf: Config):
     # stop fc controller and vms
     clients.stop_featurecloud_controllers()
-    if conf.is_simulated:
+    if conf.config.sim:
         log("Halting Vagrant VMs...")
         # VagrantManager.stop()
 
@@ -97,23 +95,30 @@ def cleanup(clients: ClientManager, conf: Config):
 def main(argv=None):
     # parse arguments
     args = get_args(argv=argv)
-    # initialise logging and parse config file
-    conf = setup_run(config=args.config)
+    if args.template:
+        Config.write_template()
+        sys.exit(0)
+     # set up logging
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    setup_logging(f'{stamp}_fedflow.log')
+    # load config
+    log(f'Loading configuration from {args.config}...')
+    conf = Config(toml=args.config)
     # set up fabric connections to all clients
     clients = get_client_connections(conf=conf)
-    if conf.debug.vmonly:
+    if conf.vmonly:
         log("Vagrant VMs launched. Exiting.")
         return
+    # provision, reset, distribute creds and data, install fedflow, start fc controllers
+    prep_clients(clients=clients, conf=conf)
     # get or create featurecloud project
     project_id = prep_project(clients=clients, conf=conf)
-    # provision, reset, distribute creds and data, install fedsim, start fc controllers
-    prep_clients(clients=clients, conf=conf)
     # contribute data, monitor run, download results
     run_project(
         clients=clients,
         project_id=project_id,
-        timeout=conf.debug.timeout,
-        outdir=conf.outdir
+        timeout=conf.timeout,
+        outdir=conf.config.outdir
     )
     # stop fc controllers, halt vagrant vms
     cleanup(clients=clients, conf=conf)
