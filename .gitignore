@@ -5,6 +5,7 @@
 *Zone.Identifier*
 dump/
 data/
+data_fc/
 apps/
 results/
 mnist.tsv
@@ -13,8 +14,10 @@ Vagrantfile
 conf/
 provision.sh
 data/
-*_fedsim.log
+*_fedflow.log
 .env
+logs/
+
 
 .vscode/*.code-workspace
 .vscode/settings.json

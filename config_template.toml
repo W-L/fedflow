@@ -1,0 +1,20 @@
+project_id = 0
+tool = ""
+sim = false
+outdir = "results/"
+
+[[clients]]
+fc_username = "FC_USER"
+data = []
+coordinator = false
+username = "USER"
+hostname = "HOSTNAME"
+sshkey = ".ssh/id_rsa"
+
+[[clients]]
+fc_username = "FC_USER"
+data = []
+coordinator = false
+username = "USER"
+hostname = "HOSTNAME"
+sshkey = ".ssh/id_rsa"

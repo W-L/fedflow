@@ -1,6 +1,6 @@
 
 [tool.hatch.version]
-path = "fedsim/__init__.py"
+path = "fedflow/__init__.py"
 
 
 [build-system]
@@ -9,54 +9,39 @@ build-backend = "hatchling.build"
 
 
 [project]
-name = "fedsim"
-description = "Simulated federated analyses with VMs "
+name = "fedflow"
+description = "Federated FeatureCloud.ai workflows on remote machines"
 dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "python-dotenv==1.2.1",
-    "fabric==3.2.2",
-    "FeatureCloud==0.1.0",
-    "httpx==0.28.1",
-    "rtoml==0.13.0",
+  "python-dotenv==1.2.1",
+  "fabric==3.2.2",
+  "FeatureCloud==0.1.0",
+  "httpx==0.28.1",
+  "pydantic==2.12.5",
+  "tomli_w==1.2.0",
 ]
-
-[tool.hatch.publish]
-disable = true
 
 
 [project.scripts]
-fedsim = "fedsim.cli:main"
-fcauto = "fedsim.fcauto:main"
+fedflow = "fedflow.cli:main"
+fcauto = "fedflow.fcauto:main"
 
 
 [tool.hatch.build.targets.sdist]
 only-include = [
-  "fedsim/",
-  "configs/",
-  "scripts/",
+  "fedflow/",
 ]
 
 
 [tool.hatch.build.targets.wheel]
-packages = ["fedsim"]
+packages = ["fedflow"]
 
 
 [tool.hatch.envs.dev]
 dependencies = [
   "pytest",
   "pytest-cov",
-]
-
-
-
-[tool.pytest.ini_options]
-log_cli = true
-log_cli_level = "INFO"
-log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
-log_cli_date_format = "%Y-%m-%d %H:%M:%S"
-markers = [
-    "integration: tests with real VMs",
 ]
 
