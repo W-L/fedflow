@@ -75,7 +75,6 @@ class VagrantManager:
         (0..{self.num_nodes - 1}).each do |i|
             config.vm.define "node-#{{i}}" do |node|
                 node.vm.hostname = "node-#{{i}}"
-                # node.vm.synced_folder "./node-#{{i}}/", "/home/vagrant/node", create: true
                 node.vm.provision "shell", name: "common", path: "provision.sh"
             end
         end
@@ -129,6 +128,7 @@ class VagrantManager:
             self._write_vagrantfile()
             launch_cmd = 'vagrant up'
             stdout, stderr = execute(launch_cmd)
+            log(f"vagrant up: \n {stdout} \n {stderr}")
         except Exception as e:
             log(f"Error launching Vagrant VMs: {e}")
             raise RuntimeError("Vagrant VMs failed to launch.")
