@@ -88,8 +88,8 @@ def cleanup(clients: ClientManager, conf: Config):
     # stop fc controller and vms
     clients.stop_featurecloud_controllers()
     if conf.config.sim:
-        log("Halting Vagrant VMs...")
-        # VagrantManager.stop()
+        log("Suspending Vagrant VMs...")
+        VagrantManager.suspend()
 
 
 def main(argv=None):

@@ -138,19 +138,35 @@ class VagrantManager:
             raise RuntimeError("Vagrant VMs failed to launch.")
         
 
+
     @staticmethod
-    def stop():
+    def halt():
         """
-        Stop vagrant machines if they are running
+        Halt vagrant machines if they are running
         """
         try:
-            stop_cmd = 'vagrant halt'
-            stdout, stderr = execute(stop_cmd)
+            halt_cmd = 'vagrant halt'
+            stdout, stderr = execute(halt_cmd)
         except Exception as e:
-            log(f"Error stopping Vagrant VMs: {e}")
+            log(f"Error halting Vagrant VMs: {e}")
             return 
         return
     
+
+
+    @staticmethod
+    def suspend():
+        """
+        Suspend vagrant machines if they are running
+        """
+        try:
+            suspend_cmd = 'vagrant suspend'
+            stdout, stderr = execute(suspend_cmd)
+        except Exception as e:
+            log(f"Error suspending Vagrant VMs: {e}")
+            return 
+        return
+
 
 
     def _sshinfo(self) -> dict[str, dict]:
