@@ -1,0 +1,22 @@
+sim = true
+tool = 'mean-app'
+
+
+[[clients]]
+fc_username = ''
+data = ["data/A/data.csv", "config.yml"]
+coordinator = true
+
+
+[[clients]]
+fc_username = ''
+data = ["data/B/data.csv", "config.yml"]
+
+
+[[clients]]
+fc_username = ''
+data = ["data/C/data.csv", "config.yml"]
+
+
+
+
