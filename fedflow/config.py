@@ -5,7 +5,7 @@ import tomllib
 
 from fabric import SerialGroup, ThreadingGroup
 from dotenv import load_dotenv
-from pydantic import BaseModel, ValidationError, model_validator
+from pydantic import BaseModel, ValidationError
 import tomli_w # type: ignore
 
 from fedflow.logger import log
@@ -132,9 +132,6 @@ class Config:
         load_dotenv(dotenv_path='tests/env', override=True)
         fc_cred = {}
         for fc_user in self.fc_users:
-            # if not fc_user:  # if coordinator does not contribute data
-            #     log('no Featurecloud user specified for a client, skipping credential load')
-            #     continue
             fc_pass = os.getenv(f"{fc_user}")
             assert fc_pass is not None, f"credentials {fc_user} not found"
             fc_cred[fc_user] = fc_pass

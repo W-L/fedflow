@@ -13,9 +13,10 @@ from fedflow.provision import write_provision_script
 
 
 def get_args(argv=None) -> argparse.Namespace:
-     parser = argparse.ArgumentParser(description="Simulated federated analyses with VMs")
-     parser.add_argument("-c", "--config", help="Path to the config file")
-     parser.add_argument("-t", "--template", help="Generate template config", action="store_true", default=False)
+     parser = argparse.ArgumentParser(description="Federated FeatureCloud.ai workflows on remote machines")
+     group = parser.add_mutually_exclusive_group(required=True)
+     group.add_argument("-c", "--config", help="Path to the config file")
+     group.add_argument("-t", "--template", help="Generate template config", action="store_true", default=False)
      args = parser.parse_args(argv)
      return args
 
@@ -89,15 +90,18 @@ def cleanup(clients: ClientManager, conf: Config):
     clients.stop_featurecloud_controllers()
     if conf.config.sim:
         log("Suspending Vagrant VMs...")
-        VagrantManager.suspend()
+        # VagrantManager.suspend()
 
 
 def main(argv=None):
     # parse arguments
     args = get_args(argv=argv)
+
+    # print template config and exit
     if args.template:
         Config.write_template()
         sys.exit(0)
+
      # set up logging
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     setup_logging(f'{stamp}_fedflow.log')
