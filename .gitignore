@@ -17,6 +17,8 @@ data/
 *_fedflow.log
 .env
 logs/
+example/config_mean_test.toml
+
 
 
 .vscode/*.code-workspace

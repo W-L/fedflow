@@ -1,73 +1,75 @@
-# FedSim
+# fedflow
 
-The aim of this project is to automate federated analyses of FeatureCloud.ai either as simulations or to orchestrate real machines.
+The aim of this project is to automate federated workflows with FeatureCloud.ai by orchestrating remote machines. FeatureCloud.ai enables federated machine learning through a web interface and a locally executed controller instance. However, analyses require manual interaction with the graphical interface of the website by all participating clients. This is prohibitive for iterative analyses and results in analyses that are not easily reproducible.
 
-The main components are: 
+This package introduces i) an API to interact headlessly with FeatureCloud.ai ii) the orchestration of remote machines (e.g. VMs) to execute fully-automated federated analyses, and iii) an example of a fully reproducible snakemake workflow using this package.
 
-- setup and provisioning of VMs using vagrant
-- instructions are sent to clients via the python module fabric
-- a reverse engineered featurecloud API that allows for headless interaction with featurecloud.ai
-
-
-What this project does not automate:
-
-- user creation at featurecloud.ai
-- user's site registration at featurecloud.ai
-- featurecloud apps that require frontend interaction of the coordinator
 
 
 ## Concept
 
-Fedsim is essentially an infrastructure wrapper to use featurecloud.ai without manual interaction. 
-It's design is intended to allow the use of local simulated VMs (on the same hardware), or connection to machines at other participating institutes. 
-The second use case could for example be in the context of a collaboration where data remains at participating institutes but access to a VM with that data is granted to the controller of the analysis.
+Fedflow is an orchestration tool to use FeatureCloud.ai in reproducible workflows without manual interaction. 
+It is designed to either run federated analyses on locally-simulated VMs for testing purposes, or to execute the same workflow on remote machines (e.g. cloud instances or machines at participating research institutes). 
 
 
-<img src="figures/fedsim_deploy.png" alt="fedsim_deploy" width="900"/>
+<img src="figures/fedflow_overview.png" alt="fedflow_overview" width="400"/>
 
 
-The steps executed for each VM can be seen here:
-
-<img src="figures/fedsim_vm.png" alt="fedsim_vm" width="700"/>
+<img src="figures/fedflow_remote.png" alt="fedflow_remote" width="300"/>
 
 
 
 ## Requirements & installation
 
-- For simulations vagrant and some virtualisation provider are required. For development I'm using libvirt and the vagrant-libvirt plugin.
+
+fedflow can be installed with pip
+
+`pip install fedflow`
+
+
+For simulations vagrant, libvirt and the vagrant-libvirt plugin are required
 
   - Instructions to install vagrant: https://developer.hashicorp.com/vagrant/install
 
+  - Installing libvirt on a debian/ubuntu-based system: `sudo apt update && sudo apt install libvirt-daemon-system`
+
   - Instructions for the vagrant-libvirt plugin: https://vagrant-libvirt.github.io/vagrant-libvirt/installation.html#ubuntu--debian
 
-- To build the fedsim package `hatch` is required. E.g.:
 
-  `pipx install hatch`
-
-
-- Clone the project and install it.
-
-  ```
-  git clone https://github.com/W-L/FedSim.git && cd FedSim/
-  pip install .
-  ```
-
-
-
+User accounts on FeatureCloud.ai need to be created via the website.
 
 
 ## Usage
 
-There are 2 main executables in this project: 
+There are 2 main components in this project: 
 
-1) a program to interact with FeatureCloud.ai headlessly. This is called `fcauto`. 
-2) a program to run simulations/real analyses headlessly. This is called `fedsim` and uses the first component internally.
+1) a program to run federated workflows via FeatureCloud.ai headlessly: `fedflow`
+1) an API to interact with FeatureCloud.ai: `fcauto`. `fedflow` uses this API to execute workflows, hence users are not required interact directly with it.
+
+
+### fedflow
+
+This program orchestrates all client machines and instructs them to interact with FeatureCloud.ai to automate federated workflows.
+
+
+```
+usage: fedflow [-h] (-c CONFIG | -t)
+
+Federated FeatureCloud.ai workflows on remote machines
+
+options:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        Path to the config file
+  -t, --template        Generate template config
+```
+
 
 
 ### fcauto
 
-This is based on a reverse-engineered API for the FeatureCloud.ai website. 
-There are several subcommands to interact with FeatureCloud projects.
+This is an API for the FeatureCloud.ai website. It's primary purpose is to be used by `fedflow`, but it can also be used in a stand-alone manner.
+There are several subcommands to interact with FeatureCloud.
 Check `fcauto SUBCOMMAND --help` for arguments/options.
 
 
@@ -93,85 +95,81 @@ options:
 
 
 
-### fedsim
-
-This program orchestrates the participants/client machines and instructs them to interact with the FeatureCloud.ai website.
-
-```
-usage: fedsim [-h] -c CONFIG [-v]
-
-Simulated federated analyses with VMs
-
-options:
-  -h, --help            show this help message and exit
-  -c CONFIG, --config CONFIG
-                        Path to the config file
-```
-
-
-
 ## Configuration
 
-Configuration of this project requires 2 files. 
-An environment file that contains all credentials of the featurecloud.ai users.
-This needs to be in the format USER=PASSWORD and be placed in `.env` in the root of the project.
+Configuration of `fedflow` requires 2 files. 
+
+1) An environment file that contains the credentials of the participating FeatureCloud.ai users. 
 
 
-The second file is a toml configuration of simulations/real runs of featurecloud. The format is as follows:
+This is in the format USER=PASSWORD in `.env` in the working directory.
+
+FeatureCloud accounts are low-privilege and low-impact if compromised, since they contain very limited information and the platform itself holds no data or results of previous analyses.
+In a multi-user environment it is advised to set `chmod 600 .env && chown <user> .env`
 
 
-```
-[general]
-
-sim = true                              # whether vagrant VMs or real machine are used
-project_id = PROJECT_ID                 # numeric ID of a featurecloud project (in it's URL)
-tool = TOOL_NAME                        # alternatively to a project_id, then a project is created automatically
 
 
-[clients]                               # a list of the participating clients
+2) A toml configuration of an automated FeatureCloud workflow. 
 
-[clients.0]
-fc_username = USERNAME
-data = ["path/to/file1", "path/to/file2"]
-coordinator = true
-hostname = ''                           # these fields can be left empty when using vagrant
-username = ''                           # if real machines are used, their details go here
-port = '' 
-sshkey = '' 
-
-
-[clients.1]
-fc_username = USERNAME
-data = ["path/to/file1", "path/to/file2"]
-hostname = ''
-username = ''
-port = '' 
-sshkey = '' 
-
-...
+A template config file can be generated with `fedflow -t` The format is as follows:
 
 
 ```
+project_id = 0
+tool = ""
+sim = false
+outdir = "results/"
 
+[[clients]]
+fc_username = "FC_USER"
+data = []
+coordinator = false
+username = "USER"
+hostname = "HOSTNAME"
+sshkey = ".ssh/id_rsa"
 
-If `sim = true` is set, `hostname, username, port, sshkey` are ignored and vagrant vms are used instead. When real machines should be used, their connection details need to be provided.
-The field sshkey is the path to the ssh key used to authenticate the user on the remote. Exchange of connection credentials is only automated in the simulation with vagrant.
+[[clients]]
+fc_username = "FC_USER"
+data = []
+coordinator = false
+username = "USER"
+hostname = "HOSTNAME"
+sshkey = ".ssh/id_rsa"
+
+```
+
+The config must either contain `tool=<str>` with one of the FeatureCloud apps (either listed on their website or with `fcauto list-apps`) or `project_id=<int>`. If a `tool` is given, a new project template will be created and used, if `project_id` is given a previously-created project template will be used instead.
+
+If `sim = true` is set, vagrant VMs are launched and used for the federated execution. In that case the parameters `hostname, username, port, sshkey` of all clients are ignored.
+To use other remote machines these connection details need to be provided. The field `sshkey` is the path to the ssh key used to authenticate the user on the remote. Exchange of connection credentials is only automated when using vagrant VMs.
+
+The clients participating in the federated analysis are specified as an array of `[[clients]]`. One client is required to take the role of `coordinator = true`. This client's FeatureCloud user will create or initiate the project and monitor its execution.
 
 
 ## Example usage
 
 
-A config is provided to run the 'mean' test app across 3 clients (with the same sample data provided in the repo of the app). Featurecloud users need to be provided in the config.
+In `example/` there are test data and configurations to run the 'mean' test app across 3 clients. FeatureCloud users need to be provided in the config `example/config_mean.toml`, and their credentials in a `.env` file.
 
-`fedsim -c configs/config_mean_trio.toml`
+
+`fedflow -c config_mean.toml`
 
 
 ## Provisioning of client VMs/participating machines
 
+
 System dependencies on remotes are installed automatically using a shell script shipped in `fedsim/provision.py`.
  
-- python and a venv to run the programs
-- docker (used by featurecloud)
+- python3.12, python3.12-venv
+- docker
+
+
+## Limitations 
+
+The API in this project does not automate the creation of user accounts for FeatureCloud.ai or the registration of their participating sites. 
+
+
 
 
 ## Terms of accceptable use and responsible automation
@@ -191,17 +189,10 @@ There are not many tests not marked as integration though, since most of the cod
 Some tests require featurecloud credentials in the environment, which are not provided in this repo.
 
 
+## Example analysis
 
-## TODO
+The directory `analysis/workflow_comp` contains an example analysis workflow that runs different FeatureCloud analyses with the automation described here. Details are available in a separate `README.md`.
 
-2 operations on the VMs are currently using elevated permisions
-- is this because featurecloud/docker writes output as root?
 
-write some convenience scripts that check the log files of all machines
-- including the logs of the fc controllers and the fc apps
-
-in the provisioning script, the docker version is currently fixed due to FC restrictions
-
-increase pytest coverage of API
 
 
