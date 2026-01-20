@@ -12,10 +12,17 @@ Fedflow is an orchestration tool to use FeatureCloud.ai in reproducible workflow
 It is designed to either run federated analyses on locally-simulated VMs for testing purposes, or to execute the same workflow on remote machines (e.g. cloud instances or machines at participating research institutes). 
 
 
-<img src="figures/fedflow_overview.png" alt="fedflow_overview" width="400"/>
+<img src="figures/fedflow_overview.png" alt="fedflow_overview" width="500"/>
 
 
-<img src="figures/fedflow_remote.png" alt="fedflow_remote" width="300"/>
+<br>
+
+---
+
+<br>
+
+
+<img src="figures/fedflow_remote.png" alt="fedflow_remote" width="500"/>
 
 
 

@@ -1,24 +1,22 @@
-[general]
-
 sim = true
 tool = 'mean-app'
 # project_id = XXXXX
 outdir = "results_mean3"
 
-[clients]
 
-[clients.0]
+
+[[clients]]
 fc_username = 'USER0'
 data = ["test_data/mean_trio/c0/data.csv", "test_data/mean_trio/c0/config.yml"]
 coordinator = true
 
 
-[clients.1]
+[[clients]]
 fc_username = 'USER1'
 data = ["test_data/mean_trio/c1/data.csv", "test_data/mean_trio/c1/config.yml"]
 
 
-[clients.2]
+[[clients]]
 fc_username = 'USER2'
 data = ["test_data/mean_trio/c2/data.csv", "test_data/mean_trio/c2/config.yml"]
 

@@ -9,7 +9,7 @@ def test_vm_launch(vagrant_manager):
     vm = vagrant_manager
     Path("Vagrantfile").unlink(missing_ok=True)
     assert not Path("Vagrantfile").is_file()
-    vm.stop()
+    vm.halt()
     assert not vm._is_up()
     vm.launch()
     assert vm._is_up()
@@ -22,7 +22,7 @@ def test_vm_launch(vagrant_manager):
 def test_serialgroup(vagrant_manager):
     vm = vagrant_manager
     vm.launch()
-    _ = vm.construct_serialgroup()
+    _ = vm.construct_connection_group()
     assert len(vm.hosts) == 3
     assert 'node-0' in list(vm.hosts.keys())
     assert vm.hosts['node-0']['user'] == 'vagrant'

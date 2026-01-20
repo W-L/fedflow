@@ -2,22 +2,22 @@ import os
 import pytest
 from dotenv import load_dotenv
 
-from fedsim.config import Config
-from fedsim.VagrantManager import VagrantManager
-from fedsim.ClientManager import ClientManager
+from fedflow.config import Config
+from fedflow.VagrantManager import VagrantManager
+from fedflow.ClientManager import ClientManager
 from tests.constants import TOML_MEAN_TRIO, TOML_MEAN_TRIO_NOSIM, TEST_ENV_FILE
 
 
 
 @pytest.fixture
 def config_mean_trio() -> Config:
-    conf = Config(toml_path=TOML_MEAN_TRIO)
+    conf = Config(toml=TOML_MEAN_TRIO)
     return conf
 
 
 @pytest.fixture
 def config_mean_trio_nosim() -> Config:
-    conf = Config(toml_path=TOML_MEAN_TRIO_NOSIM)
+    conf = Config(toml=TOML_MEAN_TRIO_NOSIM)
     return conf
 
 
