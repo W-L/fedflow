@@ -8,7 +8,7 @@ apps/
 results/
 mnist.tsv
 Vagrantfile
-*.excalidraw
+*excalidraw
 conf/
 provision.sh
 *_fedflow.log
