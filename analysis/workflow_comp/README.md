@@ -18,7 +18,7 @@ The workflow depends on a conda environment which can be installed with:
 
 The workflow also needs fedflow to be installed. 
 
-`pip install fedflow`
+`pip install fedflow-featurecloud`
 
 
 all configurable parameters of the workflow are in 

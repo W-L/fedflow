@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 
 
 [project]
-name = "fedflow"
+name = "fedflow-featurecloud"
 description = "Federated FeatureCloud.ai workflows on remote machines"
 dynamic = ["version"]
 readme = "README.md"

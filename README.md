@@ -31,7 +31,7 @@ It is designed to either run federated analyses on locally-simulated VMs for tes
 
 fedflow can be installed with pip
 
-`pip install fedflow`
+`pip install fedflow-featurecloud`
 
 
 For simulations vagrant, libvirt and the vagrant-libvirt plugin are required
