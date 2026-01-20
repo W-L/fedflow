@@ -11,3 +11,7 @@ def test_main():
    fedflow.cli.main(argv=args)
 
 
+
+def test_write_template():
+   pass # TODO
+
