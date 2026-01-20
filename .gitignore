@@ -4,8 +4,6 @@
 .snakemake/
 *Zone.Identifier*
 dump/
-data/
-data_fc/
 apps/
 results/
 mnist.tsv
@@ -13,11 +11,11 @@ Vagrantfile
 *.excalidraw
 conf/
 provision.sh
-data/
 *_fedflow.log
 .env
 logs/
 example/config_mean_test.toml
+analysis/workflow_comp/data/
 
 
 
