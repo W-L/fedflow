@@ -1,6 +1,6 @@
-# fedsim_comp
+# fedflow_comp
 
-This repository contains a reproducible snakemake workflow that compares the execution of centralised and federated analyses. For running the federated tools featurecloud.ai is used via fedsim (custom VM & API automation tool for featurecloud). Both kinds of analyses are run through fedsim; the centralised analysis with a single client that possesses all data and the federated analyses with several clients that only have access to a portion of the data. The client-local results are combined in this workflow after the federated steps.
+This repository contains a reproducible snakemake workflow that compares the execution of centralised and federated analyses. For running the federated tools FeatureCloud.ai is used via fedflow; the centralised analysis with a single client that possesses all data and the federated analyses with several clients that only have access to a portion of the data. The client-local results are combined in this workflow after the federated computation.
 
 At the moment the workflow compares these federated tools:
 
@@ -10,24 +10,15 @@ At the moment the workflow compares these federated tools:
 
 
 
-
-
 ## Setup & configuration
 
 The workflow depends on a conda environment which can be installed with:
 
 `conda env create -f env.yaml -n comp && conda activate comp`
 
-The workflow also needs fedsim to be installed. 
-Since it is not on pypi yet, it needs to be pulled from the repo and then installed via pip. 
-Once it is on pypi I'll add it to the conda dependencies.
+The workflow also needs fedflow to be installed. 
 
-`git clone https://github.com/W-L/FedSim.git`
-`cd FedSim && hatch build && pip install .`
-
-or to avoid another local repo, just copy the wheel and install that
-
-`cp ../FedSim/dist/fedsim-0.0.1-py3-none-any.whl dist/`
+`pip install fedflow`
 
 
 all configurable parameters of the workflow are in 
@@ -54,26 +45,6 @@ all configurable parameters of the workflow are in
 <img src="figs/rulegraph.png" alt="rulegraph" width="500"/>
 
 <img src="figs/jobgraph.png" alt="jobgraph" width="500"/>
-
-- prep_data
-    - download public cohort data
-    - filter to project accessions (listed in workflow config.yaml)
-    - write data files for each federated client and for centralised analysis
-
-- fedsim_svd & fedsim_randfor
-    - runs twice (forced serially), once with a single client and all data, and once with 5 clients and separated data
-    - config files for the fedsim runs are in resources/
-
-- unzip_fedsim
-    - extract fedsim results for all clients 
-
-- combine_federated_*
-    - concatenate the federated output data 
-    - adds a column to identify the client/project accession for visualisation
-
-- viz_*
-    - these scripts are run manually for now
-    - create figures to compare centralised and federated runs
 
 
 
@@ -114,11 +85,11 @@ So these results have no meaning except for comparison of the analyses.
 
 ### adding new tool
 
-- add config files in configs/ (tool and fedsim config)
+- add config files in configs/ (tool and fedflow config)
 - add tool name in workflow config
 - add input data (adjust preparation script)
-- run the tools via fedsim once outside the snakemake to generate the project IDs
-- add snakemake rules (overloaded fedsim and unzipping)
+- run the tools via fedflow once outside the snakemake to generate the project IDs
+- add snakemake rules 
 - add combination script
 - add visualisation script 
 - add figures to readme

@@ -1,4 +1,3 @@
-[general]
 sim = true
 outdir = "results/vagrant/random-forest/cent/"
 project_id = 17307
@@ -9,9 +8,9 @@ reinstall = true
 timeout = 1200
 
 
-[clients.0]
+[[clients]]
 coordinator = true
-fc_username = 'federated.client+00@gmail.com'
+fc_username = 'user'
 data = [
     "data/random-forest/cent/input.csv",
     "configs/vagrant/random-forest/config.yml"

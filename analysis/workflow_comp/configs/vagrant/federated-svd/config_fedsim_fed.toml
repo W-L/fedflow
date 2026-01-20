@@ -1,4 +1,3 @@
-[general]
 sim = true
 outdir = "results/vagrant/federated-svd/fed/"
 project_id = 17305
@@ -9,37 +8,37 @@ reinstall = true
 timeout = 600
 
 
-[clients.0]
+[[clients]]
 coordinator = true
-fc_username = 'federated.client+00@gmail.com'
+fc_username = 'user'
 data = [
     "data/federated-svd/PRJEB10878/input.csv",
     "configs/vagrant/federated-svd/config.yaml"
 ]
 
-[clients.1]
-fc_username = 'federated.client+01@gmail.com'
+[[clients]]
+fc_username = 'user'
 data = [
     "data/federated-svd/PRJEB6070/input.csv",
     "configs/vagrant/federated-svd/config.yaml"
 ]
 
-[clients.2]
-fc_username = 'federated.client+02@gmail.com'
+[[clients]]
+fc_username = 'user'
 data = [
     "data/federated-svd/PRJEB7774/input.csv",
     "configs/vagrant/federated-svd/config.yaml"
 ]
 
-[clients.3]
-fc_username = 'federated.client+03@gmail.com'
+[[clients]]
+fc_username = 'user'
 data = [
     "data/federated-svd/PRJNA429097/input.csv",
     "configs/vagrant/federated-svd/config.yaml"
 ]
 
-[clients.4]
-fc_username = 'federated.client+04@gmail.com'
+[[clients]]
+fc_username = 'user'
 data = [
     "data/federated-svd/PRJNA731589/input.csv",
     "configs/vagrant/federated-svd/config.yaml"

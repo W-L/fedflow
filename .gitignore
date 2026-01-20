@@ -16,8 +16,8 @@ provision.sh
 logs/
 example/config_mean_test.toml
 analysis/workflow_comp/data/
-
-
+analysis/workflow_comp/configs_filled_in
+analysis/workflow_comp/workflow/config/config_real.yaml
 
 .vscode/*.code-workspace
 .vscode/settings.json
