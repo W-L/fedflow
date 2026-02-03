@@ -8,7 +8,7 @@ timeout = 600
 
 [[clients]]
 coordinator = true
-fc_username = "user"
+fc_username = "user01"
 hostname = "host"
 username = "ubuntu"
 sshkey = "key"

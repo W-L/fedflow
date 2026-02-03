@@ -1,5 +1,5 @@
 
-configfile: "workflow/config/config.yaml"
+configfile: "workflow/config/config_real.yaml"
 
 ds_features = config['downsample_features']
 accs = config['accessions']
@@ -9,21 +9,21 @@ hostnames = config['biosphere_hostnames']
 
 
 
-def load_fedsim_config(toml_path):
+def load_fedflow_config(toml_path):
     import rtoml
     with open(toml_path, "r") as f:
         conf = rtoml.load(f)
     # get fc users
     fc_users = []
-    for cl in conf['clients'].values():
+    for cl in conf['clients']:
         fc_users.append(cl['fc_username'])
     # project id
-    pid = conf['general']['project_id']
+    pid = conf['project_id']
     return pid, fc_users
 
 
-_, users_fed = load_fedsim_config('configs/vagrant/federated-svd/config_fedsim_fed.toml')
-_, users_cent = load_fedsim_config('configs/vagrant/federated-svd/config_fedsim_cent.toml')
+_, users_fed = load_fedflow_config('configs/biosphere/federated-svd/config_fedsim_fed.toml')
+_, users_cent = load_fedflow_config('configs/biosphere/federated-svd/config_fedsim_cent.toml')
 
 
 
@@ -34,7 +34,7 @@ rule all:
         ############# DATA PREP ###############
         # expand("data/{tool}/{acc}/input.csv", tool=tools, acc=accs),
         # expand("data/{tool}/cent/input.csv", tool=tools),
-        ############# FEDSIM ###############
+        ############# FEDFLOW ###############
         # expand("results/{provider}/{tool}/cent/results_{u}.zip", provider=providers, tool=tools, u=users_cent),
         # expand("results/{provider}/{tool}/fed/results_{u}.zip", provider=providers, tool=tools, u=users_fed),
         # ############# SVD ###############
@@ -95,7 +95,7 @@ rule distribute_biosphere_hostnames:
 
 
 
-rule fedsim_fed:  
+rule fedflow_federated:  
     input:
         expand("data/{{tool}}/{acc}/input.csv", acc=accs),
         'results/biosphere_hostnames_distributed'
@@ -104,11 +104,11 @@ rule fedsim_fed:
     resources:
         serial=1,
     shell:
-        "fedsim -c configs/{wildcards.provider}/{wildcards.tool}/config_fedsim_fed.toml"
+        "fedflow -c configs/{wildcards.provider}/{wildcards.tool}/config_fedsim_fed.toml"
         
 
 
-rule fedsim_cent:  
+rule fedflow_centralized:  
     input:
         "data/{tool}/cent/input.csv",
         'results/biosphere_hostnames_distributed'
@@ -117,11 +117,11 @@ rule fedsim_cent:
     resources:
         serial=1,
     shell:
-        "fedsim -c configs/{wildcards.provider}/{wildcards.tool}/config_fedsim_cent.toml"
+        "fedflow -c configs/{wildcards.provider}/{wildcards.tool}/config_fedsim_cent.toml"
 
 
 
-rule unzip_fedsim:
+rule unzip_fedflow:
     input:
         "results/{p}/{t}/{m}/results_{u}.zip",
     output:
@@ -131,13 +131,13 @@ rule unzip_fedsim:
 
 
 
-use rule unzip_fedsim as unzip_fedsim_svd with:
+use rule unzip_fedflow as unzip_fedflow_svd with:
     output:
         "results/{p}/{t}/{m}/{u}/pca/localData.csv",
 
 
 
-use rule unzip_fedsim as unzip_fedsim_randfor with:
+use rule unzip_fedflow as unzip_fedflow_randfor with:
     output:
         "results/{p}/{t}/{m}/{u}/pred.csv",
         "results/{p}/{t}/{m}/{u}/proba.csv",

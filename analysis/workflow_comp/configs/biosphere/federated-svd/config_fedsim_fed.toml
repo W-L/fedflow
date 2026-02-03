@@ -8,35 +8,35 @@ timeout = 600
 
 [[clients]]
 coordinator = true
-fc_username = "user"
+fc_username = "user00"
 hostname = "host"
 username = "ubuntu"
 sshkey = "key"
 data = ["data/federated-svd/PRJEB10878/input.csv", "configs/biosphere/federated-svd/config.yaml"]
 
 [[clients]]
-fc_username = "user"
+fc_username = "user01"
 hostname = "host"
 username = "ubuntu"
 sshkey = "key"
 data = ["data/federated-svd/PRJEB6070/input.csv", "configs/biosphere/federated-svd/config.yaml"]
 
 [[clients]]
-fc_username = "user"
+fc_username = "user02"
 hostname = "host"
 username = "ubuntu"
 sshkey = "key"
 data = ["data/federated-svd/PRJEB7774/input.csv", "configs/biosphere/federated-svd/config.yaml"]
 
 [[clients]]
-fc_username = "user"
+fc_username = "user03"
 hostname = "host"
 username = "ubuntu"
 sshkey = "key"
 data = ["data/federated-svd/PRJNA429097/input.csv", "configs/biosphere/federated-svd/config.yaml"]
 
 [[clients]]
-fc_username = "user"
+fc_username = "user04"
 hostname = "host"
 username = "ubuntu"
 sshkey = "key"
