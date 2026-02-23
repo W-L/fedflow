@@ -43,13 +43,20 @@ def get_client_connections(conf: Config):
 
 def prep_clients(clients: ClientManager, conf: Config):
     log("Provisioning...")
-    clients.run_bash_script(script_path=write_provision_script())
+    # either run user-supplied provision script or built-in 
+    if conf.config.provision_script:
+        script_path = conf.config.provision_script
+    else:
+        script_path = write_provision_script()
+    clients.run_bash_script(script_path=script_path)
     log("Resetting clients...")
     clients.reset_clients()
-    log("Distributing credentials to clients...")
-    clients.distribute_credentials(fc_creds=conf.fc_creds)
-    log("Distributing data to clients...")
-    clients.distribute_data()
+    if not conf.config.skip_credential_transfer:
+        log("Distributing credentials to clients...")
+        clients.distribute_credentials(fc_creds=conf.fc_creds)
+    if not conf.config.skip_data_transfer:
+        log("Distributing data to clients...")
+        clients.distribute_data()
     log("Installing fedflow package on clients...")
     clients.install_package(reinstall=conf.reinstall, nodeps=conf.nodeps)
     log("Starting FeatureCloud controllers on clients...")
@@ -72,7 +79,7 @@ def prep_project(clients: ClientManager, conf: Config) -> str:
     
 
 
-def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: str):
+def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: str, skip_result_transfer: bool):
     # contribute data to project
     # once all participants have contributed, the project is started
     log("Contributing data to FeatureCloud project...")
@@ -81,8 +88,9 @@ def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: s
     log("Monitoring FeatureCloud project run...")
     clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id, timeout=timeout)
     sleep(10)
-    # download outcome from all clients
-    clients.fetch_results(outdir=outdir, pid=project_id)
+    if not skip_result_transfer:
+        # download outcome from all clients
+        clients.fetch_results(outdir=outdir, pid=project_id)
 
 
 def cleanup(clients: ClientManager, conf: Config):
@@ -122,7 +130,8 @@ def main(argv=None):
         clients=clients,
         project_id=project_id,
         timeout=conf.timeout,
-        outdir=conf.config.outdir
+        outdir=conf.config.outdir,
+        skip_result_transfer=conf.config.skip_result_transfer
     )
     # stop fc controllers, halt vagrant vms
     cleanup(clients=clients, conf=conf)

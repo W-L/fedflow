@@ -34,6 +34,10 @@ class GeneralConfig(BaseModel):
     tool: str | None = ''
     sim: bool = False
     outdir: str = 'results/'
+    provision_script: str | None = ""
+    skip_data_transfer: bool = False
+    skip_credential_transfer: bool = False
+    skip_result_transfer: bool = False
     debug: DebugConfig | None = None
     clients: list[ClientConfig] = [ClientConfig(), ClientConfig()]
 

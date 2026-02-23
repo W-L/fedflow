@@ -2,6 +2,10 @@ project_id = 0
 tool = ""
 sim = false
 outdir = "results/"
+provision_script = ""
+skip_data_transfer = false
+skip_credential_transfer = false
+skip_result_transfer = false
 
 [[clients]]
 fc_username = "FC_USER"
