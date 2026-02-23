@@ -1,5 +1,5 @@
 
-configfile: "workflow/config/config_real.yaml"
+configfile: "workflow/config/config_appnote.yaml"
 
 ds_features = config['downsample_features']
 accs = config['accessions']
@@ -32,8 +32,8 @@ rule all:
     input:
         # 'results/biosphere_hostnames_distributed',
         ############# DATA PREP ###############
-        # expand("data/{tool}/{acc}/input.csv", tool=tools, acc=accs),
-        # expand("data/{tool}/cent/input.csv", tool=tools),
+        expand("data/{tool}/{acc}/input_train.csv", tool=tools, acc=accs),
+        expand("data/{tool}/cent/input_train.csv", tool=tools),
         ############# FEDFLOW ###############
         # expand("results/{provider}/{tool}/cent/results_{u}.zip", provider=providers, tool=tools, u=users_cent),
         # expand("results/{provider}/{tool}/fed/results_{u}.zip", provider=providers, tool=tools, u=users_fed),
@@ -46,15 +46,15 @@ rule all:
         # expand("results/{p}/random-forest/cent/{u}/proba.csv", p=providers, u=users_cent),
         # expand("results/{p}/random-forest/fed/combined_randfor.csv", p=providers),
         # ############# Visualizations ###############
-        expand("viz_{provider}_federated-svd.png", provider=providers),
-        expand("viz_{provider}_randfor.png", provider=providers),
+        # expand("viz_{provider}_federated-svd.png", provider=providers),
+        # expand("viz_{provider}_randfor.png", provider=providers),
         
 
 
 
 rule prep_data_federated:
     output:
-        "data/{tool}/{acc}/input.csv"
+        "data/{tool}/{acc}/input_train.csv"
     wildcard_constraints:
         acc="P[^/]*"   # accession pattern starting with 'P'
     params:
@@ -69,9 +69,9 @@ rule prep_data_federated:
 
 rule prep_data_centralized:
     input:
-        expand("data/{{tool}}/{acc}/input.csv", acc=accs),
+        expand("data/{{tool}}/{acc}/input_train.csv", acc=accs),
     output:
-        "data/{tool}/cent/input.csv"
+        "data/{tool}/cent/input_train.csv"
     params:
         accession_list=' '.join(accs),
     shell:
@@ -97,7 +97,7 @@ rule distribute_biosphere_hostnames:
 
 rule fedflow_federated:  
     input:
-        expand("data/{{tool}}/{acc}/input.csv", acc=accs),
+        expand("data/{{tool}}/{acc}/input_train.csv", acc=accs),
         'results/biosphere_hostnames_distributed'
     output:
         expand("results/{{provider}}/{{tool}}/fed/results_{u}.zip", u=users_fed),
@@ -110,7 +110,7 @@ rule fedflow_federated:
 
 rule fedflow_centralized:  
     input:
-        "data/{tool}/cent/input.csv",
+        "data/{tool}/cent/input_train.csv",
         'results/biosphere_hostnames_distributed'
     output:
         expand("results/{{provider}}/{{tool}}/cent/results_{u}.zip", u=users_cent),
