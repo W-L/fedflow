@@ -58,7 +58,7 @@ def prep_clients(clients: ClientManager, conf: Config):
         log("Distributing data to clients...")
         clients.distribute_data()
     log("Installing fedflow package on clients...")
-    clients.install_package(reinstall=conf.reinstall, nodeps=conf.nodeps)
+    clients.install_package(wheel=conf.wheel, reinstall=conf.reinstall, nodeps=conf.nodeps)
     log("Starting FeatureCloud controllers on clients...")
     clients.start_featurecloud_controllers()
 

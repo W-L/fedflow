@@ -17,6 +17,7 @@ class DebugConfig(BaseModel):
     nodeps: bool = False
     timeout: int = 60 * 60
     vmonly: bool = False
+    wheel: str | None = None
 
 
 class ClientConfig(BaseModel):
@@ -73,12 +74,14 @@ class Config:
             self.nodeps = self.config.debug.nodeps
             self.timeout = self.config.debug.timeout
             self.vmonly = self.config.debug.vmonly
+            self.wheel = self.config.debug.wheel
         else:
             debug = DebugConfig()
             self.reinstall = debug.reinstall
             self.nodeps = debug.nodeps
             self.timeout = debug.timeout
             self.vmonly = debug.vmonly
+            self.wheel = debug.wheel
 
 
     def _load_config(self, path: Path) -> GeneralConfig:

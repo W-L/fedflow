@@ -63,20 +63,25 @@ class ClientManager:
         self.threadg.run(cmd)
     
 
-    def install_package(self, reinstall: bool = False, nodeps: bool = False) -> None:
+    def install_package(self, wheel: str | None = None, reinstall: bool = False, nodeps: bool = False) -> None:
         """
         Install the package on all nodes.
         TODO this is used because the package is not on PyPI, so the wheel is transferred and installed locally.
         
+        :param wheel: path to wheel if installing from file instead of from PyPI
         :param reinstall: whether to force reinstall the package
         :param nodeps: whether to skip installing dependencies
         """
-        # find the wheel file for installation
-        whl = glob("dist/fedflow-*.whl")[0]
-        whl_name = Path(whl).name
-        self.threadg.put(whl, remote=whl_name)
+        # install from wheel file if provided
+        if wheel:
+            whl_name = Path(wheel).name
+            self.threadg.put(wheel, remote=whl_name)
+            install_target = whl_name
+        else: 
+            install_target = "fedflow-featurecloud" # install from pypi
+        # install fedflow in a virtual env on all remotes
         self.threadg.run("python3 -m venv .venv")
-        install_cmd = f"source .venv/bin/activate && pip install {whl_name}"
+        install_cmd = f"source .venv/bin/activate && pip install {install_target}"
         if reinstall:
             install_cmd += " --force-reinstall"
         if nodeps:
