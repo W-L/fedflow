@@ -66,7 +66,6 @@ class ClientManager:
     def install_package(self, wheel: str | None = None, reinstall: bool = False, nodeps: bool = False) -> None:
         """
         Install the package on all nodes.
-        TODO this is used because the package is not on PyPI, so the wheel is transferred and installed locally.
         
         :param wheel: path to wheel if installing from file instead of from PyPI
         :param reinstall: whether to force reinstall the package
