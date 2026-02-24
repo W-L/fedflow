@@ -31,7 +31,7 @@ def setup_logging(logfile: str = "output.log") -> logging.Logger:
     logger.addHandler(sh)
     logger.addHandler(fh)
     # first entry
-    logger.info(f"fedflow {version('fedflow')}")
+    logger.info(f"fedflow {version('fedflow-featurecloud')}")
     return logger
 
 
