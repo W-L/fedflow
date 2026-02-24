@@ -177,21 +177,23 @@ def separate_data(data, outpath, nostatus, header, index, transpose, split):
         # transpose so that samples are columns
         data = data.transpose()
 
-    # write to files for training and testing
-    # shuffle the samples
-    data = data.sample(frac=1, random_state=99)
-    # write 80% of the samples to the training file and 20% to the testing file
-    ntrain = int(split * data.shape[0])
-    data_train = data.iloc[:ntrain]
-    data_test = data.iloc[ntrain:]
-    # write training and testing files
-    data_train_path = outpath / "input_train.csv"
-    data_test_path = outpath / "input_test.csv"
-    data_train.to_csv(data_train_path, sep=',', index=index, header=header)
-    data_test.to_csv(data_test_path, sep=',', index=index, header=header)
-    # write full file
-    # data_path = outpath / "input.csv"
-    # data.to_csv(data_path, sep=',', index=index, header=header)
+    if split:
+        # write to files for training and testing
+        # shuffle the samples
+        data = data.sample(frac=1, random_state=99)
+        # write 80% of the samples to the training file and 20% to the testing file
+        ntrain = int(0.8 * data.shape[0])
+        data_train = data.iloc[:ntrain]
+        data_test = data.iloc[ntrain:]
+        # write training and testing files
+        data_train_path = outpath / "input.csv"
+        data_test_path = outpath / "input_test.csv"
+        data_train.to_csv(data_train_path, sep=',', index=index, header=header)
+        data_test.to_csv(data_test_path, sep=',', index=index, header=header)
+    else:
+        # write full file
+        data_path = outpath / "input.csv"
+        data.to_csv(data_path, sep=',', index=index, header=header)
     print(f"total: {nsamples}, 0: {nsamples - psum}, 1: {psum}, feat: {nfeat}")
     
     
@@ -292,7 +294,7 @@ def main():
             header=True,
             index=True,
             transpose=True, 
-            split=1
+            split=False
         )
 
     elif args.tool == "ada-boost" or args.tool == "random-forest":
@@ -303,7 +305,7 @@ def main():
             header=True,
             index=False,
             transpose=False,
-            split=0.8
+            split=True
         )
          
 

@@ -15,7 +15,7 @@ def get_args():
 
 def main():
     args = get_args()
-    configs = glob('configs/biosphere/*/*.toml')
+    configs = glob('configs_filled_in/biosphere/*/*.toml')
     print(f"nconfigs: {len(configs)}")
     print(f"nhostnames: {len(args.hostnames)}")
 
@@ -28,7 +28,7 @@ def main():
         clients = conf['clients']
         assert len(clients) <= len(args.hostnames)
         # assign hostnames
-        for cl, ip in zip(clients.values(), args.hostnames):
+        for cl, ip in zip(clients, args.hostnames):
             cl['hostname'] = ip
         # write back config
         with open(config_path, "w") as f:
