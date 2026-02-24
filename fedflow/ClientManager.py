@@ -149,6 +149,9 @@ class ClientManager:
         # stop docker containers
         stop_docker = "docker ps -q | xargs -r docker stop"
         self.threadg.run(stop_docker)
+        # remove dangling docker volumes
+        rm_docker_vols = "docker volume ls -q | xargs -r docker volume rm"
+        self.threadg.run(rm_docker_vols)
         # remove data directory if it exists
         # test that it's a directory and not a symlink before removing
         # this needs sudo because docker creates the directory as root?
@@ -222,7 +225,8 @@ class ClientManager:
         cxn = coordinator[0]
         fc_user = cxn['fc_username']
         cmd = f"source .venv/bin/activate && fcauto monitor -u {fc_user} -p {project_id} -t {timeout}"
-        cxn.run(cmd)
+        cxn.run(f'echo "$(hostname): monitoring..." && {cmd}')
+        # cxn.run(cmd)
         
 
     def fetch_results(self, outdir, pid):
