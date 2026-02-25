@@ -42,57 +42,32 @@ all configurable parameters of the workflow are in
 
 `snakemake --rulegraph | dot -Tpng > rulegraph.png && snakemake --dag | dot -Tpng > jobgraph.png`
 
-<img src="figs/rulegraph.png" alt="rulegraph" width="500"/>
-
-<img src="figs/jobgraph.png" alt="jobgraph" width="500"/>
+<!-- <img src="figs/rulegraph.png" alt="rulegraph" width="500"/> -->
+<!-- <img src="figs/jobgraph.png" alt="jobgraph" width="500"/> -->
 
 
 
 ## Results
 
 
-<img src="figs/viz_vagrant_federated-svd.png" alt="embedding" width="500"/>
+<img src="figs/fig_results_biosphere.png" alt="fig_results" width="800"/>
 
-Embedding of downsampled species signal features for a centralised analysis (A), and a federated run with 5 clients (B). The embeddings are identical for both executions. The input features were randomly downsampled to 5%, i.e. ~130 columns, to save on execution time.
-
-
-
-<br>
-
----
-
-<br>
-
-
-<img src="figs/viz_vagrant_randfor.png" alt="randfor" width="700"/>
-
-Results of random forest classification for a centralised versus federated analysis. 
-The input data was downsampled to 5% of the total features, and the training and test data are equivalent. 
-So these results have no meaning except for comparison of the analyses.
-(A) Scatter plot of probabilities for class 1 for the centralised (x-axis) and federated analyses (y-axis).
-(B) ROC curves and deltaAUC of the global versus local classifiers.
-(C) Densities of probalities for class 1 separated by true class label (vertical) and by classifier (horizontal)
+The product of this workflow shows its rulegraph (A) as well as an embedding of metagenomic and clinical features for a centralised analysis and a federated run with 5 clients (B). The embeddings are identical for both executions. 
+Further, a random forest classification for a centralised versus federated analysis is performed. 
+Input data contains metagenomic species counts and clinical data and was split into training and testing data (80:20).
+A scatter plot of probabilities for class 1 for the centralised (x-axis) and federated analyses (y-axis) shows good correspondance between these analysis modalities (C). Good performance is confirmed by ROC curves of the global and local classifiers (D). (E) The distributions of probalities for class 1 separated by true class label shows that while there is adequate separation, careful calibration of model predictions is required.
 
 
 
-<br>
-
----
-
-<br>
 
 
+### Todo for adding new tools to the workflow
 
-### adding new tool
-
-- add config files in configs/ (tool and fedflow config)
-- add tool name in workflow config
-- add input data (adjust preparation script)
-- run the tools via fedflow once outside the snakemake to generate the project IDs
-- add snakemake rules 
-- add combination script
-- add visualisation script 
-- add figures to readme
-- update rulegraph
+- add config files in configs/ (tool and fedflow configs)
+- add tool name in workflow config.yaml
+- add input data (adjust or add preparation script)
+- verify that generic fedflow snakemake rule is appropriate
+- add script to combine federated results
+- add script to visualise results
 
 
