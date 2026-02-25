@@ -34,7 +34,7 @@ all configurable parameters of the workflow are in
 
 `snakemake --resources serial=1 -p -cN`
 
-`--resources serial=1` makes sure that multiple runs of fedsim are performed in series to avoid that individual fedsim runs use the same VMs concurrently.
+`--resources serial=1` makes sure that multiple runs of fedflow are performed in series to avoid that individual fedflow runs use the same VMs concurrently.
 
 
 

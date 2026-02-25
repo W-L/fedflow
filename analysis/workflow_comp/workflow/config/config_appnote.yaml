@@ -16,8 +16,8 @@ providers:
 
 # Names of tools to be run in the workflow
 # for each, config files need to be present as:
-#      configs/<providers>/<tool>/config_fedsim_cent.toml
-#      configs/<providers>/<tool>/config_fedsim_fed.toml
+#      configs/<providers>/<tool>/config_cent.toml
+#      configs/<providers>/<tool>/config_fed.toml
 tools:
   - federated-svd
   - random-forest

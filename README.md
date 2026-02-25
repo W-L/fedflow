@@ -157,7 +157,7 @@ In `example/` there are test data and configurations to run the 'mean' test app 
 ## Provisioning of client VMs/participating machines
 
 
-System dependencies on remotes are installed automatically using a shell script shipped in `fedsim/provision.py`.
+System dependencies on remotes are installed automatically using a shell script shipped in `fedflow/provision.py`.
  
 - python3.12, python3.12-venv
 - docker

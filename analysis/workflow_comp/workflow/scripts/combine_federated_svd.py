@@ -9,8 +9,6 @@ parser.add_argument("--output", type=str, help="Output file")
 args = parser.parse_args()
 
 # load the results from all clients and save a combined file
-# all_files = glob.glob("results/fedsim_fed/federated.client*/17305/pca/localData.csv")
-# print(all_files)
 all_files = args.input
 accs = args.accessions
 
