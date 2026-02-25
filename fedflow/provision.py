@@ -1,6 +1,6 @@
 
 
-bash_provision_ubuntu = f"""
+bash_provision_ubuntu = """
 #!/bin/bash
 set -e 
 

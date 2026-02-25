@@ -1,4 +1,3 @@
-from glob import glob
 from pathlib import Path
 import shutil
 import shlex
@@ -117,7 +116,7 @@ class ClientManager:
         Start the Featurecloud controller on all remotes.
         """
         self.stop_featurecloud_controllers()
-        cmd = f"source .venv/bin/activate && featurecloud controller start --data-dir data_fc"
+        cmd = "source .venv/bin/activate && featurecloud controller start --data-dir data_fc"
         self.threadg.run(f'echo "$(hostname): starting fc controller..." && {cmd}')
         # check status
         cmd = "source .venv/bin/activate && featurecloud controller status"
