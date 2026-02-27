@@ -8,6 +8,7 @@ import rtoml
 def get_args(): 
     parser = argparse.ArgumentParser()
     parser.add_argument("--hostnames", type=str, nargs='+', required=True)
+    parser.add_argument("--config_paths", type=str, required=True)
     parser.add_argument("--out", type=str, required=True)
     args = parser.parse_args()
     return args
@@ -15,7 +16,7 @@ def get_args():
 
 def main():
     args = get_args()
-    configs = glob('configs_filled_in/biosphere/*/*.toml')
+    configs = glob(args.config_paths)
     print(f"nconfigs: {len(configs)}")
     print(f"nhostnames: {len(args.hostnames)}")
 
