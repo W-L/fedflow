@@ -86,7 +86,7 @@ def run_project(clients: ClientManager, project_id: str, timeout: int, outdir: s
     # monitor run, then download logs and results
     log("Monitoring FeatureCloud project run...")
     clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id, timeout=timeout)
-    sleep(10)
+    sleep(15)
     if not skip_result_transfer:
         # download outcome from all clients
         clients.fetch_results(outdir=outdir, pid=project_id)
