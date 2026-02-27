@@ -1,11 +1,11 @@
 
-configfile: "workflow/config/config_appnote.yaml"
+configfile: "workflow/config/config.yaml"
 
 ds_features = config['downsample_features']
 accs = config['accessions']
-providers = config['providers']
+provider = config['provider']
 tools = config['tools']
-hostnames = config['biosphere_hostnames']
+hostnames = config['hostnames']
 
 
 
@@ -20,14 +20,14 @@ def load_fedflow_config(toml_path):
     return fc_users
 
 
-users_fed = load_fedflow_config('configs_filled_in/biosphere/federated-svd/config_fed.toml')
-users_cent = load_fedflow_config('configs_filled_in/biosphere/federated-svd/config_cent.toml')
+users_fed = load_fedflow_config(f'configs/{provider}/{tools[0]}/config_fed.toml')
+users_cent = load_fedflow_config(f'configs/{provider}/{tools[0]}/config_cent.toml')
 
 
 
 rule all:
     input:
-        # 'results/biosphere_hostnames_distributed',
+        # 'results/hostnames_distributed',
         ############# DATA PREP ###############
         # expand("data/{tool}/{acc}/input.csv", acc=accs, tool=tools),
         # expand("data/{tool}/cent/input.csv", tool=tools),
@@ -43,10 +43,8 @@ rule all:
         # expand("results/{p}/random-forest/cent/{u}/proba.csv", p=providers, u=users_cent),
         # expand("results/{p}/random-forest/fed/combined_randfor.csv", p=providers),
         # ############# Visualizations ###############
-        # expand("viz_{provider}_federated-svd.png", provider=providers),
-        # expand("viz_{provider}_randfor.png", provider=providers),
         # "rulegraph.png",
-        expand("figs/fig_results_{provider}.png", provider=providers)
+        f"figs/fig_results_{provider}.png"
 
 
 rule rulegraph:
@@ -86,15 +84,17 @@ rule prep_data_centralized:
 
 
 
-rule distribute_biosphere_hostnames:
+rule distribute_hostnames:
     input:
-        expand("configs_filled_in/biosphere/{tool}/config_{mode}.toml", tool=tools, mode=['fed', 'cent']),
+        expand("configs/{provider}/{tool}/config_{mode}.toml", provider=provider, tool=tools, mode=['fed', 'cent']),
     output:
-        'results/biosphere_hostnames_distributed'
+        'results/hostnames_distributed'
     params:
+        provider=provider,
         hostnames=hostnames,
     shell:
-        "python workflow/scripts/distribute_biosphere_hostnames.py "
+        "python workflow/scripts/distribute_hostnames.py "
+        " --config_paths 'configs/{provider}/*/*.toml' "
         " --hostnames {params.hostnames} "
         " --out {output} "
 
@@ -103,26 +103,26 @@ rule distribute_biosphere_hostnames:
 rule fedflow_federated:  
     input:
         expand("data/{{tool}}/{acc}/input.csv", acc=accs),
-        'results/biosphere_hostnames_distributed'
+        'results/hostnames_distributed'
     output:
         expand("results/{{provider}}/{{tool}}/fed/results_{u}.zip", u=users_fed),
     resources:
         serial=1,
     shell:
-        "fedflow -c configs_filled_in/{wildcards.provider}/{wildcards.tool}/config_fed.toml"
+        "fedflow -c configs/{wildcards.provider}/{wildcards.tool}/config_fed.toml"
         
 
 
 rule fedflow_centralized:  
     input:
         "data/{tool}/cent/input.csv",
-        'results/biosphere_hostnames_distributed'
+        'results/hostnames_distributed'
     output:
         expand("results/{{provider}}/{{tool}}/cent/results_{u}.zip", u=users_cent),
     resources:
         serial=1,
     shell:
-        "fedflow -c configs_filled_in/{wildcards.provider}/{wildcards.tool}/config_cent.toml"
+        "fedflow -c configs/{wildcards.provider}/{wildcards.tool}/config_cent.toml"
 
 
 
