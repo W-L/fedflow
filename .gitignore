@@ -18,8 +18,8 @@ logs/
 example/config_mean_test.toml
 example/config_mean_test_biosphere.toml
 analysis/workflow_comp/data/
-analysis/workflow_comp/configs_filled_in
-analysis/workflow_comp/workflow/config/config_real.yaml
+analysis/workflow_comp/configs/
+
 
 .vscode/*.code-workspace
 .vscode/settings.json
