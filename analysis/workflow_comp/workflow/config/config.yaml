@@ -1,19 +1,28 @@
-# project accessions to be used in the workflow
-accessions: [
-  "PRJEB10878",
-  "PRJEB6070",
-  "PRJEB7774",
-  "PRJNA429097",
-  "PRJNA731589",
-]
-# fraction of features to be used
-downsample_features: 0.01
-# provider of machines
-providers: ["biosphere", "vagrant"]
+accessions:                 # project accessions to be used in the workflow
+  - PRJEB10878
+  - PRJEB6070
+  - PRJEB7774
+  - PRJNA429097
+  - PRJNA731589
+
+downsample_features: 1     # fraction of features to be used
+provider: biosphere        # provider of machines: vagrant, biosphere
+
 # Names of tools to be run in the workflow
 # for each, config files need to be present as:
-#      configs/<providers>/<tool>/config_cent.toml
-#      configs/<providers>/<tool>/config_fed.toml
-tools: ["federated-svd", "random-forest"] #, "ada-boost"]
+#      configs/<provider>/<tool>/config_cent.toml
+#      configs/<provider>/<tool>/config_fed.toml
+tools:
+  - federated-svd
+  - random-forest
+
+# hostnames of remotes to be written into the config files 
+# not required when using vagrant
+hostnames: 
+  - 134.158.249.174
+  - 134.158.248.145
+  - 134.158.249.68
+  - 134.158.248.93
+  - 134.158.249.161
 
 
