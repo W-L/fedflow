@@ -1,15 +1,10 @@
 outdir = "results/biosphere/random-forest/cent/"
 project_id = 17307
 
-[debug]
-nodeps = true
-reinstall = true
-timeout = 1200
-
 [[clients]]
 coordinator = true
 fc_username = "user"
 hostname = "host"
 username = "ubuntu"
 sshkey = "key"
-data = ["data/random-forest/cent/input.csv", "configs/biosphere/random-forest/config.yml"]
+data = ["data/random-forest/cent/input.csv", "data/random-forest/cent/input_test.csv", "configs/biosphere/random-forest/config.yml"]

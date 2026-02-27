@@ -2,17 +2,13 @@ sim = true
 outdir = "results/vagrant/random-forest/cent/"
 project_id = 17307
 
-[debug]
-nodeps = true
-reinstall = true
-timeout = 1200
-
 
 [[clients]]
 coordinator = true
 fc_username = 'user'
 data = [
     "data/random-forest/cent/input.csv",
+    "data/random-forest/cent/input_test.csv",
     "configs/vagrant/random-forest/config.yml"
 ]
 

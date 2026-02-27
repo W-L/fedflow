@@ -1,11 +1,6 @@
 outdir = "results/biosphere/federated-svd/fed/"
 project_id = 17305
 
-[debug]
-nodeps = true
-reinstall = true
-timeout = 600
-
 [[clients]]
 coordinator = true
 fc_username = "user00"

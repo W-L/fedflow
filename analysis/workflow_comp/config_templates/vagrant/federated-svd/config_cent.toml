@@ -2,11 +2,6 @@ sim = true
 outdir = "results/vagrant/federated-svd/cent/"
 project_id = 17306
 
-[debug]
-nodeps = true
-reinstall = true
-timeout = 600
-
 
 [[clients]]
 coordinator = true

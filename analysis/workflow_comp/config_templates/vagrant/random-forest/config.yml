@@ -3,7 +3,7 @@
 fc_random_forest:
   input:
     train: "input.csv"
-    test: "input.csv"
+    test: "input_test.csv"
   output:
     pred: "pred.csv"
     proba: "proba.csv"

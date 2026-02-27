@@ -1,0 +1,38 @@
+outdir = "results/biosphere/random-forest/fed/"
+project_id = 17308
+
+[[clients]]
+coordinator = true
+fc_username = "user"
+hostname = "host"
+username = "ubuntu"
+sshkey = "key"
+data = ["data/random-forest/PRJEB10878/input.csv", "data/random-forest/PRJEB10878/input_test.csv", "configs/biosphere/random-forest/config.yml"]
+
+[[clients]]
+fc_username = "user"
+hostname = "host"
+username = "ubuntu"
+sshkey = "key"
+data = ["data/random-forest/PRJEB6070/input.csv", "data/random-forest/PRJEB6070/input_test.csv", "configs/biosphere/random-forest/config.yml"]
+
+[[clients]]
+fc_username = "user"
+hostname = "host"
+username = "ubuntu"
+sshkey = "key"
+data = ["data/random-forest/PRJEB7774/input.csv", "data/random-forest/PRJEB7774/input_test.csv", "configs/biosphere/random-forest/config.yml"]
+
+[[clients]]
+fc_username = "user"
+hostname = "host"
+username = "ubuntu"
+sshkey = "key"
+data = ["data/random-forest/PRJNA429097/input.csv", "data/random-forest/PRJNA429097/input_test.csv", "configs/biosphere/random-forest/config.yml"]
+
+[[clients]]
+fc_username = "user"
+hostname = "host"
+username = "ubuntu"
+sshkey = "key"
+data = ["data/random-forest/PRJNA731589/input.csv", "data/random-forest/PRJNA731589/input_test.csv", "configs/biosphere/random-forest/config.yml"]
