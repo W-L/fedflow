@@ -19,6 +19,14 @@ DEFAULT_HEADERS = {
 
 
 
+timeout = httpx.Timeout(
+    connect=10.0,   # TCP handshake
+    read=60.0,      # waiting for response bytes
+    write=10.0,
+    pool=10.0
+)
+
+
 
 
 class RateLimiter:
@@ -67,7 +75,7 @@ class Controller:
 
         :param host: The host URL of the local controller
         """
-        self.client = httpx.Client(base_url=host)
+        self.client = httpx.Client(base_url=host, timeout=timeout)
         self.host = host
         self.limiter = RateLimiter() 
 
@@ -300,7 +308,7 @@ class AppTable:
         """
         Class to represent the app table on FeatureCloud
         """
-        self.client = httpx.Client(base_url="https://featurecloud.ai", headers=DEFAULT_HEADERS)
+        self.client = httpx.Client(base_url="https://featurecloud.ai", headers=DEFAULT_HEADERS, timeout=timeout)
         self.limiter = RateLimiter()
         self.apps = self._get_app_list()
         
@@ -329,7 +337,7 @@ class User:
 
         :param username: name on FeatureCloud.ai
         """
-        self.client = httpx.Client(base_url="https://featurecloud.ai", headers=DEFAULT_HEADERS)
+        self.client = httpx.Client(base_url="https://featurecloud.ai", headers=DEFAULT_HEADERS, timeout=timeout)
         load_dotenv(dotenv_path='.env', override=True)
         self.username = username
         self.password = os.getenv(f"{username}")
