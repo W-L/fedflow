@@ -5,7 +5,6 @@ accessions:                 # project accessions to be used in the workflow
   - PRJNA429097
   - PRJNA731589
 
-downsample_features: 1     # fraction of features to be used
 provider: biosphere        # provider of machines: vagrant, biosphere
 
 # Names of tools to be run in the workflow
@@ -19,10 +18,10 @@ tools:
 # hostnames of remotes to be written into the config files 
 # not required when using vagrant
 hostnames: 
-  - 134.158.249.174
-  - 134.158.248.145
-  - 134.158.249.68
-  - 134.158.248.93
+  - 134.158.248.176
+  - 134.158.248.249
   - 134.158.249.161
+  - 134.158.249.92
+  - 134.158.248.150
 
 

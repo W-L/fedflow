@@ -1,7 +1,6 @@
 
 configfile: "workflow/config/config.yaml"
 
-ds_features = config['downsample_features']
 accs = config['accessions']
 provider = config['provider']
 tools = config['tools']
@@ -39,9 +38,9 @@ rule all:
         # expand("results/{p}/federated-svd/cent/{u}/pca/localData.csv", p=providers, u=users_cent),
         # expand("results/{p}/federated-svd/fed/combined_svd.csv", p=providers),
         # ############# Random Forest ###############
-        # expand("results/{p}/random-forest/fed/{u}/proba.csv", p=providers, u=users_fed),
-        # expand("results/{p}/random-forest/cent/{u}/proba.csv", p=providers, u=users_cent),
-        # expand("results/{p}/random-forest/fed/combined_randfor.csv", p=providers),
+        # expand("results/{p}/random-forest/fed/{u}/proba.csv", p=provider, u=users_fed),
+        # expand("results/{p}/random-forest/cent/{u}/proba.csv", p=provider, u=users_cent),
+        # expand("results/{p}/random-forest/fed/combined_randfor.csv", p=provider),
         # ############# Visualizations ###############
         # "rulegraph.png",
         f"figs/fig_results_{provider}.png"
@@ -60,13 +59,10 @@ rule prep_data_federated:
         "data/{tool}/{acc}/input.csv"
     wildcard_constraints:
         acc="P[^/]*"   # accession pattern starting with 'P'
-    params:
-        ds_features=ds_features,
     shell:
         "python workflow/scripts/prep_data_federated.py "
         " --acc {wildcards.acc} "
         " --tool {wildcards.tool} "
-        " --downsample-features {params.ds_features} "
 
 
 

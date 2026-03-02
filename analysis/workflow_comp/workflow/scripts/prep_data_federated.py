@@ -219,8 +219,8 @@ def get_args():
     parser.add_argument("--acc", type=str, required=True)
     parser.add_argument("--tool", type=str, required=True)
     # parser.add_argument("--outdir", type=str, required=True)
-    parser.add_argument("--downsample-samples", type=float, default=None)
-    parser.add_argument("--downsample-features", type=float, default=None)
+    # parser.add_argument("--downsample-samples", type=float, default=None)
+    # parser.add_argument("--downsample-features", type=float, default=None)
     args = parser.parse_args()
     return args
 
@@ -277,12 +277,12 @@ def main():
 
 
     # downsample if specified
-    if args.downsample_features or args.downsample_samples:
-        data_acc = downsample(
-            downsample_features=args.downsample_features,
-            downsample_samples=args.downsample_samples,
-            data=data_acc
-        )
+    # if args.downsample_features or args.downsample_samples:
+    #     data_acc = downsample(
+    #         downsample_features=args.downsample_features,
+    #         downsample_samples=args.downsample_samples,
+    #         data=data_acc
+    #     )
 
     outpath = outdir / args.tool / args.acc
 
