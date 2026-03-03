@@ -42,7 +42,7 @@ rule all:
         # expand("results/{p}/random-forest/cent/{u}/proba.csv", p=provider, u=users_cent),
         # expand("results/{p}/random-forest/fed/combined_randfor.csv", p=provider),
         # ############# Visualizations ###############
-        # "rulegraph.png",
+        # "figs/rulegraph.png",
         f"figs/fig_results_{provider}.png"
 
 
@@ -53,8 +53,19 @@ rule rulegraph:
         snakemake --rulegraph | dot -Tpng -Gdpi=300 > {output}
         """
 
+rule download_data:
+    output:
+        "data/metadata_2340_CRC_cohort_20240704.csv",
+        "data/species_signal_2340_CRC_cohort_20240617_combat_prev0.csv",
+    shell:
+        "python workflow/scripts/download_data.py"
+
+
 
 rule prep_data_federated:
+    input:
+        meta="data/metadata_2340_CRC_cohort_20240704.csv",
+        msp="data/species_signal_2340_CRC_cohort_20240617_combat_prev0.csv",
     output:
         "data/{tool}/{acc}/input.csv"
     wildcard_constraints:
@@ -63,6 +74,8 @@ rule prep_data_federated:
         "python workflow/scripts/prep_data_federated.py "
         " --acc {wildcards.acc} "
         " --tool {wildcards.tool} "
+        " --msp {input.msp} "
+        " --meta {input.meta} "
 
 
 
