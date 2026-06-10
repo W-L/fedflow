@@ -18,6 +18,8 @@ class DebugConfig(BaseModel):
     timeout: int = 60 * 60
     vmonly: bool = False
     wheel: str | None = None
+    flnet: bool = False
+    gitlab_user: str = 'GITLAB_USER'
 
 
 class ClientConfig(BaseModel):
@@ -36,6 +38,7 @@ class GeneralConfig(BaseModel):
     sim: bool = False
     outdir: str = 'results/'
     provision_script: str | None = ""
+    deployment_script: str | None = ""
     skip_data_transfer: bool = False
     skip_credential_transfer: bool = False
     skip_result_transfer: bool = False
@@ -75,6 +78,8 @@ class Config:
             self.timeout = self.config.debug.timeout
             self.vmonly = self.config.debug.vmonly
             self.wheel = self.config.debug.wheel
+            self.flnet = self.config.debug.flnet
+            self.gitlab_user = self.config.debug.gitlab_user
         else:
             debug = DebugConfig()
             self.reinstall = debug.reinstall
@@ -82,6 +87,8 @@ class Config:
             self.timeout = debug.timeout
             self.vmonly = debug.vmonly
             self.wheel = debug.wheel
+            self.flnet = debug.flnet
+            self.gitlab_user = debug.gitlab_user
 
 
     def _load_config(self, path: Path) -> GeneralConfig:

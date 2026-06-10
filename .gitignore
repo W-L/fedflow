@@ -12,6 +12,7 @@ Vagrantfile
 *excalidraw
 conf/
 provision.sh
+deploy.sh
 *_fedflow.log
 .env
 .token
