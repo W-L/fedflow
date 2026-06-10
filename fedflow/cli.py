@@ -8,6 +8,7 @@ from fedflow.config import Config
 from fedflow.VagrantManager import VagrantManager
 from fedflow.ClientManager import ClientManager
 from fedflow.provision import write_provision_script
+from fedflow.deploy_client import write_deployment_script
 
 
 
@@ -46,7 +47,7 @@ def prep_clients(clients: ClientManager, conf: Config):
     if conf.config.provision_script:
         script_path = conf.config.provision_script
     else:
-        script_path = write_provision_script()
+        script_path = write_provision_script(script='fedflow')
     clients.run_bash_script(script_path=script_path)
     log("Resetting clients...")
     clients.reset_clients()
@@ -60,6 +61,41 @@ def prep_clients(clients: ClientManager, conf: Config):
     clients.install_package(wheel=conf.wheel, reinstall=conf.reinstall, nodeps=conf.nodeps)
     log("Starting FeatureCloud controllers on clients...")
     clients.start_featurecloud_controllers()
+
+
+def prep_clients_flnet(clients: ClientManager, conf: Config):
+    # put FLNet token on clients
+    clients.distribute_token(local_path='.token')
+
+    log("Provisioning...")
+    # either run user-supplied provision script or built-in 
+    if conf.config.provision_script:
+        script_path = conf.config.provision_script
+    else:
+        script_path = write_provision_script(script='flnet')
+    clients.run_bash_script(script_path=script_path)
+
+    log("Deploying...")
+    # either run user-supplied provision script or built-in 
+    if conf.config.deployment_script:
+        script_path = conf.config.deployment_script
+    else:
+        script_path = write_deployment_script()
+    clients.run_bash_script(script_path=script_path, script_args=[conf.gitlab_user, '.token'])   # TODO: these args won't be necessary once flnet is public
+
+    
+    sys.exit()
+    # clients.reset_clients()
+    # if not conf.config.skip_credential_transfer:
+        # log("Distributing credentials to clients...")
+        # clients.distribute_credentials(fc_creds=conf.fc_creds)
+    # if not conf.config.skip_data_transfer:
+        # log("Distributing data to clients...")
+        # clients.distribute_data()
+    # log("Installing fedflow package on clients...")
+    # clients.install_package(wheel=conf.wheel, reinstall=conf.reinstall, nodeps=conf.nodeps)
+    # log("Starting FeatureCloud controllers on clients...")
+    # clients.start_featurecloud_controllers()
 
 
 def prep_project(clients: ClientManager, conf: Config) -> str:
@@ -121,7 +157,10 @@ def main(argv=None):
         log("Vagrant VMs launched. Exiting.")
         return
     # provision, reset, distribute creds and data, install fedflow, start fc controllers
-    prep_clients(clients=clients, conf=conf)
+    if conf.flnet:
+        prep_clients_flnet(clients=clients, conf=conf)
+    else:
+        prep_clients(clients=clients, conf=conf)
     # get or create featurecloud project
     project_id = prep_project(clients=clients, conf=conf)
     # contribute data, monitor run, download results

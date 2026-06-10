@@ -50,15 +50,18 @@ class ClientManager:
         self.threadg.run(cmd)
 
 
-    def run_bash_script(self, script_path: str) -> None:
+    def run_bash_script(self, script_path: str, script_args: list[str] = None) -> None:
         """
         Run a bash script on remotes. This is used to provision clients.
 
         :param script_path: path to the bash script to run
+        :param script_args: list of arguments for the bash script
         """
         assert Path(script_path).is_file(), f"{script_path} is not a file."
         self.threadg.put(script_path, Path(script_path).name)
         cmd = f"bash {Path(script_path).name}"
+        if script_args:
+            cmd += " " + " ".join(shlex.quote(arg) for arg in script_args)
         self.threadg.run(cmd)
     
 
@@ -94,6 +97,15 @@ class ClientManager:
         for cxn in self.threadg:
             for local_path in cxn['data']:    
                 cxn.put(local_path, remote=Path(local_path).name)
+
+
+    def distribute_token(self, local_path: str) -> None:
+        """
+        distribute secret token to VMs
+        TODO: not necessary once the flnet project is public
+        """
+        for cxn in self.threadg:
+            cxn.put(local_path, remote=Path(local_path).name)
 
 
     def distribute_credentials(self, fc_creds: dict) -> None:

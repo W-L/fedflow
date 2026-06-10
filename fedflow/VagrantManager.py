@@ -23,7 +23,7 @@ class VagrantManager:
         assert self._libvirt_available()
         self.num_nodes = num_nodes
         self.box = box
-        write_provision_script()
+        write_provision_script(script='fedflow')
         # initialized later
         self.client_strings = []
         self.serialg = []
