@@ -1,27 +1,43 @@
-accessions:                 # project accessions to be used in the workflow
+# project accessions to be used in the workflow
+accessions:                 
   - PRJEB10878
   - PRJEB6070
   - PRJEB7774
   - PRJNA429097
   - PRJNA731589
 
-provider: biosphere        # provider of machines: vagrant, biosphere
+# One username per federated client in accession order.
+# The first username is also used for centralized runs.
+fc_usernames:
+  - federated.client+00@gmail.com
+  - federated.client+01@gmail.com
+  - federated.client+02@gmail.com
+  - federated.client+03@gmail.com
+  - federated.client+04@gmail.com
+
 
 # Names of tools to be run in the workflow
-# for each, config files need to be present as:
-#      configs/<provider>/<tool>/config_cent.toml
-#      configs/<provider>/<tool>/config_fed.toml
 tools:
   - federated-svd
   - random-forest
 
-# hostnames of remotes to be written into the config files 
-# not required when using vagrant
-hostnames: 
-  - 134.158.248.176
-  - 134.158.248.249
-  - 134.158.249.161
-  - 134.158.249.92
-  - 134.158.248.150
+# n_repeats: number of repeats to run for test/train splits
+n_repeats: 30
+
+# When true, generated fedflow configs include [debug].nodeps = true.
+debug_nodeps: true
+
+
+providers:
+  biosphere:
+    username: ubuntu
+    sshkey: /home/lweilguny/.ssh/biosphere
+    hostnames:
+      - 134.158.249.67
+      - 134.158.248.115
+      - 134.158.249.124
+      - 134.158.249.160
+      - 134.158.249.96
+  vagrant: {}
 
 

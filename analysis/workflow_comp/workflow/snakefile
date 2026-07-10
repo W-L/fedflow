@@ -1,49 +1,52 @@
-
+import sys
 configfile: "workflow/config/config.yaml"
 
 accs = config['accessions']
-provider = config['provider']
+fc_usernames = config['fc_usernames']
+assert len(fc_usernames) >= len(accs)
+
+users_fed = fc_usernames[:len(accs)]
+users_cent = [fc_usernames[0]]
+
+providers = config['providers']
+p = list(providers.keys())[0]
+provider_username = providers[p]['username']  
+provider_sshkey = providers[p].get('sshkey', None)
+provider_hostnames = providers[p].get('hostnames', [])
+
 tools = config['tools']
-hostnames = config['hostnames']
+n_repeats = config['n_repeats']
+reps = [f"{n:03d}" for n in range(n_repeats)]  
 
+debug_nodeps = config.get('debug_nodeps', False)
 
-
-def load_fedflow_config(toml_path):
-    import rtoml
-    with open(toml_path, "r") as f:
-        conf = rtoml.load(f)
-    # get fc users
-    fc_users = []
-    for cl in conf['clients']:
-        fc_users.append(cl['fc_username'])
-    return fc_users
-
-
-users_fed = load_fedflow_config(f'configs/{provider}/{tools[0]}/config_fed.toml')
-users_cent = load_fedflow_config(f'configs/{provider}/{tools[0]}/config_cent.toml')
-
-
+ 
 
 rule all:
     input:
-        # 'results/hostnames_distributed',
         ############# DATA PREP ###############
-        # expand("data/{tool}/{acc}/input.csv", acc=accs, tool=tools),
-        # expand("data/{tool}/cent/input.csv", tool=tools),
+        expand("data/federated-svd/fed/{acc}/000/input.csv", acc=accs, tool=tools),
+        expand("data/federated-svd/cent/P0/000/input.csv", tool=tools),
+        expand("data/random-forest/fed/{acc}/{rep}/input.csv", acc=accs, tool=tools, rep=reps),
+        expand("data/random-forest/cent/P0/{rep}/input.csv", tool=tools, rep=reps),
+        expand("configs/{p}/federated-svd/{mode}/000/config.toml", p=p, acc=accs, tool=tools, mode=["fed", "cent"]),
+        expand("configs/{p}/random-forest/{mode}/{rep}/config.toml", p=p, acc=accs, tool=tools, mode=["fed", "cent"], rep=reps),
         ############# FEDFLOW ###############
-        # expand("results/{provider}/{tool}/cent/results_{u}.zip", provider=providers, tool=tools, u=users_cent),
-        # expand("results/{provider}/{tool}/fed/results_{u}.zip", provider=providers, tool=tools, u=users_fed),
+        expand("results/{p}/federated-svd/fed/000/results_{u}.zip", p=p, u=users_fed),
+        expand("results/{p}/federated-svd/cent/000/results_{u}.zip", p=p, u=users_cent),
+        expand("results/{p}/random-forest/fed/{r}/results_{u}.zip", p=p, r=reps, u=users_fed),
+        expand("results/{p}/random-forest/cent/{r}/results_{u}.zip", p=p, r=reps, u=users_cent),
         # ############# SVD ###############
-        # expand("results/{p}/federated-svd/fed/{u}/pca/localData.csv", p=providers, u=users_fed),
-        # expand("results/{p}/federated-svd/cent/{u}/pca/localData.csv", p=providers, u=users_cent),
-        # expand("results/{p}/federated-svd/fed/combined_svd.csv", p=providers),
+        # expand("results/{p}/federated-svd/fed/000/{u}/pca/localData.csv", p=p, u=users_fed),
+        # expand("results/{p}/federated-svd/cent/000/{u}/pca/localData.csv", p=p, u=users_cent),
+        # expand("results/{p}/federated-svd/fed/000/combined_svd.csv", p=p),
         # ############# Random Forest ###############
-        # expand("results/{p}/random-forest/fed/{u}/proba.csv", p=provider, u=users_fed),
-        # expand("results/{p}/random-forest/cent/{u}/proba.csv", p=provider, u=users_cent),
-        # expand("results/{p}/random-forest/fed/combined_randfor.csv", p=provider),
+        # expand("results/{p}/random-forest/fed/{r}/{u}/proba.csv", p=p, u=users_fed, r=reps),
+        # expand("results/{p}/random-forest/cent/{r}/{u}/proba.csv", p=p, u=users_cent, r=reps),
+        # expand("results/{p}/random-forest/fed/{r}/combined_randfor.csv", p=p, r=reps),
         # ############# Visualizations ###############
         # "figs/rulegraph.png",
-        f"figs/fig_results_{provider}.png"
+        # f"figs/fig_results_{p}.png"
 
 
 rule rulegraph:
@@ -55,115 +58,162 @@ rule rulegraph:
 
 rule download_data:
     output:
-        "data/metadata_2340_CRC_cohort_20240704.csv",
-        "data/species_signal_2340_CRC_cohort_20240617_combat_prev0.csv",
+        meta="data/metadata_2340_CRC_cohort_20240704.csv",
+        msp="data/species_signal_2340_CRC_cohort_20240617_combat_prev0.csv",
     shell:
         "python workflow/scripts/download_data.py"
 
 
 
-rule prep_data_federated:
+rule prep_data_federated_svd:
     input:
-        meta="data/metadata_2340_CRC_cohort_20240704.csv",
-        msp="data/species_signal_2340_CRC_cohort_20240617_combat_prev0.csv",
+        meta=rules.download_data.output.meta,
+        msp=rules.download_data.output.msp,
     output:
-        "data/{tool}/{acc}/input.csv"
+        "data/federated-svd/fed/{acc}/000/input.csv"
     wildcard_constraints:
         acc="P[^/]*"   # accession pattern starting with 'P'
     shell:
-        "python workflow/scripts/prep_data_federated.py "
+        "python workflow/scripts/prep_data_federated_svd.py "
         " --acc {wildcards.acc} "
-        " --tool {wildcards.tool} "
         " --msp {input.msp} "
         " --meta {input.meta} "
 
 
-
-rule prep_data_centralized:
+rule prep_data_federated_randfor:
     input:
-        expand("data/{{tool}}/{acc}/input.csv", acc=accs),
+        meta=rules.download_data.output.meta,
+        msp=rules.download_data.output.msp,
     output:
-        "data/{tool}/cent/input.csv"
+        expand("data/random-forest/fed/{{acc}}/{rep}/input.csv", rep=reps),
+    wildcard_constraints:
+        acc="P[^/]*"   # accession pattern starting with 'P'
+    params:
+        n_repeats=n_repeats,
+    shell:
+        "python workflow/scripts/prep_data_federated_randfor.py "
+        " --acc {wildcards.acc} "
+        " --msp {input.msp} "
+        " --meta {input.meta} "
+        " --nrep {params.n_repeats} "
+
+
+
+
+rule prep_data_centralized_svd:
+    input:
+        expand("data/federated-svd/fed/{acc}/000/input.csv", acc=accs),
+    output:
+        "data/federated-svd/cent/P0/000/input.csv"
     params:
         accession_list=' '.join(accs),
     shell:
-        "python workflow/scripts/prep_data_centralised.py "
-        " --tool {wildcards.tool} "
+        "python workflow/scripts/prep_data_centralised_svd.py "
         " --accs {params.accession_list} "
 
 
-
-rule distribute_hostnames:
+rule prep_data_centralized_randfor:
     input:
-        expand("configs/{provider}/{tool}/config_{mode}.toml", provider=provider, tool=tools, mode=['fed', 'cent']),
+        expand("data/random-forest/fed/{acc}/{rep}/input.csv", acc=accs, rep=reps),
     output:
-        'results/hostnames_distributed'
+        expand("data/random-forest/cent/P0/{rep}/input.csv", rep=reps),
     params:
-        provider=provider,
-        hostnames=hostnames,
+        accession_list=' '.join(accs),
+        n_repeats=n_repeats,
     shell:
-        "python workflow/scripts/distribute_hostnames.py "
-        " --config_paths 'configs/{provider}/*/*.toml' "
-        " --hostnames {params.hostnames} "
-        " --out {output} "
+        "python workflow/scripts/prep_data_centralised_randfor.py "
+        " --accs {params.accession_list} "
+        " --nreps {params.n_repeats} "
+
+
+rule generate_fedflow_config:
+    input:
+        template="config_templates/{provider}/{tool}/{mode}/config.toml",
+        app_config="config_templates/{provider}/{tool}/app/config.yml",
+        data_fed_svd=expand("data/federated-svd/fed/{acc}/000/input.csv", acc=accs),
+        data_fed_randfor=expand("data/random-forest/fed/{acc}/{{rep}}/input.csv", acc=accs),
+        data_cent_svd=rules.prep_data_centralized_svd.output,
+        data_cent_randfor=rules.prep_data_centralized_randfor.output,
+    output:
+        "configs/{provider}/{tool}/{mode}/{rep}/config.toml"
+    params:
+        accessions=" ".join(accs),
+        fc_usernames=" ".join(fc_usernames),
+        provider_username=provider_username,
+        provider_sshkey=provider_sshkey,
+        provider_hostnames=" ".join(provider_hostnames),
+        debug_nodeps_flag=" --debug-nodeps" if debug_nodeps else "",
+    shell:
+        "python workflow/scripts/generate_fedflow_config.py "
+        " --template {input.template} "
+        " --app-config {input.app_config} "
+        " --output {output} "
+        " --provider {wildcards.provider} "
+        " --tool {wildcards.tool} "
+        " --mode {wildcards.mode} "
+        " --rep {wildcards.rep} "
+        " --accessions {params.accessions} "
+        " --fc-usernames {params.fc_usernames} "
+        " --provider-username '{params.provider_username}' "
+        " --provider-sshkey '{params.provider_sshkey}' "
+        " --hostnames {params.provider_hostnames} "
+        "{params.debug_nodeps_flag} "
 
 
 
 rule fedflow_federated:  
     input:
-        expand("data/{{tool}}/{acc}/input.csv", acc=accs),
-        'results/hostnames_distributed'
+        "configs/{provider}/{tool}/fed/{rep}/config.toml"
     output:
-        expand("results/{{provider}}/{{tool}}/fed/results_{u}.zip", u=users_fed),
+        expand("results/{{provider}}/{{tool}}/fed/{{rep}}/results_{u}.zip", u=users_fed),
     resources:
         serial=1,
     shell:
-        "fedflow -c configs/{wildcards.provider}/{wildcards.tool}/config_fed.toml"
-        
+        "fedflow -c {input}"
 
 
 rule fedflow_centralized:  
     input:
-        "data/{tool}/cent/input.csv",
-        'results/hostnames_distributed'
+        "configs/{provider}/{tool}/cent/{rep}/config.toml"
     output:
-        expand("results/{{provider}}/{{tool}}/cent/results_{u}.zip", u=users_cent),
+        expand("results/{{provider}}/{{tool}}/cent/{{rep}}/results_{u}.zip", u=users_cent),
     resources:
         serial=1,
     shell:
-        "fedflow -c configs/{wildcards.provider}/{wildcards.tool}/config_cent.toml"
+        "fedflow -c {input}"
+
 
 
 
 rule unzip_fedflow:
     input:
-        "results/{p}/{t}/{m}/results_{u}.zip",
+        "results/{p}/{t}/{m}/{n}/results_{u}.zip",
     output:
-        "results/{p}/{t}/{m}/{u}/some/output.csv",
+        "results/{p}/{t}/{m}/{n}/{u}/some/output.csv",
     shell:
-        "unzip -o {input} -d results/{wildcards.p}/{wildcards.t}/{wildcards.m}/{wildcards.u}/"
+        "unzip -o {input} -d results/{wildcards.p}/{wildcards.t}/{wildcards.m}/{wildcards.n}/{wildcards.u}/"
 
 
 
 use rule unzip_fedflow as unzip_fedflow_svd with:
     output:
-        "results/{p}/{t}/{m}/{u}/pca/localData.csv",
+        "results/{p}/{t}/{m}/{n}/{u}/pca/localData.csv",
 
 
 
 use rule unzip_fedflow as unzip_fedflow_randfor with:
     output:
-        "results/{p}/{t}/{m}/{u}/pred.csv",
-        "results/{p}/{t}/{m}/{u}/proba.csv",
-        "results/{p}/{t}/{m}/{u}/test.csv",
+        "results/{p}/{t}/{m}/{n}/{u}/pred.csv",
+        "results/{p}/{t}/{m}/{n}/{u}/proba.csv",
+        "results/{p}/{t}/{m}/{n}/{u}/test.csv",
 
 
 
 rule combine_federated_svd:
     input:
-        expand("results/{{p}}/federated-svd/fed/{u}/pca/localData.csv", u=users_fed),
+        expand("results/{{p}}/federated-svd/fed/000/{u}/pca/localData.csv", u=users_fed),
     output:
-        "results/{p}/federated-svd/fed/combined_svd.csv",
+        "results/{p}/federated-svd/fed/000/combined_svd.csv",
     params: accessions=accs,
     shell:
         "python workflow/scripts/combine_federated_svd.py "
@@ -175,11 +225,11 @@ rule combine_federated_svd:
 
 rule combine_federated_randfor:
     input:
-        pred=expand("results/{{p}}/random-forest/fed/{u}/pred.csv", u=users_fed),
-        prob=expand("results/{{p}}/random-forest/fed/{u}/proba.csv", u=users_fed),
-        true=expand("results/{{p}}/random-forest/fed/{u}/test.csv", u=users_fed),
+        pred=expand("results/{{p}}/random-forest/fed/{{n}}/{u}/pred.csv", u=users_fed),
+        prob=expand("results/{{p}}/random-forest/fed/{{n}}/{u}/proba.csv", u=users_fed),
+        true=expand("results/{{p}}/random-forest/fed/{{n}}/{u}/test.csv", u=users_fed),
     output:
-        "results/{p}/random-forest/fed/combined_randfor.csv",
+        "results/{p}/random-forest/fed/{n}/combined_randfor.csv",
     params: accessions=accs,
     shell:
         "python workflow/scripts/combine_federated_randfor.py "
@@ -190,17 +240,20 @@ rule combine_federated_randfor:
         " --accessions {params.accessions} "
 
 
+
+
+# TODO this script needs to be adapted and needs to perform the stats analysis we want to do
 rule create_figure:
     input:
-        svd_cent = expand("results/{{provider}}/federated-svd/cent/{user}/pca/localData.csv", user=users_cent),
-        svd_fed = "results/{provider}/federated-svd/fed/combined_svd.csv",
-        rf_cent_pred = expand("results/{{provider}}/random-forest/cent/{user}/pred.csv", user=users_cent),
-        rf_cent_proba = expand("results/{{provider}}/random-forest/cent/{user}/proba.csv", user=users_cent),
-        rf_cent_test = expand("results/{{provider}}/random-forest/cent/{user}/test.csv", user=users_cent),
-        rf_fed = "results/{provider}/random-forest/fed/combined_randfor.csv",
+        svd_cent = expand("results/{{p}}/federated-svd/cent/000/{u}/pca/localData.csv", u=users_cent),
+        svd_fed = "results/{p}/federated-svd/fed/000/combined_svd.csv",
+        rf_cent_pred = expand("results/{{p}}/random-forest/cent/000/{u}/pred.csv", u=users_cent),
+        rf_cent_proba = expand("results/{{p}}/random-forest/cent/000/{u}/proba.csv", u=users_cent),
+        rf_cent_test = expand("results/{{p}}/random-forest/cent/000/{u}/test.csv", u=users_cent),
+        rf_fed = f"results/{{p}}/random-forest/fed/000/combined_randfor.csv",
         rulegraph = "figs/rulegraph.png",
     output:
-        "figs/fig_results_{provider}.png",
+        "figs/fig_results_{p}.png",
     shell:
         "Rscript workflow/scripts/create_fig.r {input.svd_cent} {input.svd_fed} "
         " {input.rf_cent_pred} {input.rf_cent_proba} {input.rf_cent_test} {input.rf_fed} " 
