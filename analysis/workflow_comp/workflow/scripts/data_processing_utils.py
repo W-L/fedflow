@@ -1,10 +1,7 @@
-from pathlib import Path
-import argparse
 import random
 
 import pandas as pd
 import numpy as np
-
 
 
 
@@ -103,92 +100,24 @@ def filter_data(data, samples_set, samples):
     return data_df_filt
 
 
-def separate_data(data, outpath, nostatus, header, index, transpose, split):
-    # create output dir
-    outpath.mkdir(parents=True, exist_ok=True)
-    nsamples = data.shape[0]
-    nfeat = data.shape[1] 
 
-    if nostatus:
-        # exclude the health status column from the features
-        data = data.drop(columns=['health_status'])
-        psum = 0
-    else:
-        psum = data['health_status'].sum()
-    if transpose:
-        # transpose so that samples are columns
-        data = data.transpose()
 
-    if split:
-        # write to files for training and testing
+def split_data(data, nrep, train_split=0.8):
+    # sample nrep intergers for the random_state for shuffling
+    random_states = [random.randint(0, 1000) for _ in range(nrep)]
+    data_train_list = []
+    data_test_list = []
+
+    for n in range(nrep):
         # shuffle the samples
-        data = data.sample(frac=1, random_state=99)
-        # write 80% of the samples to the training file and 20% to the testing file
-        ntrain = int(0.8 * data.shape[0])
+        data = data.sample(frac=1, random_state=random_states[n])
+        # write train_split (80%) of the samples to the training file and rest to the testing file
+        ntrain = int(train_split * data.shape[0])
         data_train = data.iloc[:ntrain]
         data_test = data.iloc[ntrain:]
-        # write training and testing files
-        data_train_path = outpath / "input.csv"
-        data_test_path = outpath / "input_test.csv"
-        data_train.to_csv(data_train_path, sep=',', index=index, header=header)
-        data_test.to_csv(data_test_path, sep=',', index=index, header=header)
-    else:
-        # write full file
-        data_path = outpath / "input.csv"
-        data.to_csv(data_path, sep=',', index=index, header=header)
-    print(f"total: {nsamples}, 0: {nsamples - psum}, 1: {psum}, feat: {nfeat}")
+        data_train_list.append(data_train)
+        data_test_list.append(data_test)
+        
+    return data_train_list, data_test_list
     
-    
-
-
-def get_args(): 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--acc", type=str, required=True)
-    parser.add_argument("--tool", type=str, required=True)
-    parser.add_argument("--msp", type=str, required=True)
-    parser.add_argument("--meta", type=str, required=True)
-    args = parser.parse_args()
-    return args
-
-
-def main():
-    args = get_args()
-    # set random seed
-    random.seed(99)
-    
-    # get the sample accessions to keep according to the project accessions to keep
-    samples_set, samples = filter_sample_ids(args.meta, acc_to_keep=args.acc)
-    # filter the data to only those samples
-    data_filt = filter_data(args.msp, samples_set, samples)
-    # select the samples (rows) for th accession
-    data_acc = data_filt.loc[list(samples_set)]
-
-    outpath = Path('data') / args.tool / args.acc
-
-    if args.tool == "federated-svd":    
-        separate_data(
-            data=data_acc,
-            outpath=outpath,
-            nostatus=True,
-            header=True,
-            index=True,
-            transpose=True, 
-            split=False
-        )
-
-    elif args.tool == "ada-boost" or args.tool == "random-forest":
-        separate_data(
-            data=data_acc,
-            outpath=outpath,
-            nostatus=False,
-            header=True,
-            index=False,
-            transpose=False,
-            split=True
-        )
-         
-
-
-if __name__ == "__main__":
-    main()
 
