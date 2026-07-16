@@ -25,17 +25,17 @@ debug_nodeps = config.get('debug_nodeps', False)
 rule all:
     input:
         ############# DATA PREP ###############
-        expand("data/federated-svd/fed/{acc}/000/input.csv", acc=accs, tool=tools),
-        expand("data/federated-svd/cent/P0/000/input.csv", tool=tools),
-        expand("data/random-forest/fed/{acc}/{rep}/input.csv", acc=accs, tool=tools, rep=reps),
-        expand("data/random-forest/cent/P0/{rep}/input.csv", tool=tools, rep=reps),
-        expand("configs/{p}/federated-svd/{mode}/000/config.toml", p=p, acc=accs, tool=tools, mode=["fed", "cent"]),
-        expand("configs/{p}/random-forest/{mode}/{rep}/config.toml", p=p, acc=accs, tool=tools, mode=["fed", "cent"], rep=reps),
+        # expand("data/federated-svd/fed/{acc}/000/input.csv", acc=accs, tool=tools),
+        # expand("data/federated-svd/cent/P0/000/input.csv", tool=tools),
+        # expand("data/random-forest/fed/{acc}/{rep}/input.csv", acc=accs, tool=tools, rep=reps),
+        # expand("data/random-forest/cent/P0/{rep}/input.csv", tool=tools, rep=reps),
+        # expand("configs/{p}/federated-svd/{mode}/000/config.toml", p=p, acc=accs, tool=tools, mode=["fed", "cent"]),
+        # expand("configs/{p}/random-forest/{mode}/{rep}/config.toml", p=p, acc=accs, tool=tools, mode=["fed", "cent"], rep=reps),
         ############# FEDFLOW ###############
-        expand("results/{p}/federated-svd/fed/000/results_{u}.zip", p=p, u=users_fed),
-        expand("results/{p}/federated-svd/cent/000/results_{u}.zip", p=p, u=users_cent),
-        expand("results/{p}/random-forest/fed/{r}/results_{u}.zip", p=p, r=reps, u=users_fed),
-        expand("results/{p}/random-forest/cent/{r}/results_{u}.zip", p=p, r=reps, u=users_cent),
+        # expand("results/{p}/federated-svd/fed/000/results_{u}.zip", p=p, u=users_fed),
+        # expand("results/{p}/federated-svd/cent/000/results_{u}.zip", p=p, u=users_cent),
+        # expand("results/{p}/random-forest/fed/{r}/results_{u}.zip", p=p, r=reps, u=users_fed),
+        # expand("results/{p}/random-forest/cent/{r}/results_{u}.zip", p=p, r=reps, u=users_cent),
         # ############# SVD ###############
         # expand("results/{p}/federated-svd/fed/000/{u}/pca/localData.csv", p=p, u=users_fed),
         # expand("results/{p}/federated-svd/cent/000/{u}/pca/localData.csv", p=p, u=users_cent),
@@ -45,8 +45,8 @@ rule all:
         # expand("results/{p}/random-forest/cent/{r}/{u}/proba.csv", p=p, u=users_cent, r=reps),
         # expand("results/{p}/random-forest/fed/{r}/combined_randfor.csv", p=p, r=reps),
         # ############# Visualizations ###############
-        # "figs/rulegraph.png",
-        # f"figs/fig_results_{p}.png"
+        "figs/rulegraph.png",
+        f"figs/fig_results_{p}.png"
 
 
 rule rulegraph:
@@ -240,23 +240,49 @@ rule combine_federated_randfor:
         " --accessions {params.accessions} "
 
 
+rule aggregate_randfor_stats:
+    input:
+        cent_proba=expand("results/{{p}}/random-forest/cent/{r}/{u}/proba.csv", r=reps, u=users_cent),
+        cent_test=expand("results/{{p}}/random-forest/cent/{r}/{u}/test.csv", r=reps, u=users_cent),
+        fed_combined=expand("results/{{p}}/random-forest/fed/{r}/combined_randfor.csv", r=reps),
+    output:
+        auc_long="results/{p}/random-forest/stats/auc_long.csv",
+        paired_auc="results/{p}/random-forest/stats/paired_auc.csv",
+        paired_summary="results/{p}/random-forest/stats/paired_summary.csv",
+        wilcoxon="results/{p}/random-forest/stats/wilcoxon.csv",
+        roc_aggregate="results/{p}/random-forest/stats/roc_aggregate.csv",
+        proba_all="results/{p}/random-forest/stats/proba_all.csv",
+        ppscatter="results/{p}/random-forest/stats/ppscatter.csv",
+    params:
+        cent_prefix="results/{p}/random-forest/cent",
+        fed_prefix="results/{p}/random-forest/fed",
+        output_prefix="results/{p}/random-forest/stats",
+    shell:
+        "python workflow/scripts/analyze_randfor_stats.py "
+        " --cent-prefix {params.cent_prefix} "
+        " --fed-prefix {params.fed_prefix} "
+        " --output-prefix {params.output_prefix} "
 
 
-# TODO this script needs to be adapted and needs to perform the stats analysis we want to do
+
+
 rule create_figure:
     input:
         svd_cent = expand("results/{{p}}/federated-svd/cent/000/{u}/pca/localData.csv", u=users_cent),
         svd_fed = "results/{p}/federated-svd/fed/000/combined_svd.csv",
-        rf_cent_pred = expand("results/{{p}}/random-forest/cent/000/{u}/pred.csv", u=users_cent),
-        rf_cent_proba = expand("results/{{p}}/random-forest/cent/000/{u}/proba.csv", u=users_cent),
-        rf_cent_test = expand("results/{{p}}/random-forest/cent/000/{u}/test.csv", u=users_cent),
-        rf_fed = f"results/{{p}}/random-forest/fed/000/combined_randfor.csv",
+        rf_auc_long = rules.aggregate_randfor_stats.output.auc_long,
+        rf_paired_summary = rules.aggregate_randfor_stats.output.paired_summary,
+        rf_wilcoxon = rules.aggregate_randfor_stats.output.wilcoxon,
+        rf_roc_aggregate = rules.aggregate_randfor_stats.output.roc_aggregate,
+        rf_proba_all = rules.aggregate_randfor_stats.output.proba_all,
+        rf_ppscatter = rules.aggregate_randfor_stats.output.ppscatter,
         rulegraph = "figs/rulegraph.png",
     output:
         "figs/fig_results_{p}.png",
     shell:
         "Rscript workflow/scripts/create_fig.r {input.svd_cent} {input.svd_fed} "
-        " {input.rf_cent_pred} {input.rf_cent_proba} {input.rf_cent_test} {input.rf_fed} " 
+        " {input.rf_auc_long} {input.rf_paired_summary} {input.rf_wilcoxon} {input.rf_roc_aggregate} "
+        " {input.rf_proba_all} {input.rf_ppscatter} "
         " {input.rulegraph} {output} "
 
 
