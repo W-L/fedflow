@@ -6,6 +6,7 @@
 dump/
 apps/
 results/
+results_*/
 arch/
 mnist.tsv
 Vagrantfile
@@ -18,7 +19,10 @@ logs/
 example/config_mean_test.toml
 example/config_mean_test_biosphere.toml
 analysis/workflow_comp/data/
+analysis/workflow_comp/data2/
 analysis/workflow_comp/configs/
+analysis/workflow_benchmarks/data/
+
 
 
 .vscode/*.code-workspace
