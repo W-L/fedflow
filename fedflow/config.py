@@ -13,7 +13,7 @@ from fedflow.logger import log
 
 
 class DebugConfig(BaseModel):
-    reinstall: bool = True
+    reinstall: bool = False
     nodeps: bool = False
     timeout: int = 60 * 60
     vmonly: bool = False
