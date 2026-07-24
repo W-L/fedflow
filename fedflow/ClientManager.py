@@ -2,6 +2,9 @@ from pathlib import Path
 import shutil
 import shlex
 import tarfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from fedflow.metrics import MetricsRecorder
 
 
 
@@ -12,7 +15,7 @@ class ClientManager:
     Managing fabric Connections to remote hosts.
     """
 
-    def __init__(self, serialg, threadg, clients: list):
+    def __init__(self, serialg, threadg, clients: list, metrics: MetricsRecorder):
         """
         Initialize the ClientManager.
 
@@ -22,6 +25,7 @@ class ClientManager:
         """
         self.serialg = serialg
         self.threadg = threadg
+        self.metrics = metrics
         # # remotes are separated into participants and coordinator
         self.participants = []
         self.coordinator = []
@@ -84,6 +88,8 @@ class ClientManager:
             install_cmd += " --force-reinstall"
         if nodeps:
             install_cmd += " --no-deps"
+        # suppress already satisfied requirements
+        install_cmd += ' -q'
         self.threadg.run(install_cmd)
         
 
@@ -189,12 +195,34 @@ class ClientManager:
         if project_id is None or len(tokens) != n_participants:
             raise ValueError("Failed to create project or retrieve tokens.")
         
-        # use tokens to join project from participant nodes
-        for cxn, token in zip(self.participants, tokens):
+        # use tokens to join project from participant nodes        
+        def join(cxn, token, project_id):
             fc_user = cxn['fc_username']
             cmd = f"source .venv/bin/activate && fcauto join -t {token} -u {fc_user} -p {project_id}"
             cxn.run(f'echo "$(hostname): joining project {project_id}..." && {cmd}')
+
+        with ThreadPoolExecutor() as pool:
+            futures = {
+                pool.submit(join, cxn, token, project_id): cxn for cxn, token in zip(self.participants, tokens)
+            }
+            for future in as_completed(futures):
+                future.result() 
+
         return project_id
+    
+
+    def set_project_to_prepare(self, coordinator: list, project_id: str) -> None:
+        """
+        Set the project to prepare mode, which allows data contribution.
+
+        :param coordinator: Single-item list of fabric Connection for the coordinator node
+        :param project_id: ID of the Featurecloud project to monitor
+        """
+        # set project to prepare mode, which allows data contribution
+        cxn = coordinator[0]
+        fc_user = cxn['fc_username']
+        cmd = f"source .venv/bin/activate && fcauto prep -u {fc_user} -p {project_id}"
+        cxn.run(f'echo "$(hostname): setting prep mode..." && {cmd}')
 
 
     def contribute_data_to_project(self, project_id: str) -> None:
@@ -204,13 +232,20 @@ class ClientManager:
 
         :param project_id: ID of the Featurecloud project
         """
-        for cxn in self.serialg:
+        def contribute(cxn, project_id):
             fc_user = cxn['fc_username']
             # create a list of data paths to contribute
             data_paths = cxn['data']
             data_args = ' '.join([f"{Path(path).name}" for path in data_paths])
             cmd = f"source .venv/bin/activate && fcauto contribute -u {fc_user} -p {project_id} -d {data_args}"
             cxn.run(f'echo "$(hostname): contributing data to project {project_id}..." && {cmd}')
+
+        with ThreadPoolExecutor() as pool:
+            futures = {
+                pool.submit(contribute, cxn, project_id): cxn for cxn in self.serialg
+            }
+            for future in as_completed(futures):
+                future.result() 
         return
     
 
@@ -227,7 +262,6 @@ class ClientManager:
         fc_user = cxn['fc_username']
         cmd = f"source .venv/bin/activate && fcauto monitor -u {fc_user} -p {project_id} -t {timeout}"
         cxn.run(f'echo "$(hostname): monitoring..." && {cmd}')
-        # cxn.run(cmd)
         
 
     def fetch_results(self, outdir, pid):
