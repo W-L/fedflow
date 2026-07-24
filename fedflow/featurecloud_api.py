@@ -517,14 +517,15 @@ class FCC:
         return is_coordinator
 
 
-    def upload_files(self, filepaths: list[str]) -> dict:
+    def set_to_prepare(self):
         """
-        Upload files to a project as a specific FeatureCloud User
+        Set the project to 'prepare' mode. Only the coordinator can do this.
 
-        :param filepaths: paths to the files to upload
-        :raises PermissionError: First data upload needs to be done from the coordinator
-        :return: dict of booleans for each uploaded file
+        :raises PermissionError: if user is not coordinator
         """
+        if not self.is_project_coordinator():
+            raise PermissionError("Only the project coordinator can set the project to 'prepare' mode.")
+        
         # check the project status first
         # to allow file contributions, project needs to be in 'prepare' state
         # 'prepare' can only be reached from 'ready'
@@ -539,13 +540,23 @@ class FCC:
         # checking that we are in prepare mode
         is_prepping = self.project.is_prepping()
         if not is_prepping:
-            if not self.is_project_coordinator():
-                raise PermissionError("Only the project coordinator can set the project to 'prepare' mode.")
             # if not try to progress to 'prepare' state    
             log(f"Project {self.project.project_id} not in 'prepare' mode. Setting it now as coordinator.")
             self.project.set_status("prepare")
             time.sleep(2)  # wait a bit for status to update
-            assert self.project.is_prepping(), "Failed to set project to 'prepare' mode."
+        
+        assert self.project.is_prepping(), "Failed to set project to 'prepare' mode."
+
+
+    def upload_files(self, filepaths: list[str]) -> dict:
+        """
+        Upload files to a project as a specific FeatureCloud User
+
+        :param filepaths: paths to the files to upload
+        :raises PermissionError: First data upload needs to be done from the coordinator
+        :return: dict of booleans for each uploaded file
+        """
+        assert self.project.is_prepping(), "Project not in 'prepare' mode."
 
         # collect confirmations from all uploads
         results = {}
@@ -569,11 +580,11 @@ class FCC:
                 r = self.controller.client.post("/file-upload/", params=params, content=f.read(), headers=headers)
                 r.raise_for_status()
                 results[file_name] = r.text  # or r.json() if backend returns JSON
-            time.sleep(2)  # to avoid overwhelming the server
+            time.sleep(1)  # to avoid overwhelming the server
 
         # finalize upload from this participant
         # setting the 'finalize' flag finishes the upload from a single participant
-        time.sleep(2)
+        time.sleep(1)
         params = {
             "projectId": self.project.project_id,
             "fileName": "",     
@@ -582,7 +593,7 @@ class FCC:
         }
         r = self.controller.client.post("/file-upload/", params=params, headers=headers, content=b"")
         r.raise_for_status()
-        time.sleep(2)
+        time.sleep(1)
         return results
 
 
@@ -725,6 +736,20 @@ def create_project_and_tokens(username: str, tool: str, n_participants: int):
 
 
 
+def set_to_prepare(username: str, project_id: str):
+    """
+    Set a FeatureCloud project to status 'prepare'
+
+    :param username: username of project coordinator
+    :param project_id: ID of the project to set to prepare
+    """
+    user = User(username=username)
+    proj = Project.from_project_id(project_id=project_id, client=user.client)    
+    fcc = FCC(user=user, project=proj)
+    fcc.set_to_prepare()
+    print(f"{username} set project {project_id} to prepare")
+
+
 
 def contribute_data(username: str, project_id: str, data_list: list[str]):
     """
@@ -827,4 +852,86 @@ def list_apps():
     apps = AppTable().apps.keys()
     for app in apps:
         log(f"{app}")
+
+
+def create_user(
+    email: str,
+    first_name: str,
+    last_name: str,
+    site_name: str,
+    role: str = "user",
+):
+    """
+    Create a user account on FeatureCloud.ai.
+
+    :param email: E-mail address of the new user.
+    :param first_name: First name of the new user.
+    :param last_name: Last name of the new user.
+    :param site_name: Name for the initial site of the new user.
+    :param role: Role on FeatureCloud, defaults to "user".
+    :return: Parsed JSON response when available, otherwise response text.
+    """
+    load_dotenv(dotenv_path='.env', override=True)
+    password = os.getenv(email)
+    assert password is not None, f"Credentials for {email} not found."
+
+    payload = {
+        "email": email,
+        "password": password,
+        "firstName": first_name,
+        "lastName": last_name,
+        "role": role,
+    }
+
+    limiter = RateLimiter()
+    with httpx.Client(base_url="https://featurecloud.ai", headers=DEFAULT_HEADERS, timeout=timeout) as client:
+        limiter.wait()
+        r = client.post("/api/auth/user/signup/", json=payload)
+        r.raise_for_status()
+
+        limiter.wait()
+        login_resp = client.post(
+            "/api/auth/login/",
+            json={"username": email, "password": password},
+        )
+        login_resp.raise_for_status()
+        login_data = login_resp.json()
+        access = login_data["access"]
+        client.headers["Authorization"] = f"Bearer {access}"
+
+        site_payload = {
+            "name": site_name,
+            "organization": None,
+            "address": None,
+            "zip": None,
+            "city": None,
+            "country": None,
+            "firstName": None,
+            "lastName": None,
+            "phone": None,
+        }
+        limiter.wait()
+        site_resp = client.post("/api/site/", json=site_payload)
+        site_resp.raise_for_status()
+
+    log(f"Created FeatureCloud user {email} with role {role}.")
+    log(f"Created initial site '{site_name}' for user {email}.")
+
+    signup_result = r.text
+    site_result = site_resp.text
+
+    try:
+        signup_result = r.json()
+    except ValueError:
+        pass
+
+    try:
+        site_result = site_resp.json()
+    except ValueError:
+        pass
+
+    return {
+        "user": signup_result,
+        "site": site_result,
+    }
 

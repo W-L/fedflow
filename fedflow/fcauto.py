@@ -44,9 +44,18 @@ def get_args(argv=None) -> argparse.Namespace:
         help="Reset a FeatureCloud project to status 'ready' ",
         parents=[common]
     )
+    prep = sub.add_parser(  # noqa: F841
+        "prep",
+        help="Set a FeatureCloud project to status 'prepare', which allows data contribution",
+        parents=[common]
+    )
     list_apps = sub.add_parser(     # noqa: F841
         "list-apps",
         help="List available apps on FeatureCloud",
+    )
+    create_user = sub.add_parser(
+        "signup",
+        help="Create a new user account on FeatureCloud",
     )
 
     # additional arguments for each subcommand
@@ -56,6 +65,11 @@ def get_args(argv=None) -> argparse.Namespace:
     join.add_argument("-t", "--token", help="Token to join project")
     contribute.add_argument("-d", "--data", help="Paths of data to contribute. Can be multiple arguments.", nargs='+')
     monitor.add_argument("-t", "--timeout", help="Maximum time to wait for project to finish (in seconds)", type=int, default=60)
+    create_user.add_argument("--email", help="Email address of the new user", required=True)
+    create_user.add_argument("--first-name", help="First name of the new user", required=True)
+    create_user.add_argument("--last-name", help="Last name of the new user", required=True)
+    create_user.add_argument("--site-name", help="Name of the initial site for the new user", required=True)
+    create_user.add_argument("--role", help="Role of the new user", default="user")
     #
     args = parser.parse_args(argv)
     return args
@@ -100,8 +114,21 @@ def main(argv=None):
             username=args.user,
             project_id=args.project,
         )
+    elif args.cmd == "prep":
+        featurecloud_api.set_to_prepare(
+            username=args.user,
+            project_id=args.project,
+        )
     elif args.cmd == "list-apps":
         featurecloud_api.list_apps()
+    elif args.cmd == "signup":
+        featurecloud_api.create_user(
+            email=args.email,
+            first_name=args.first_name,
+            last_name=args.last_name,
+            site_name=args.site_name,
+            role=args.role,
+        )
 
 
 
