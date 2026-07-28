@@ -156,6 +156,8 @@ class ClientManager:
         self.threadg.run(stop_docker)
         rm_docker = "docker ps -q -a | xargs -r docker container rm"
         self.threadg.run(rm_docker)
+        # rm_img = "docker image ls -a -q | xargs -r docker image rm"
+        # self.threadg.run(rm_img)
         # remove dangling docker volumes
         rm_docker_vols = "docker volume ls -q | xargs -r docker volume rm"
         self.threadg.run(rm_docker_vols)
