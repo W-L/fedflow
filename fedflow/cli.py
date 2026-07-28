@@ -105,6 +105,7 @@ def run_project(
     with metrics.phase("contribute_data_to_project", project_id=project_id):
         clients.contribute_data_to_project(project_id=project_id)
     # monitor run, then download logs and results
+    sleep(10)
     log("Monitoring FeatureCloud project run...")
     with metrics.phase("monitor_project_run", timeout=timeout):
         clients.monitor_project_run(coordinator=clients.coordinator, project_id=project_id, timeout=timeout)
