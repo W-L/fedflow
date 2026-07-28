@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import random
 import time
 
 import httpx
@@ -57,6 +58,32 @@ class RateLimiter:
             self.allowance = 0
         else:
             self.allowance -= 1
+
+
+_TRANSIENT_ERRORS = (httpx.RemoteProtocolError, httpx.ConnectError, httpx.TimeoutException)
+
+
+def _retry_transient(fn, max_retries: int = 5, cap: float = 30.0):
+    """
+    Call fn and retry up to max_retries times on transient httpx errors,
+    using full-jitter exponential backoff.
+
+    :param fn: callable that performs some HTTP request.
+    :param max_retries: Maximum number of retries
+    :param cap: Upper bound on sleep
+    :return: Return value of fn
+    :raises: exception if all attempts fail.
+    """
+    for attempt in range(max_retries + 1):
+        try:
+            return fn()
+        except _TRANSIENT_ERRORS as exc:
+            if attempt == max_retries:
+                raise
+            sleep_time = random.uniform(1, min(cap, 2 ** attempt) + 1)
+            log(f"Transient error ({exc.__class__.__name__}), retrying in {sleep_time:.1f}s "
+                f"(attempt {attempt + 1}/{max_retries})")
+            time.sleep(sleep_time)
 
 
 
@@ -235,9 +262,12 @@ class Project:
         """
         payload = {"token": token, "cmd": "join"}
         self.limiter.wait()
-        r = self.client.post("/api/project-tokens/", json=payload)
-        r.raise_for_status()
-        return r.json()
+        r = _retry_transient(lambda: self.client.post("/api/project-tokens/", json=payload))
+        if r is not None:
+            r.raise_for_status()
+            return r.json()
+        else:
+            raise RuntimeError(f"Failed to join project with token {token}.")
 
 
     def get_status(self) -> str:
@@ -247,11 +277,14 @@ class Project:
         :return: status description string
         """
         self.limiter.wait()
-        r = self.client.get(f"/api/projects/{self.project_id}/")
-        r.raise_for_status()
-        data = r.json()
-        status = data.get("status")
-        return status
+        r = _retry_transient(lambda: self.client.get(f"/api/projects/{self.project_id}/"))
+        if r is not None:
+            r.raise_for_status()
+            data = r.json()
+            status = data.get("status")
+            return status
+        else:
+            raise RuntimeError(f"Failed to get status for project {self.project_id}.")
 
 
     def set_status(self, status: str):
@@ -320,9 +353,12 @@ class AppTable:
         :return: dict of app slugs and their IDs
         """
         self.limiter.wait()
-        r = self.client.get("/api/apps/")
-        r.raise_for_status()
-        apps = r.json()
+        r = _retry_transient(lambda: self.client.get("/api/apps/"))
+        if r is not None:
+            r.raise_for_status()
+            apps = r.json()
+        else:
+            raise RuntimeError(f"Failed to get apps.")
         # get dict of slugs to IDs
         apps = {app["slug"]: app["id"] for app in apps}
         return apps
@@ -360,10 +396,17 @@ class User:
         """
         log(f"Logging in user {self.username}...")
         self.limiter.wait()
-        r = self.client.post("/api/auth/login/",
-                             json={"username": self.username, "password": self.password})
-        r.raise_for_status()
-        data = r.json()
+        r = _retry_transient(
+            lambda: self.client.post(
+                "/api/auth/login/",
+                json={"username": self.username, "password": self.password}
+            )
+        )
+        if r is not None:
+            r.raise_for_status()
+            data = r.json()
+        else:
+            raise RuntimeError(f"Failed to login as user {self.username}.")
         self.access = data["access"]
         self.refresh = data["refresh"]
         self.client.headers["Authorization"] = f"Bearer {self.access}"
@@ -388,10 +431,14 @@ class User:
         """
         try:
             self.limiter.wait()
-            r = self.client.get("/api/user/info/")
-            ok = r.status_code == 200
-            log(f"User {self.username} logged in: {ok}")
-            return ok
+            r = _retry_transient(lambda: self.client.get("/api/user/info/"))
+            if r is not None:
+                ok = r.status_code == 200
+                log(f"User {self.username} logged in: {ok}")
+                return ok
+            else:
+                log(f"User {self.username} login check failed.")
+                return False
         except httpx.HTTPError:
             return False
         
@@ -403,15 +450,18 @@ class User:
         :return: json snippet
         """
         self.limiter.wait()
-        r = self.client.get("/api/site/")
-        r.raise_for_status()
-        site_info = r.json()
-        # write to file for the local controller
-        Path("data_fc").mkdir(parents=True, exist_ok=True)
-        with open("data_fc/site_info.json", "w") as f:
-            f.write(r.text)
-        assert Path("data_fc/site_info.json").exists(), "Failed to write site_info.json"
-        return site_info
+        r = _retry_transient(lambda: self.client.get("/api/site/"))
+        if r is not None:
+            r.raise_for_status()
+            site_info = r.json()
+            # write to file for the local controller
+            Path("data_fc").mkdir(parents=True, exist_ok=True)
+            with open("data_fc/site_info.json", "w") as f:
+                f.write(r.text)
+            assert Path("data_fc/site_info.json").exists(), "Failed to write site_info.json"
+            return site_info
+        else:
+            raise RuntimeError("Failed to retrieve site_info.json from FeatureCloud.ai.")
     
 
     def get_purchased_apps(self) -> dict:
@@ -580,11 +630,11 @@ class FCC:
                 r = self.controller.client.post("/file-upload/", params=params, content=f.read(), headers=headers)
                 r.raise_for_status()
                 results[file_name] = r.text  # or r.json() if backend returns JSON
-            time.sleep(1)  # to avoid overwhelming the server
+            time.sleep(2)  # to avoid overwhelming the server
 
         # finalize upload from this participant
         # setting the 'finalize' flag finishes the upload from a single participant
-        time.sleep(1)
+        time.sleep(2)
         params = {
             "projectId": self.project.project_id,
             "fileName": "",     
@@ -593,7 +643,7 @@ class FCC:
         }
         r = self.controller.client.post("/file-upload/", params=params, headers=headers, content=b"")
         r.raise_for_status()
-        time.sleep(1)
+        time.sleep(3)
         return results
 
 
