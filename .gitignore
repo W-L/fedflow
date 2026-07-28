@@ -15,6 +15,7 @@ conf/
 provision.sh
 *_fedflow.log
 .env
+.env*
 logs/
 example/config_mean_test.toml
 example/config_mean_test_biosphere.toml
@@ -22,6 +23,8 @@ analysis/workflow_comp/data/
 analysis/workflow_comp/data2/
 analysis/workflow_comp/configs/
 analysis/workflow_benchmarks/data/
+hostnames.txt
+fc_usernames.txt
 
 
 
