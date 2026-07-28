@@ -1,0 +1,124 @@
+configfile: "workflow/config/config.yaml"
+
+tool_config = config["tool_config"]
+app_config = config["app_config"]
+
+nclients = sorted(config["nclients"])
+max_clients = max(nclients)
+data_sizes = sorted(config["data_sizes"])
+n_repeats = config["n_repeats"]
+reps = range(n_repeats)
+random_seed = config.get("random_seed", 99)
+
+fc_usernames_file = config["fc_usernames_file"]
+hostnames_file = config["hostnames_file"]
+
+username = config["biosphere_username"]
+sshkey = config["biosphere_sshkey"]
+
+
+
+
+rule all:
+    input:
+        # "results/rulegraph.png",
+        # "results/provision.done",
+        # expand("data/nclients_{n}/size_{s}/rep_{r}/client_0/data.csv", n=nclients, s=data_sizes, r=reps),
+        # expand("results/nclients_{n}/size_{s}/rep_{r}/fedflow_metrics.json", n=nclients, s=data_sizes, r=reps),
+        "results/validation_summary.tsv",
+        
+
+
+rule rulegraph:
+    output:
+        "results/rulegraph.png"
+    shell:
+        """
+        snakemake --rulegraph | dot -Tpng -Gdpi=300 > {output}
+        """
+
+
+rule generate_random_mean_data:
+    output:
+        data="data/nclients_{n}/size_{s}/rep_{r}/client_0/data.csv"
+    params:
+        random_seed=lambda wildcards: random_seed + int(wildcards.r) + int(wildcards.n) + int(wildcards.s)
+    shell:
+        "python workflow/scripts/generate_random_mean_data.py "
+        " --outdir data/nclients_{wildcards.n}/size_{wildcards.s}/rep_{wildcards.r} "
+        " --nclients {wildcards.n} "
+        " --ndata {wildcards.s} "
+        " --seed {params.random_seed} "
+
+
+rule fedflow_provision:
+    input:
+        tool_config=tool_config,
+        app_config=app_config,
+        fc_usernames_file=fc_usernames_file,
+        hostnames_file=hostnames_file,
+        data=f"data/nclients_{max_clients}/size_{data_sizes[0]}/rep_{reps[0]}/client_0/data.csv"
+    output:
+        "results/provision.done"
+    params:
+        max_clients=max_clients,
+        size=data_sizes[0],
+        rep=reps[0],
+        username=username,
+        sshkey=sshkey,
+    shell:
+        "python workflow/scripts/generate_fedflow_config.py "
+        " --template {input.tool_config} "
+        " --app-config {input.app_config} "
+        " --output results/provision/config.toml "
+        " --outdir results/provision/ "
+        " --nclients {params.max_clients} "
+        " --data-root data/nclients_{params.max_clients}/size_{params.size}/rep_{params.rep} "
+        " --fc-usernames-file {input.fc_usernames_file} "
+        " --hostnames-file {input.hostnames_file} "
+        " --username {params.username} "
+        " --sshkey {params.sshkey} && "
+        "fedflow -c results/provision/config.toml && "
+        "touch {output} "
+
+
+rule fedflow:
+    input:
+        tool_config=tool_config,
+        app_config=app_config,
+        fc_usernames_file=fc_usernames_file,
+        hostnames_file=hostnames_file,
+        provision=rules.fedflow_provision.output,
+        data=rules.generate_random_mean_data.output.data
+    output:
+        config="results/nclients_{n}/size_{s}/rep_{r}/config.toml",
+        metrics="results/nclients_{n}/size_{s}/rep_{r}/fedflow_metrics.json"
+    params:
+        username=username,
+        sshkey=sshkey,
+    shell:
+        "python workflow/scripts/run_fedflow_with_hostlocks.py "
+        " --template {input.tool_config} "
+        " --app-config {input.app_config} "
+        " --output {output.config} "
+        " --outdir results/nclients_{wildcards.n}/size_{wildcards.s}/rep_{wildcards.r} "
+        " --nclients {wildcards.n} "
+        " --data-root data/nclients_{wildcards.n}/size_{wildcards.s}/rep_{wildcards.r} "
+        " --fc-usernames-file {input.fc_usernames_file} "
+        " --hostnames-file {input.hostnames_file} "
+        " --username {params.username} "
+        " --sshkey {params.sshkey} "
+
+
+rule aggregate_validation_summary:
+    input:
+        expand("results/nclients_{n}/size_{s}/rep_{r}/fedflow_metrics.json", n=nclients, s=data_sizes, r=reps)
+    output:
+        "results/validation_summary.tsv"
+    shell:
+        "python workflow/scripts/aggregate_validation_summary.py "
+        " --metrics {input} "
+        " --output {output} "
+
+
+

@@ -1,0 +1,15 @@
+tool = "mean-app"
+
+
+[debug]
+reinstall = true
+nodeps = false
+timeout = 3600
+
+[[clients]]
+fc_username = ""
+data = []
+coordinator = true
+hostname = ""
+username = ""
+sshkey = ""

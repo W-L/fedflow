@@ -1,0 +1,36 @@
+
+tool_config: "config_templates/biosphere/mean-app/config.toml"
+app_config: "config_templates/mean-app/config.yml"
+fc_usernames_file: workflow/config/fc_usernames.txt
+hostnames_file: workflow/config/hostnames.txt
+
+
+nclients:
+  - 1
+  - 2
+  - 4
+  - 8
+  - 16
+  - 32
+  - 64
+
+
+
+data_sizes:
+  - 10
+  - 100
+  - 1000
+  - 10000
+
+
+n_repeats: 5
+
+
+random_seed: 99
+
+
+biosphere_username: ubuntu
+biosphere_sshkey: /home/lweilguny/.ssh/biosphere
+
+
+

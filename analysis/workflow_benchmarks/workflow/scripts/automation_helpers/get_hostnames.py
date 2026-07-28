@@ -16,5 +16,6 @@ order = data.pop("order", None)
 hostnames = [k.get("main_hostname", None) for k in data.values()]
 
 for hostname in hostnames:
-    print(hostname)
+    if hostname:
+        print(hostname)
 
