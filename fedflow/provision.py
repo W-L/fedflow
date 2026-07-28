@@ -10,6 +10,8 @@ DEPS_PY="python3.12 python3-pip python3.12-venv"
 if dpkg -s $DEPS_PY >/dev/null 2>&1; then
     echo "Python dependencies are installed"
 else
+    sudo systemctl stop unattended-upgrades
+    sudo pkill -f unattended-upgr || true
     sudo apt-get update
     sudo apt-get install -y $DEPS_PY
 fi
@@ -18,6 +20,8 @@ fi
 if dpkg -s docker-ce >/dev/null 2>&1; then
     echo "Docker is installed"
 else
+    sudo systemctl stop unattended-upgrades
+    sudo pkill -f unattended-upgr || true
     DEPS="curl ca-certificates gnupg"
     sudo apt-get update
     sudo apt-get install -y $DEPS
