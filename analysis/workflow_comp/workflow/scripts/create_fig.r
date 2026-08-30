@@ -2,6 +2,10 @@ library(tidyverse)
 library(patchwork)
 library(grid)
 library(png)
+library(showtext)
+
+showtext_auto()
+font_add_google("Nunito", family = "my_sans")
 
 
 tol_muted <- c(
@@ -76,7 +80,7 @@ embedding <- ggplot(proj, aes(x = X0, y = X1, color = client)) +
   geom_point(alpha = 0.5) +
   scale_colour_manual(values = client_colors, na.value = "grey80") +
   labs(x = "PC1", y = "PC2") +
-  theme_minimal() +
+  theme_minimal(base_family = "my_sans") +
   theme(legend.position = "none", strip.text = element_blank())
 
 
@@ -101,7 +105,7 @@ ppscatter <- ggplot(ppscatter_df, aes(x = prob_1_cent, y = prob_1_fed, color = c
   ) +
   xlim(0, 1) +
   ylim(0, 1) +
-  theme_minimal() +
+  theme_minimal(base_family = "my_sans") +
   theme(plot.title = element_text(size = 9), legend.position = "none")
 
 
@@ -125,7 +129,7 @@ rocs <- ggplot() +
   scale_colour_manual(values = client_colors) +
   scale_fill_manual(values = client_colors) +
   labs(x = "False Positive Rate", y = "True Positive Rate") +
-  theme_minimal() +
+  theme_minimal(base_family = "my_sans") +
   theme(legend.position = "none")
 # rocs
 
@@ -140,7 +144,7 @@ dist_plot <- ggplot(proba_all, aes(x = factor(y_true), y = prob_1, color = clien
   labs(x = "True class", y = "p(class = 1)") +
   scale_colour_manual(values = client_colors) +
   scale_fill_manual(values = client_colors) +
-  theme_minimal() +
+  theme_minimal(base_family = "my_sans") +
   theme(legend.position = "bottom", legend.title = element_blank())
 # dist_plot
 
@@ -165,7 +169,7 @@ auc_box <- ggplot(auc_long_filtered, aes(y = client, x = auc, color = client)) +
   scale_fill_manual(values = client_colors[c("centralized", FED_AGG_LABEL)]) +
   scale_y_discrete(guide = "none") +
   labs(y = "", x = "ROC-AUC", title = auc_subtitle) +
-  theme_minimal() +
+  theme_minimal(base_family = "my_sans") +
   theme(
     legend.position = "none",
     plot.title = element_text(size = 9)
@@ -193,5 +197,5 @@ fig <- (wrap_elements(rg) + embedding + ppscatter + rocs + dist_plot + auc_box +
   plot_annotation(tag_levels = "A") +
   plot_layout(design = design, guides = "collect")
 
-ggsave(out, plot = fig, width = 12, height = 10, dpi = 400)
+ggsave(out, plot = fig, width = 12, height = 10, dpi = 400, device = cairo_pdf)
 

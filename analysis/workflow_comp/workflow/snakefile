@@ -46,7 +46,7 @@ rule all:
         # expand("results/{p}/random-forest/fed/{r}/combined_randfor.csv", p=p, r=reps),
         # ############# Visualizations ###############
         "figs/rulegraph.png",
-        f"figs/fig_results_{p}.png"
+        f"figs/fig_results_{p}.pdf"
 
 
 rule rulegraph:
@@ -278,7 +278,7 @@ rule create_figure:
         rf_ppscatter = rules.aggregate_randfor_stats.output.ppscatter,
         rulegraph = "figs/rulegraph.png",
     output:
-        "figs/fig_results_{p}.png",
+        "figs/fig_results_{p}.pdf",
     shell:
         "Rscript workflow/scripts/create_fig.r {input.svd_cent} {input.svd_fed} "
         " {input.rf_auc_long} {input.rf_paired_summary} {input.rf_wilcoxon} {input.rf_roc_aggregate} "
