@@ -169,5 +169,6 @@ fig <- (
 ) + plot_annotation(tag_levels = "A") + plot_layout(design = design)
 
 
-ggsave("metrics_summary.png", plot = fig, width = 12, height = 9, dpi = 400)
+# ggsave("metrics_summary.png", plot = fig, width = 12, height = 9, dpi = 400)
+ggsave("metrics_summary.pdf", plot = fig, width = 12, height = 9)#, dpi = 400)
 
